@@ -1,3 +1,4 @@
+import { getPurchasedBalance, trySpendPurchased } from '../credits/purchasedCredits';
 import { RateLimitType, RateLimitStore, RateLimitSettings, DORateLimitConfig, KVRateLimitConfig } from './config';
 import { createObjectLogger } from '../../logger';
 import { AuthUser } from '../../types/auth-types';
@@ -379,7 +380,7 @@ export class RateLimitService {
 		env: Env,
 		config: RateLimitSettings,
 		userId: string
-	): Promise<{ remaining: number; limit: number; dailyRemaining?: number; dailyLimit?: number }> {
+		): Promise<{ remaining: number; limit: number; purchased?: number; dailyRemaining?: number; dailyLimit?: number }> {
 		const identifier = `user:${userId}`;
 		const key = this.buildRateLimitKey(RateLimitType.LLM_CALLS, identifier);
 		const llmConfig = config[RateLimitType.LLM_CALLS] as DORateLimitConfig;
@@ -394,8 +395,10 @@ export class RateLimitService {
 				calendarDaily: llmConfig.calendarDaily,
 			});
 
+			const purchased = await getPurchasedBalance(env, userId);
 			return {
-				remaining,
+				remaining: remaining + purchased,
+				purchased,
 				limit: llmConfig.limit,
 				dailyLimit: llmConfig.dailyLimit,
 			};
@@ -464,6 +467,9 @@ export class RateLimitService {
 			}
 
 			const result = await this.enforce(env, key, config, RateLimitType.LLM_CALLS, incrementBy);
+				if (!result.success && options.throwOnExceeded !== false && await trySpendPurchased(env, userId, incrementBy)) {
+				return; // covered by purchased credits
+			}
 			if (!result.success && options.throwOnExceeded !== false) {
 				this.logger.warn('LLM calls rate limit exceeded', {
 					identifier,
