@@ -1337,6 +1337,21 @@ class ApiClient {
 	async getLimitsUsage(): Promise<ApiResponse<any>> {
 		return this.request<any>('/api/limits/usage');
 	}
+	
+	// ===============================
+	// Credit pack payments (Razorpay)
+	// ===============================
+
+	async getCreditPacks(): Promise<ApiResponse<{ packs: Array<{ id: string; label: string; credits: number; priceInr: number }>; balance: number }>> {
+		return this.request<{ packs: Array<{ id: string; label: string; credits: number; priceInr: number }>; balance: number }>('/api/payments/packs');
+	}
+
+	async createCreditOrder(packId: string): Promise<ApiResponse<{ orderId: string; amount: number; currency: string; keyId: string; packId: string }>> {
+		return this.request<{ orderId: string; amount: number; currency: string; keyId: string; packId: string }>('/api/payments/order', {
+			method: 'POST',
+			body: { packId },
+		});
+	}
 
 	// ===============================
 	// Cloudflare Account API Methods
