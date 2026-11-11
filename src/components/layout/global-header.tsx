@@ -15,7 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { OrangeButton } from '@/components/shared/OrangeButton';
 import { useAuthModal } from '../auth/AuthModalProvider';
 import { useHeaderContent } from './header-context';
-
+import { BuyCredits } from './buy-credits';
 export function GlobalHeader() {
 	const { user, isLoading: authLoading } = useAuth();
 	const { showAuthModal } = useAuthModal();
@@ -72,6 +72,7 @@ export function GlobalHeader() {
 					</div>
 
 					<div className="flex items-center justify-end gap-1.5 shrink-0">
+						   <BuyCredits />
 						{content?.trailing}
 						{!authLoading && !user && (
 							<OrangeButton
