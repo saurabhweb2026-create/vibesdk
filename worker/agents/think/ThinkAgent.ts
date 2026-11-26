@@ -66,6 +66,79 @@ export interface ThinkAgentConfig {
 	previewUrl?: string;
 }
 
+
+type JsonObject = Record<string, unknown>;
+
+/** Workers AI usage block -> OpenAI usage block. */
+function toOpenAiUsage(usage: unknown): JsonObject | undefined {
+	if (!usage || typeof usage !== 'object') return undefined;
+	const u = usage as JsonObject;
+	const prompt = Number(u.prompt_tokens ?? 0);
+	const completion = Number(u.completion_tokens ?? 0);
+	return { prompt_tokens: prompt, completion_tokens: completion, total_tokens: Number(u.total_tokens ?? prompt + completion) };
+}
+
+/** Converts a legacy Workers AI result ({ response, tool_calls, usage }) into a chat completion. */
+function toChatCompletion(out: JsonObject): JsonObject {
+	if (Array.isArray(out.choices)) return out;
+	const toolCalls = Array.isArray(out.tool_calls) ? out.tool_calls : undefined;
+	return {
+		id: 'workers-ai',
+		object: 'chat.completion',
+		created: Math.floor(Date.now() / 1000),
+		model: 'workers-ai',
+		choices: [
+			{
+				index: 0,
+				message: { role: 'assistant', content: typeof out.response === 'string' ? out.response : '', tool_calls: toolCalls },
+				finish_reason: toolCalls?.length ? 'tool_calls' : 'stop',
+			},
+		],
+		usage: toOpenAiUsage(out.usage),
+	};
+}
+
+/** Rewrites SSE chunks that lack `choices` (Workers AI's final usage chunk) into OpenAI chunks. */
+function normalizeWorkersAiStream(stream: ReadableStream): ReadableStream<Uint8Array> {
+	const decoder = new TextDecoder();
+	const encoder = new TextEncoder();
+	let buffer = '';
+	const fixLine = (line: string): string => {
+		if (!line.startsWith('data:')) return line;
+		const payload = line.slice(5).trim();
+		if (!payload || payload === '[DONE]') return line;
+		try {
+			const obj = JSON.parse(payload) as JsonObject;
+			if (Array.isArray(obj.choices)) return line;
+			const text = typeof obj.response === 'string' ? obj.response : '';
+			const chunk: JsonObject = {
+				id: 'workers-ai',
+				object: 'chat.completion.chunk',
+				created: Math.floor(Date.now() / 1000),
+				model: 'workers-ai',
+				choices: text ? [{ index: 0, delta: { content: text }, finish_reason: null }] : [],
+				usage: toOpenAiUsage(obj.usage),
+			};
+			return `data: ${JSON.stringify(chunk)}`;
+		} catch {
+			return line;
+		}
+	};
+	return stream.pipeThrough(
+		new TransformStream<Uint8Array, Uint8Array>({
+			transform(chunk, controller) {
+				buffer += decoder.decode(chunk, { stream: true });
+				const lines = buffer.split('\n');
+				buffer = lines.pop() ?? '';
+				for (const line of lines) controller.enqueue(encoder.encode(`${fixLine(line)}\n`));
+			},
+			flush(controller) {
+				if (buffer) controller.enqueue(encoder.encode(fixLine(buffer)));
+			},
+		}),
+	);
+}
+
 const DEFAULT_SYSTEM_PROMPT =
 	'You are an expert Cloudflare full-stack engineer building deployable web apps. ' +
 	'Use the workspace tools to read, write and edit files in the project. Keep changes ' +
@@ -298,9 +371,15 @@ export class ThinkAgent extends Think<Env> {
 				env.CLOUDFLARE_AI_GATEWAY ? { gateway: { id: env.CLOUDFLARE_AI_GATEWAY } } : undefined,
 			);
 			if (out instanceof ReadableStream) {
-				return new Response(out, { status: 200, headers: { 'content-type': 'text/event-stream' } });
+				return new Response(normalizeWorkersAiStream(out), {
+					status: 200,
+					headers: { 'content-type': 'text/event-stream' },
+				});
 			}
-			return new Response(JSON.stringify(out), { status: 200, headers: { 'content-type': 'application/json' } });
+			return new Response(JSON.stringify(toChatCompletion(out)), {
+				status: 200,
+				headers: { 'content-type': 'application/json' },
+			});
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
 			return new Response(JSON.stringify({ error: { message } }), {
