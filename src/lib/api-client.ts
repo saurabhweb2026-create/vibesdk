@@ -66,16 +66,6 @@ import type{
 	WipeAppDatabaseResponse,
 	ListAppBranchesResponse,
 
-export type BillingStatusData = {
-	plan: 'free' | 'basic' | 'pro';
-	status: 'none' | 'active' | 'cancelling';
-	periodEnd: number | null;
-	balance: number;
-	plans: Array<{ id: 'basic' | 'pro'; name: string; priceInr: number; monthlyCredits: number; maxLiveSites: number; available: boolean }>;
-	packs: Array<{ id: string; label: string; credits: number; priceInr: number }>;
-};
-export type SubscribeData = { subscriptionId: string; keyId: string; plan: 'basic' | 'pro' };
-export type CreditOrderData = { orderId: string; amount: number; currency: string; keyId: string; packId: string };
 }	from '@/api-types';
 import {
 	RateLimitExceededError,
@@ -1423,3 +1413,15 @@ export const apiClient = new ApiClient();
 
 // Export class for testing/custom instances
 export { ApiClient };
+
+
+export type BillingStatusData = {
+	plan: 'free' | 'basic' | 'pro';
+	status: 'none' | 'active' | 'cancelling';
+	periodEnd: number | null;
+	balance: number;
+	plans: Array<{ id: 'basic' | 'pro'; name: string; priceInr: number; monthlyCredits: number; maxLiveSites: number; available: boolean }>;
+	packs: Array<{ id: string; label: string; credits: number; priceInr: number }>;
+};
+export type SubscribeData = { subscriptionId: string; keyId: string; plan: 'basic' | 'pro' };
+export type CreditOrderData = { orderId: string; amount: number; currency: string; keyId: string; packId: string };
