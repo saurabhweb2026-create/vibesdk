@@ -251,7 +251,6 @@ class ApiClient {
 		await this.fetchCsrfToken();
 	}
 
-
 	/**
 	 * Check if CSRF token is expired
 	 */
