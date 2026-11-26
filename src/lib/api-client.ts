@@ -65,7 +65,18 @@ import type{
 	QueryAppTableResponse,
 	WipeAppDatabaseResponse,
 	ListAppBranchesResponse,
-} from '@/api-types';
+
+export type BillingStatusData = {
+	plan: 'free' | 'basic' | 'pro';
+	status: 'none' | 'active' | 'cancelling';
+	periodEnd: number | null;
+	balance: number;
+	plans: Array<{ id: 'basic' | 'pro'; name: string; priceInr: number; monthlyCredits: number; maxLiveSites: number; available: boolean }>;
+	packs: Array<{ id: string; label: string; credits: number; priceInr: number }>;
+};
+export type SubscribeData = { subscriptionId: string; keyId: string; plan: 'basic' | 'pro' };
+export type CreditOrderData = { orderId: string; amount: number; currency: string; keyId: string; packId: string };
+}	from '@/api-types';
 import {
 	RateLimitExceededError,
 	SecurityError,
@@ -1342,15 +1353,20 @@ class ApiClient {
 	// Credit pack payments (Razorpay)
 	// ===============================
 
-	async getCreditPacks(): Promise<ApiResponse<{ packs: Array<{ id: string; label: string; credits: number; priceInr: number }>; balance: number }>> {
-		return this.request<{ packs: Array<{ id: string; label: string; credits: number; priceInr: number }>; balance: number }>('/api/payments/packs');
+		async getBillingStatus(): Promise<ApiResponse<BillingStatusData>> {
+		return this.request<BillingStatusData>('/api/payments/status');
 	}
 
-	async createCreditOrder(packId: string): Promise<ApiResponse<{ orderId: string; amount: number; currency: string; keyId: string; packId: string }>> {
-		return this.request<{ orderId: string; amount: number; currency: string; keyId: string; packId: string }>('/api/payments/order', {
-			method: 'POST',
-			body: { packId },
-		});
+	async createSubscription(plan: 'basic' | 'pro'): Promise<ApiResponse<SubscribeData>> {
+		return this.request<SubscribeData>('/api/payments/subscribe', { method: 'POST', body: { plan } });
+	}
+
+	async cancelSubscription(): Promise<ApiResponse<{ result: 'cancelling' | 'nothing' }>> {
+		return this.request<{ result: 'cancelling' | 'nothing' }>('/api/payments/cancel', { method: 'POST', body: {} });
+	}
+
+	async createCreditOrder(packId: string): Promise<ApiResponse<CreditOrderData>> {
+		return this.request<CreditOrderData>('/api/payments/order', { method: 'POST', body: { packId } });
 	}
 
 	// ===============================
