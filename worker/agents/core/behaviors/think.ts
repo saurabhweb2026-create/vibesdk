@@ -306,7 +306,7 @@ export class ThinkCodingBehavior
 			'## Rules',
 			'- Name: if the project has no clear short name, call `set_title` once (Title Case, under 60 chars).',
 			'- Clarify: if the request is vague (no features, scope, data or design), state your assumptions, call `ask_questions` once with all needed questions, then end the turn without writing files. If it is clear, build immediately.',
-			'- Build: write files, then call `deploy_space` (it commits and rebuilds the preview), then `get_browser_console_logs`. Fix any build or console errors and repeat. Finish only after a successful deploy and clean console.',
+			'- Build: write files, then call `deploy_space` (it commits and rebuilds the preview), then `get_browser_console_logs`. Fix any build or console errors and repeat. Never end a building turn without calling `deploy_space`; do not tell the user to deploy later. Finish only after a successful deploy and clean console.',
 			'- Commits: `commit` creates a restore point for a finished unit of work. Do not commit before `deploy_space` or after tiny edits.',
 			'- Be efficient: read only files you need, edit instead of rewriting whole files, batch independent tool calls, and keep replies short.',
 		].join('\n');
