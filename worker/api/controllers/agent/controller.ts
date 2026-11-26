@@ -1,3 +1,4 @@
+import { recordDiagnostic } from '../../../utils/diagnostics';
 import { WebSocketMessageResponses } from '../../../agents/constants';
 import { BaseController } from '../baseController';
 import { generateId } from '../../../utils/idGenerator';
@@ -470,6 +471,7 @@ export class CodingAgentController extends BaseController {
                 return CodingAgentController.createSuccessResponse(preview);
             } catch (error) {
                 this.logger.error('Failed to deploy preview', { agentId, error });
+                await recordDiagnostic(env, 'preview-route', error);
                 return CodingAgentController.createErrorResponse<AgentPreviewResponse>('Failed to deploy preview', 500);
             }
         } catch (error) {

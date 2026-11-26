@@ -28,6 +28,7 @@ import { getConfigurationForModel } from '../../inferutils/core';
 import type { ThinkAgentConfig } from '../../think/ThinkAgent';
 import { withDurableObjectResetRetry } from '../../think/space-workspace-ops';
 import { resolveThinkModel } from '../../think/model-config';
+import { recordDiagnostic } from '../../../utils/diagnostics';
 import type { BranchDeploymentBundle } from '@space-do/space';
 import { CloudflareAccountService } from '../../../services/cloudflare/CloudflareAccountService';
 import { deployThinkBundleToPlatform, deployThinkBundleToUserAccount } from '../../../services/deployer/think-user-deploy';
@@ -863,6 +864,7 @@ export class ThinkCodingBehavior
 			if (result?.error) {
 				const message = result.details ? `${result.error}: ${result.details}` : result.error;
 				this.logger.warn('SpaceDO.deploy reported a build failure', { branch, error: message });
+				await recordDiagnostic(this.env, 'preview-build', message);
 				this.broadcast(WebSocketMessageResponses.DEPLOYMENT_FAILED, { error: message });
 				return null;
 			}
@@ -876,6 +878,7 @@ export class ThinkCodingBehavior
 			return url;
 		} catch (e) {
 			this.logger.warn('SpaceDO.deploy failed', e);
+			await recordDiagnostic(this.env, 'preview-deploy', e);
 			this.broadcast(WebSocketMessageResponses.DEPLOYMENT_FAILED, {
 				error: e instanceof Error ? e.message : String(e),
 			});
