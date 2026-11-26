@@ -93,6 +93,7 @@ import { ApiError } from '@/lib/api-client';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { usePageHeader } from '@/components/layout/header-context';
 import { CloudflareLogo } from '@/components/icons/logos';
+import { TroopStage, type TroopStatus } from './components/troop-stage';
 
 const isPhasicBlueprint = (
 	blueprint?: BlueprintType | null,
@@ -963,6 +964,27 @@ function ChatSession() {
 			isBootstrapping || isGeneratingBlueprint // || codeGenState === 'active'
 		);
 	}, [isBootstrapping, isGeneratingBlueprint]);
+		const troopStatus = useMemo<TroopStatus>(() => {
+		if (isDeploying) return 'deploying';
+		if (isDebugging) return 'fixing';
+		if (isGeneratingBlueprint) return 'planning';
+		if (isBootstrapping) return 'setup';
+		if (isPreviewDeploying) return 'preview';
+		if (isGenerating || isThinking || generatingFile) return 'building';
+		if (previewUrl || files.length > 0) return 'done';
+		return 'idle';
+	}, [
+		isDeploying,
+		isDebugging,
+		isGeneratingBlueprint,
+		isBootstrapping,
+		isPreviewDeploying,
+		isGenerating,
+		isThinking,
+		generatingFile,
+		previewUrl,
+		files.length,
+	]);
 
 	// Check if chat input should be disabled (before blueprint completion, or during debugging)
 	const isChatDisabled = useMemo(() => {
