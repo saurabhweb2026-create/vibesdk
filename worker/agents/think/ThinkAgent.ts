@@ -234,7 +234,10 @@ export class ThinkAgent extends Think<Env> {
 		// drops them, which Gemini 3 rejects with `400 INVALID_ARGUMENT`).
 		const gatewayFetch: typeof fetch = async (input, init) => {
 			const headers = new Headers(init?.headers);
-			if (model.useStoredKeys) headers.delete('authorization');
+			// Workers AI models have no stored provider key in the gateway; they need the platform token as Authorization.
+			const thinkOverride = (this.env as unknown as { THINK_MODEL?: string }).THINK_MODEL?.trim() ?? '';
+			const usesWorkersAi = thinkOverride.startsWith('@cf/') || thinkOverride.startsWith('workers-ai/');
+			if (model.useStoredKeys && !usesWorkersAi) headers.delete('authorization');
 			// Same affinity key for every step of a session so the provider reuses its prompt prefix cache.
 			headers.set('x-session-affinity', this.name);
 			let body = init?.body;
