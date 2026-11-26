@@ -1,6 +1,6 @@
 ---
 name: frontend-design-saas-reference
-description: Very large (about 30k tokens) full SaaS design reference: animation, dark mode, accessibility, full CSS variables, module patterns and component code snippets. Load ONLY when you need exact component code or a pattern that frontend-design-saas does not cover. Prefer frontend-design-saas.
+description: "Very large (about 30k tokens) full SaaS design reference: animation, dark mode, accessibility, full CSS variables, module patterns and component code snippets. Load ONLY when you need exact component code or a pattern that frontend-design-saas does not cover. Prefer frontend-design-saas."
 ---
 
 # SaaS Design System (Stripe / Linear / Vercel lineage)

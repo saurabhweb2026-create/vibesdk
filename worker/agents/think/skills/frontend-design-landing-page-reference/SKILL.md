@@ -1,6 +1,6 @@
 ---
 name: frontend-design-landing-page-reference
-description: Very large (about 25k tokens) full landing page reference: forensic visual analysis and a catalog of component snippets (buttons, cards, forms, nav, hero, decor). Load ONLY when you need the exact code of a listed component. Prefer frontend-design-landing-page.
+description: "Very large (about 25k tokens) full landing page reference: forensic visual analysis and a catalog of component snippets (buttons, cards, forms, nav, hero, decor). Load ONLY when you need the exact code of a listed component. Prefer frontend-design-landing-page."
 ---
 
 # Landing Page Design System
