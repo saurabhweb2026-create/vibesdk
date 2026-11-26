@@ -145,7 +145,7 @@
 	"vars": {
 		"TEMPLATES_REPOSITORY": "https://github.com/cloudflare/vibesdk-templates",
 		"CLOUDFLARE_ACCOUNT_ID": "d189e2100261fc9cdafc7fc8a337f6f6",
-		"CLOUDFLARE_AI_GATEWAY": "vibesdk-gateway",
+		"CLOUDFLARE_AI_GATEWAY": "monkeytrooprs-v2-gateway",
 		"ENABLE_CLOUDFLARE_LIMITS": "true",
 		"ENABLE_EMAIL_AUTH": "true",
 		"PLATFORM_CAPABILITIES": {
