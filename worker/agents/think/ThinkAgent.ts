@@ -243,6 +243,7 @@ export class ThinkAgent extends Think<Env> {
 			let body = init?.body;
 			if (typeof body === 'string') body = this.injectThoughtSignatures(body);
 			const res = await fetch(input as RequestInfo, { ...(init ?? {}), headers, body });
+			if (!res.ok) await this.recordLlmError(res.clone(), thinkOverride);
 			if (!res.body) return res;
 			const outHeaders = new Headers(res.headers);
 			// Body length/encoding change after transforming the stream.
@@ -266,6 +267,24 @@ export class ThinkAgent extends Think<Env> {
 		// Read at request time so existing apps follow a changed THINK_MODEL too.
 		const override = (this.env as unknown as { THINK_MODEL?: string }).THINK_MODEL;
 		return provider.chat(resolveThinkModel(override).id === resolveThinkModel().id ? model.modelName : resolveThinkModel(override).id);
+	}
+
+	/** Stores the provider's error body so failed model calls can be diagnosed from D1. */
+	private async recordLlmError(res: Response, model: string): Promise<void> {
+		try {
+			const db = (this.env as unknown as { DB?: D1Database }).DB;
+			if (!db) return;
+			const text = (await res.text()).slice(0, 2000);
+			await db
+				.prepare('CREATE TABLE IF NOT EXISTS llm_errors (ts TEXT, model TEXT, status INTEGER, body TEXT)')
+				.run();
+			await db
+				.prepare('INSERT INTO llm_errors (ts, model, status, body) VALUES (?, ?, ?, ?)')
+				.bind(new Date().toISOString(), model, res.status, text)
+				.run();
+		} catch {
+			// Diagnostics must never break the model call.
+		}
 	}
 
 	/**
