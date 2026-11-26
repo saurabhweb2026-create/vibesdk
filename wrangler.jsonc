@@ -166,7 +166,11 @@
 		"MAX_SANDBOX_INSTANCES": "10",
 		"SANDBOX_INSTANCE_TYPE": "standard-3",
 		"DEV_BROWSER_SIDECAR_URL": "http://127.0.0.1:9223",
-		"DEV_BROWSER_PREVIEW_ORIGIN": "http://localhost:5173"
+		"DEV_BROWSER_PREVIEW_ORIGIN": "http://localhost:5173",
+		"RAZORPAY_KEY_ID": "rzp_test_U4fg1SCx58xcXL",
+		"RAZORPAY_PLAN_BASIC": "plan_U4fbDLUn3oykSQ",
+		"RAZORPAY_PLAN_PRO": "plan_U4fcTbtTnCGqkD",
+		"TROOP_MODEL": "@cf/meta/llama-3.1-8b-instruct"
 	},
 	"workers_dev": true,
 	"preview_urls": false
