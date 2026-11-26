@@ -26,7 +26,7 @@ import { signSpacePreviewToken } from 'worker/utils/spacePreviewToken';
 import { AppService } from 'worker/database/services/AppService';
 import { getConfigurationForModel } from '../../inferutils/core';
 import type { ThinkAgentConfig } from '../../think/ThinkAgent';
-import { withDurableObjectResetRetry } from '../../think/space-workspace-ops';
+import { isDeployRestartError, withDurableObjectResetRetry } from '../../think/space-workspace-ops';
 import { resolveThinkModel } from '../../think/model-config';
 import { recordDiagnostic } from '../../../utils/diagnostics';
 import type { BranchDeploymentBundle } from '@space-do/space';
@@ -855,7 +855,13 @@ export class ThinkCodingBehavior
 				this.logger.debug('gitCommit before deploy (no-op or failed)', e);
 			}
 
-			const result = await this.callSpace((space) => space.deploy(branch));
+			let result: Awaited<ReturnType<SpaceRpcStub['deploy']>> | undefined;
+			try {
+				result = await this.callSpace((space) => space.deploy(branch));
+			} catch (e) {
+				// The workspace restarts itself after a successful deploy; the reply can be lost.
+				if (!isDeployRestartError(e)) throw e;
+			}
 
 			// SpaceDO.deploy reports build/config failures in the payload rather
 			// than throwing (and still fills in preview_url). Surface those as a

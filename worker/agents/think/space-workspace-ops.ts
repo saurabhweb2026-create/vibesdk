@@ -52,6 +52,17 @@ export function isDurableObjectResetError(error: unknown): boolean {
 }
 
 /**
+ * SpaceDO.deploy deliberately aborts its own Durable Object right after a
+ * successful deploy so the new bundle is picked up. When that abort lands
+ * before the RPC reply is delivered, the caller sees this message as an error
+ * even though the deploy completed.
+ */
+export function isDeployRestartError(error: unknown): boolean {
+	const message = error instanceof Error ? error.message : String(error);
+	return message.includes('Generated app deployment updated');
+}
+
+/**
  * Run a SpaceDO RPC, retrying ONCE with a freshly resolved stub when the call
  * failed because the DO was reset. All other errors propagate unchanged.
  */

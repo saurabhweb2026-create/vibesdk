@@ -10,7 +10,7 @@
  */
 import { tool, type Tool } from 'ai';
 import { z } from 'zod';
-import { withDurableObjectResetRetry, type SpaceWorkspaceStub } from './space-workspace-ops';
+import { isDeployRestartError, withDurableObjectResetRetry, type SpaceWorkspaceStub } from './space-workspace-ops';
 
 const DESCRIPTION = [
 	'Commit the current working tree and deploy a branch so its preview rebuilds and serves the latest code.',
@@ -43,6 +43,12 @@ export function createDeploySpaceTool(opts: { getStub: () => SpaceWorkspaceStub 
 				const result = await withDurableObjectResetRetry(getStub, (stub) => stub.deploy(branch));
 				return JSON.stringify({ branch, ...(result as Record<string, unknown>) }, null, 2);
 			} catch (e) {
+				if (isDeployRestartError(e)) {
+					return JSON.stringify({
+						branch,
+						status: 'deployed',
+					});
+				}
 				return JSON.stringify({
 					branch,
 					error: `Deploy failed: ${e instanceof Error ? e.message : String(e)}`,
