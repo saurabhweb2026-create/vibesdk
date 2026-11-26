@@ -1153,6 +1153,7 @@ function ChatSession() {
 							ref={messagesContainerRef}
 						>
 							<div className="pt-5 px-4 pb-4 text-sm flex flex-col gap-5">
+																<TroopStage status={troopStatus} fileName={generatingFile?.filePath} />
 								{!appLoading && (
 									<UserMessage
 										message={query ?? displayQuery}
