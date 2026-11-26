@@ -18,6 +18,7 @@ import { setupLimitsRoutes } from './limitsRoutes';
 import { Hono } from "hono";
 import { AppEnv } from "../../types/appenv";
 import { setupStatusRoutes } from './statusRoutes';
+import { setupPaymentRoutes } from './paymentRoutes';
 
 export function setupRoutes(app: Hono<AppEnv>): void {
     // Health check route
@@ -79,4 +80,7 @@ export function setupRoutes(app: Hono<AppEnv>): void {
 
     // Usage limits and free tier routes
     setupLimitsRoutes(app);
+	
+    // Plans, credits and Razorpay payments
+    setupPaymentRoutes(app);
 }
