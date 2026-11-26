@@ -29,24 +29,11 @@ const TROOP = [
 ];
 
 const PLANS = [
-	{
-		name: 'Free',
-		price: '₹0',
-		line: '20 free credits every day',
-		points: ['Try Caesar', 'No card needed'],
-	},
-	{
-		name: 'Basic',
-		price: '₹1,999',
-		line: 'per month',
-		points: ['Caesar', '3 live websites'],
-	},
-	{
-		name: 'Pro',
-		price: '₹6,999',
-		line: 'per month',
-		points: ['Caesar, Louie and Jack', 'The whole troop'],
-	},
+	{ name: 'Free', price: '₹0', line: '20 free credits every day', points: ['Try Caesar', 'No card needed'] },
+	{ name: 'Caesar', price: '₹1,999', line: 'per month', points: ['The website builder', '3 live websites'] },
+	{ name: 'Louie', price: '₹2,999', line: 'per month', points: ['Ads for your website', 'Google, Facebook, Instagram'] },
+	{ name: 'Jack', price: '₹2,499', line: 'per month', points: ['Answers your customers', 'Saves your leads'] },
+	{ name: 'Pro', price: '₹6,999', line: 'per month', points: ['Caesar, Louie and Jack', 'Best value'] },
 ];
 
 export default function Landing({ onEnter }: { onEnter: () => void }) {
@@ -155,9 +142,9 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 
 			<section id="plans" className="mx-auto max-w-5xl px-5 pb-12 pt-6">
 				<h2 className="mb-6 text-center text-2xl font-semibold">
-					Simple plans
+					Pick one helper, or take them all
 				</h2>
-				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
 					{PLANS.map((p) => (
 						<div
 							key={p.name}

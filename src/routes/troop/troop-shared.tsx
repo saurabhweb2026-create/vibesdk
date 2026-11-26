@@ -111,11 +111,13 @@ export function SitePicker({
 	);
 }
 
-export function LockedNotice() {
+export function LockedNotice({ agent }: { agent: 'Louie' | 'Jack' }) {
 	return (
 		<div className={PANEL}>
-			<div className="font-semibold text-white">Louie and Jack are part of the Pro plan</div>
-			<p className="mt-1 text-sm text-white/65">Upgrade to Pro to bring the whole troop to work for your business.</p>
+			<div className="font-semibold text-white">{agent} is a paid helper</div>
+			<p className="mt-1 text-sm text-white/65">
+				Subscribe to {agent} on his own, or take Pro to get all three. Use the plans button at the top right of the screen.
+			</p>
 		</div>
 	);
 }

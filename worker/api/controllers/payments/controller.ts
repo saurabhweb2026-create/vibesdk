@@ -9,6 +9,7 @@ import {
     createRazorpaySubscription,
     getBillingStatus,
     getPacks,
+    PaidPlanId,
 } from '../../../services/credits/purchasedCredits';
 
 interface OrderData {
@@ -22,7 +23,7 @@ interface OrderData {
 interface SubscribeData {
     subscriptionId: string;
     keyId: string;
-    plan: 'basic' | 'pro';
+    plan: PaidPlanId;
 }
 
 interface CancelData {
@@ -30,7 +31,7 @@ interface CancelData {
 }
 
 // Messages that are safe and useful to show to the person using the app.
-const FRIENDLY_ERRORS = ['Unknown plan', 'This plan is not available yet', 'You are already on this plan'];
+const FRIENDLY_ERRORS = ['Unknown plan', 'This plan is not available yet', 'You are already on this plan', 'You already have this with another plan'];
 
 export class PaymentsController extends BaseController {
     static logger = createLogger('PaymentsController');
@@ -64,10 +65,11 @@ export class PaymentsController extends BaseController {
     }
 
     // Stop renewals at the end of the period already paid for
-    static async cancel(_request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<CancelData>>> {
+    static async cancel(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<CancelData>>> {
         try {
             const user = context.user!;
-            const result = await cancelUserSubscription(env, user.id);
+            const body = (await request.json()) as { plan?: string };
+            const result = await cancelUserSubscription(env, user.id, String(body.plan ?? ''));
             return PaymentsController.createSuccessResponse({ result });
         } catch (error) {
             this.logger.error('Error cancelling subscription:', error);

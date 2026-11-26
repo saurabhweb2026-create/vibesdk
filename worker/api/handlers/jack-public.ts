@@ -94,7 +94,7 @@ async function handleChat(env: Env, request: Request): Promise<Response> {
 
 	const bot = await getBot(env, botId);
 	if (!bot || !bot.enabled) return json({ error: 'This chat is not available right now.' }, 404);
-	if (!(await canUseTroop(env, bot.userId))) return json({ error: 'This chat is not available right now.' }, 403);
+	if (!(await canUseTroop(env, bot.userId, 'jack'))) return json({ error: 'This chat is not available right now.' }, 403);
 
 	const rawLimit = Number((env as unknown as Record<string, string | undefined>).JACK_DAILY_LIMIT);
 	const appLimit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : DEFAULT_APP_DAILY_LIMIT;

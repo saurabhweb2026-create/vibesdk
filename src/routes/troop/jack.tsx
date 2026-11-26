@@ -99,8 +99,8 @@ export default function JackPage() {
 
 	useEffect(() => {
 		setSetup(null);
-		if (selectedId && data?.allowed) load(selectedId);
-	}, [selectedId, data?.allowed, load]);
+		if (selectedId && data?.access.jack) load(selectedId);
+	}, [selectedId, data?.access.jack, load]);
 
 	const patch = (p: Partial<JackSetupData>) => setSetup((s) => (s ? { ...s, ...p } : s));
 
@@ -128,8 +128,8 @@ export default function JackPage() {
 			<title>Jack - Monkeytrooprs</title>
 			<TroopHeader face="/troop/jack-face.webp" name="Jack" color={LIME} role="Customer support" line="Teach me your business and I will answer your customers." />
 			{error && <div className={PANEL}>{error}</div>}
-			{data && !data.allowed && <LockedNotice />}
-			{data && data.allowed && (
+			{data && !data.access.jack && <LockedNotice agent="Jack" />}
+			{data && data.access.jack && (
 				<>
 					<SitePicker sites={sites} selectedId={selectedId} onSelect={select} />
 					{setup && (

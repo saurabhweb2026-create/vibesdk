@@ -144,8 +144,8 @@ export default function LouiePage() {
 			<title>Louie - Monkeytrooprs</title>
 			<TroopHeader face="/troop/louie-face.webp" name="Louie" color={PINK} role="Ads" line="Tell me your goal and I will write your ads." />
 			{error && <div className={PANEL}>{error}</div>}
-			{data && !data.allowed && <LockedNotice />}
-			{data && data.allowed && (
+			{data && !data.access.louie && <LockedNotice agent="Louie" />}
+			{data && data.access.louie && (
 				<>
 					<SitePicker sites={sites} selectedId={selectedId} onSelect={select} />
 					{selectedId && (

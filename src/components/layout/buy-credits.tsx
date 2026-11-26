@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Coins } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { apiClient } from '@/lib/api-client';
-import type { BillingStatusData } from '@/lib/api-client';
+import type { BillingStatusData, PaidPlanId } from '@/lib/api-client';
 import { OrangeButton } from '@/components/shared/OrangeButton';
 import {
 	Dialog,
@@ -18,12 +18,17 @@ declare global {
 	}
 }
 
-type PaidPlan = 'basic' | 'pro';
+type PaidPlan = PaidPlanId;
 
 const PLAN_LINES: Record<PaidPlan, string[]> = {
 	basic: ['Caesar, the AI website builder', 'Websites live (see your limit below)', 'Monthly credits for building and editing'],
-	pro: ['Everything in Basic', 'Caesar, Louie and Jack as they launch', 'More monthly credits'],
+	louie: ['Louie writes your ads', 'Google, Facebook and Instagram ads, posts and a budget plan', 'Works on any website you built'],
+	jack: ['Jack answers your customers on your website', 'Saves the customers who leave their details', 'You teach him your prices, timings and offers'],
+	pro: ['Caesar, Louie and Jack together', 'Cheaper than taking all three one by one', 'More monthly credits'],
 };
+
+const PLAN_NAMES: Record<PaidPlan, string> = { basic: 'Caesar', louie: 'Louie', jack: 'Jack', pro: 'Pro' };
+const PLAN_ORDER: PaidPlan[] = ['basic', 'louie', 'jack', 'pro'];
 
 function loadRazorpay(): Promise<boolean> {
 	if (window.Razorpay) return Promise.resolve(true);
@@ -72,7 +77,7 @@ export function BuyCredits() {
 	useEffect(() => {
 		if (!userId) return;
 		const wanted = new URLSearchParams(window.location.search).get('plan');
-		if (wanted === 'basic' || wanted === 'pro') {
+		if (wanted === 'basic' || wanted === 'louie' || wanted === 'jack' || wanted === 'pro') {
 			setHighlight(wanted);
 			setOpen(true);
 			const url = new URL(window.location.href);
@@ -119,12 +124,12 @@ export function BuyCredits() {
 				key: res.data.keyId,
 				subscription_id: res.data.subscriptionId,
 				name: 'Monkeytrooprs',
-				description: (plan === 'pro' ? 'Pro' : 'Basic') + ' plan, billed monthly',
+				description: PLAN_NAMES[plan] + ' plan, billed monthly',
 				prefill: { email: user.email },
 				theme: { color: '#f97316' },
 				handler: () => {
 					setMessage('Payment received. Activating your plan...');
-					waitFor((s) => s.plan === plan, 'Your plan is active. Happy building!');
+					waitFor((s) => s.subscriptions.some((x) => x.plan === plan), 'Your plan is active. Happy building!');
 				},
 			});
 			checkout.open();
@@ -135,11 +140,11 @@ export function BuyCredits() {
 		}
 	};
 
-	const cancel = async () => {
+	const cancel = async (target: PaidPlan) => {
 		if (!window.confirm('Stop renewals? Your plan stays active until the end of the period you already paid for.')) return;
 		setBusy('cancel');
 		try {
-			const res = await apiClient.cancelSubscription();
+			const res = await apiClient.cancelSubscription(target);
 			setMessage(res.data ? 'Renewals stopped. Your plan stays active until the end of this period.' : 'Could not cancel. Please try again.');
 			await refresh();
 		} catch {
@@ -187,8 +192,9 @@ export function BuyCredits() {
 		}
 	};
 
-	const plan = status?.plan ?? 'free';
-	const label = plan === 'pro' ? 'Pro' : plan === 'basic' ? 'Basic' : 'Upgrade';
+	const subs = status?.subscriptions ?? [];
+	const ownedNames = subs.map((x) => PLAN_NAMES[x.plan]);
+	const label = ownedNames.length > 0 ? ownedNames.join(' + ') : 'Upgrade';
 	const buttonText = status && status.balance > 0 ? `${label} · ${status.balance.toLocaleString('en-IN')} credits` : label;
 	const endDate = status?.periodEnd ? new Date(status.periodEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 
@@ -207,18 +213,20 @@ export function BuyCredits() {
 			</OrangeButton>
 
 			<Dialog open={open} onOpenChange={setOpen}>
-				<DialogContent className="max-w-lg">
+				<DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle>Plans and credits</DialogTitle>
 						<DialogDescription>
-							You are on the {plan === 'free' ? 'Free' : plan === 'pro' ? 'Pro' : 'Basic'} plan
+							{ownedNames.length === 0 ? 'You are on the Free plan' : `You have: ${ownedNames.join(', ')}`}
 							{status?.status === 'cancelling' && endDate ? `, active until ${endDate}` : ''}. Your extra credits ({(status?.balance ?? 0).toLocaleString('en-IN')}) are used after your free daily credits run out.
 						</DialogDescription>
 					</DialogHeader>
 
 					<div className="flex flex-col gap-3">
-						{(status?.plans ?? []).map((p) => {
-							const current = plan === p.id;
+						{[...(status?.plans ?? [])].sort((x, y) => PLAN_ORDER.indexOf(x.id) - PLAN_ORDER.indexOf(y.id)).map((p) => {
+							const mine = subs.find((x) => x.plan === p.id);
+							const current = !!mine;
+							const inPro = !current && subs.some((x) => x.plan === 'pro') && p.id !== 'pro';
 							return (
 								<div
 									key={p.id}
@@ -235,13 +243,29 @@ export function BuyCredits() {
 										{PLAN_LINES[p.id].map((line) => (
 											<li key={line}>{line}</li>
 										))}
-										<li>{p.monthlyCredits.toLocaleString('en-IN')} credits every month, up to {p.maxLiveSites} live websites</li>
+										{p.agents.includes('caesar') && (
+											<li>{p.monthlyCredits.toLocaleString('en-IN')} credits every month, up to {p.maxLiveSites} live websites</li>
+										)}
 									</ul>
 									<div className="mt-3">
 										{current ? (
-											<span className="text-sm text-muted-foreground">
-												{status?.status === 'cancelling' ? 'Current plan (renewal stopped)' : 'Your current plan'}
-											</span>
+											<div className="flex items-center gap-3">
+												<span className="text-sm text-muted-foreground">
+													{mine?.status === 'cancelling' ? 'Active (renewal stopped)' : 'Your plan'}
+												</span>
+												{mine?.status === 'active' && (
+													<button
+														type="button"
+														disabled={busy !== null}
+														onClick={() => void cancel(p.id)}
+														className="text-sm text-muted-foreground underline"
+													>
+														Stop renewals
+													</button>
+												)}
+											</div>
+										) : inPro ? (
+											<span className="text-sm text-muted-foreground">Included in your Pro plan</span>
 										) : (
 											<button
 												type="button"
@@ -249,24 +273,13 @@ export function BuyCredits() {
 												onClick={() => void subscribe(p.id)}
 												className="rounded-md bg-orange-500 px-3 py-1.5 text-sm text-white hover:bg-orange-600 disabled:opacity-50"
 											>
-												{!p.available ? 'Coming soon' : busy === p.id ? 'Please wait...' : plan === 'free' ? `Choose ${p.name}` : `Switch to ${p.name}`}
+												{!p.available ? 'Coming soon' : busy === p.id ? 'Please wait...' : `Choose ${p.name}`}
 											</button>
 										)}
 									</div>
 								</div>
 							);
 						})}
-
-						{plan !== 'free' && status?.status === 'active' && (
-							<button
-								type="button"
-								disabled={busy !== null}
-								onClick={() => void cancel()}
-								className="self-start text-sm text-muted-foreground underline"
-							>
-								Stop renewals
-							</button>
-						)}
 
 						{(status?.packs ?? []).length > 0 && (
 							<div className="mt-1">

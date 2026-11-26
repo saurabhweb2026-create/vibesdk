@@ -1,4 +1,4 @@
-import { getUserPlan } from '../credits/purchasedCredits';
+import { getAgentAccess } from '../credits/purchasedCredits';
 
 // Louie (ads) and Jack (support) data. Tables are created on first use, so no migration step is needed.
 
@@ -28,11 +28,11 @@ async function ensureTables(env: Env): Promise<void> {
 
 /* ===================== access and limits ===================== */
 
-// Louie and Jack are open to everyone while testing. Set TROOP_PRO_ONLY=true to keep them for the Pro plan.
-export async function canUseTroop(env: Env, userId: string): Promise<boolean> {
-	const flag = (env as unknown as Record<string, string | undefined>).TROOP_PRO_ONLY;
+// Louie and Jack are open to everyone while testing. Set TROOP_REQUIRE_PLAN=true to require that agent's plan (or Pro).
+export async function canUseTroop(env: Env, userId: string, agent: 'louie' | 'jack'): Promise<boolean> {
+	const flag = (env as unknown as Record<string, string | undefined>).TROOP_REQUIRE_PLAN;
 	if (flag !== 'true') return true;
-	return (await getUserPlan(env, userId)).plan === 'pro';
+	return (await getAgentAccess(env, userId))[agent];
 }
 
 function today(): string {

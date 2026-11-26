@@ -28,14 +28,17 @@ export function getPacks(env: Env): CreditPack[] {
 
 /* ===================== subscription plans ===================== */
 
-export type PlanId = 'free' | 'basic' | 'pro';
+export type PaidPlanId = 'basic' | 'louie' | 'jack' | 'pro';
+export type PlanId = 'free' | PaidPlanId;
+export type AgentId = 'caesar' | 'louie' | 'jack';
 
 export interface PlanInfo {
-	id: 'basic' | 'pro';
+	id: PaidPlanId;
 	name: string;
 	priceInr: number; // shown to the user; the real price is the one on the Razorpay plan
 	monthlyCredits: number; // added to the user's credits every time a monthly payment succeeds
 	maxLiveSites: number;
+	agents: AgentId[]; // which of the troop this plan switches on
 	available: boolean; // true once the Razorpay plan id is set
 }
 
@@ -45,12 +48,14 @@ function num(v: string | undefined, fallback: number): number {
 }
 
 // Change these numbers from the Cloudflare dashboard (Variables), no code needed:
-// PLAN_PRICE_BASIC, PLAN_CREDITS_BASIC, PLAN_SITES_BASIC, RAZORPAY_PLAN_BASIC (and the same four for PRO).
+// PLAN_PRICE_<X>, PLAN_CREDITS_<X>, PLAN_SITES_<X>, RAZORPAY_PLAN_<X> where <X> is BASIC (Caesar), LOUIE, JACK or PRO (all three).
 export function getPaidPlans(env: Env): PlanInfo[] {
 	const v = vars(env);
 	return [
-		{ id: 'basic', name: 'Basic', priceInr: num(v.PLAN_PRICE_BASIC, 1999), monthlyCredits: num(v.PLAN_CREDITS_BASIC, 1500), maxLiveSites: num(v.PLAN_SITES_BASIC, 3), available: !!v.RAZORPAY_PLAN_BASIC },
-		{ id: 'pro', name: 'Pro', priceInr: num(v.PLAN_PRICE_PRO, 6999), monthlyCredits: num(v.PLAN_CREDITS_PRO, 6000), maxLiveSites: num(v.PLAN_SITES_PRO, 3), available: !!v.RAZORPAY_PLAN_PRO },
+		{ id: 'basic', name: 'Caesar', priceInr: num(v.PLAN_PRICE_BASIC, 1999), monthlyCredits: num(v.PLAN_CREDITS_BASIC, 1500), maxLiveSites: num(v.PLAN_SITES_BASIC, 3), agents: ['caesar'], available: !!v.RAZORPAY_PLAN_BASIC },
+		{ id: 'louie', name: 'Louie', priceInr: num(v.PLAN_PRICE_LOUIE, 2999), monthlyCredits: num(v.PLAN_CREDITS_LOUIE, 0), maxLiveSites: 0, agents: ['louie'], available: !!v.RAZORPAY_PLAN_LOUIE },
+		{ id: 'jack', name: 'Jack', priceInr: num(v.PLAN_PRICE_JACK, 2499), monthlyCredits: num(v.PLAN_CREDITS_JACK, 0), maxLiveSites: 0, agents: ['jack'], available: !!v.RAZORPAY_PLAN_JACK },
+		{ id: 'pro', name: 'Pro: all three', priceInr: num(v.PLAN_PRICE_PRO, 6999), monthlyCredits: num(v.PLAN_CREDITS_PRO, 6000), maxLiveSites: num(v.PLAN_SITES_PRO, 3), agents: ['caesar', 'louie', 'jack'], available: !!v.RAZORPAY_PLAN_PRO },
 	];
 }
 
@@ -58,9 +63,15 @@ function planById(env: Env, id: string): PlanInfo | undefined {
 	return getPaidPlans(env).find((p) => p.id === id);
 }
 
-function razorpayPlanId(env: Env, id: 'basic' | 'pro'): string | undefined {
+function razorpayPlanId(env: Env, id: PaidPlanId): string | undefined {
 	const v = vars(env);
-	return id === 'basic' ? v.RAZORPAY_PLAN_BASIC : v.RAZORPAY_PLAN_PRO;
+	const ids: Record<PaidPlanId, string | undefined> = {
+		basic: v.RAZORPAY_PLAN_BASIC,
+		louie: v.RAZORPAY_PLAN_LOUIE,
+		jack: v.RAZORPAY_PLAN_JACK,
+		pro: v.RAZORPAY_PLAN_PRO,
+	};
+	return ids[id];
 }
 
 /* ===================== storage ===================== */
@@ -72,6 +83,8 @@ async function ensureTables(env: Env): Promise<void> {
 		env.DB.prepare('CREATE TABLE IF NOT EXISTS credit_balances (user_id TEXT PRIMARY KEY, balance INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL)'),
 		env.DB.prepare('CREATE TABLE IF NOT EXISTS credit_payments (razorpay_payment_id TEXT PRIMARY KEY, razorpay_order_id TEXT NOT NULL, user_id TEXT NOT NULL, pack_id TEXT NOT NULL, credits INTEGER NOT NULL, amount_paise INTEGER NOT NULL, created_at INTEGER NOT NULL)'),
 		env.DB.prepare('CREATE TABLE IF NOT EXISTS user_plans (user_id TEXT PRIMARY KEY, plan TEXT NOT NULL, status TEXT NOT NULL, razorpay_subscription_id TEXT, current_period_end INTEGER, updated_at INTEGER NOT NULL)'),
+		env.DB.prepare('CREATE TABLE IF NOT EXISTS user_subs (user_id TEXT NOT NULL, plan TEXT NOT NULL, status TEXT NOT NULL, razorpay_subscription_id TEXT, current_period_end INTEGER, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, plan))'),
+		env.DB.prepare('INSERT OR IGNORE INTO user_subs (user_id, plan, status, razorpay_subscription_id, current_period_end, updated_at) SELECT user_id, plan, status, razorpay_subscription_id, current_period_end, updated_at FROM user_plans'),
 	]);
 	tablesReady = true;
 }
@@ -126,43 +139,74 @@ async function addCredits(
 	}
 }
 
+export interface UserSub {
+	plan: PaidPlanId;
+	status: 'active' | 'cancelling';
+	subscriptionId: string | null;
+	periodEnd: number | null;
+}
+
 export interface UserPlan {
-	plan: PlanId;
+	plan: PlanId; // the biggest plan the user has, for labels
 	status: 'none' | 'active' | 'cancelling';
 	subscriptionId: string | null;
 	periodEnd: number | null;
 }
 
-export async function getUserPlan(env: Env, userId: string): Promise<UserPlan> {
-	const none: UserPlan = { plan: 'free', status: 'none', subscriptionId: null, periodEnd: null };
+const PLAN_RANK: PaidPlanId[] = ['pro', 'basic', 'louie', 'jack'];
+
+// Every plan the user pays for. Louie and Jack can be taken on their own, so there can be several.
+export async function getUserSubs(env: Env, userId: string): Promise<UserSub[]> {
 	try {
 		await ensureTables(env);
-		const row = await env.DB
-			.prepare('SELECT plan, status, razorpay_subscription_id AS sid, current_period_end AS pe FROM user_plans WHERE user_id = ?1')
+		const { results } = await env.DB
+			.prepare("SELECT plan, status, razorpay_subscription_id AS sid, current_period_end AS pe FROM user_subs WHERE user_id = ?1 AND status IN ('active', 'cancelling')")
 			.bind(userId)
-			.first<{ plan: string; status: string; sid: string | null; pe: number | null }>();
-		if (!row || (row.status !== 'active' && row.status !== 'cancelling')) return none;
-		if (row.plan !== 'basic' && row.plan !== 'pro') return none;
-		return { plan: row.plan, status: row.status, subscriptionId: row.sid, periodEnd: row.pe };
+			.all<{ plan: string; status: string; sid: string | null; pe: number | null }>();
+		const subs: UserSub[] = [];
+		for (const r of results) {
+			const plan = PLAN_RANK.find((id) => id === r.plan);
+			if (plan && (r.status === 'active' || r.status === 'cancelling')) {
+				subs.push({ plan, status: r.status, subscriptionId: r.sid, periodEnd: r.pe });
+			}
+		}
+		return subs.sort((x, y) => PLAN_RANK.indexOf(x.plan) - PLAN_RANK.indexOf(y.plan));
 	} catch (e) {
-		console.error('getUserPlan failed', e);
-		return none;
+		console.error('getUserSubs failed', e);
+		return [];
 	}
+}
+
+export async function getUserPlan(env: Env, userId: string): Promise<UserPlan> {
+	const top = (await getUserSubs(env, userId))[0];
+	if (!top) return { plan: 'free', status: 'none', subscriptionId: null, periodEnd: null };
+	return { plan: top.plan, status: top.status, subscriptionId: top.subscriptionId, periodEnd: top.periodEnd };
+}
+
+// Which of the troop the user has paid for (Caesar also works on free daily credits).
+export async function getAgentAccess(env: Env, userId: string): Promise<Record<AgentId, boolean>> {
+	const access: Record<AgentId, boolean> = { caesar: false, louie: false, jack: false };
+	for (const sub of await getUserSubs(env, userId)) {
+		for (const agent of planById(env, sub.plan)?.agents ?? []) access[agent] = true;
+	}
+	return access;
 }
 
 // How many websites this user may keep live (0 on the free plan).
 export async function getMaxLiveSites(env: Env, userId: string): Promise<number> {
-	const up = await getUserPlan(env, userId);
-	if (up.plan === 'free') return num(vars(env).PLAN_SITES_FREE, 0);
-	return planById(env, up.plan)?.maxLiveSites ?? 0;
+	let best = num(vars(env).PLAN_SITES_FREE, 0);
+	for (const sub of await getUserSubs(env, userId)) {
+		best = Math.max(best, planById(env, sub.plan)?.maxLiveSites ?? 0);
+	}
+	return best;
 }
 
-async function saveActivePlan(env: Env, p: { userId: string; plan: 'basic' | 'pro'; subscriptionId: string; periodEnd: number | null }): Promise<void> {
+async function saveActivePlan(env: Env, p: { userId: string; plan: PaidPlanId; subscriptionId: string; periodEnd: number | null }): Promise<void> {
 	await ensureTables(env);
 	await env.DB
 		.prepare(
-			"INSERT INTO user_plans (user_id, plan, status, razorpay_subscription_id, current_period_end, updated_at) VALUES (?1, ?2, 'active', ?3, ?4, ?5) " +
-				"ON CONFLICT(user_id) DO UPDATE SET plan = ?2, status = CASE WHEN razorpay_subscription_id = ?3 AND status = 'cancelling' THEN 'cancelling' ELSE 'active' END, razorpay_subscription_id = ?3, current_period_end = ?4, updated_at = ?5",
+			"INSERT INTO user_subs (user_id, plan, status, razorpay_subscription_id, current_period_end, updated_at) VALUES (?1, ?2, 'active', ?3, ?4, ?5) " +
+				"ON CONFLICT(user_id, plan) DO UPDATE SET status = CASE WHEN razorpay_subscription_id = ?3 AND status = 'cancelling' THEN 'cancelling' ELSE 'active' END, razorpay_subscription_id = ?3, current_period_end = ?4, updated_at = ?5",
 		)
 		.bind(p.userId, p.plan, p.subscriptionId, p.periodEnd, Date.now())
 		.run();
@@ -171,7 +215,7 @@ async function saveActivePlan(env: Env, p: { userId: string; plan: 'basic' | 'pr
 async function endPlanBySubscription(env: Env, subscriptionId: string): Promise<void> {
 	await ensureTables(env);
 	await env.DB
-		.prepare("UPDATE user_plans SET status = 'inactive', updated_at = ?2 WHERE razorpay_subscription_id = ?1")
+		.prepare("UPDATE user_subs SET status = 'inactive', updated_at = ?2 WHERE razorpay_subscription_id = ?1")
 		.bind(subscriptionId, Date.now())
 		.run();
 }
@@ -201,13 +245,15 @@ export async function createRazorpayOrder(env: Env, userId: string, pack: Credit
 	return { orderId: order.id, amount: order.amount, currency: order.currency, keyId };
 }
 
-export async function createRazorpaySubscription(env: Env, userId: string, planId: string): Promise<{ subscriptionId: string; keyId: string; plan: 'basic' | 'pro' }> {
+export async function createRazorpaySubscription(env: Env, userId: string, planId: string): Promise<{ subscriptionId: string; keyId: string; plan: PaidPlanId }> {
 	const plan = planById(env, planId);
 	if (!plan) throw new Error('Unknown plan');
 	const rzpPlan = razorpayPlanId(env, plan.id);
 	if (!rzpPlan) throw new Error('This plan is not available yet');
-	const current = await getUserPlan(env, userId);
-	if (current.plan === plan.id) throw new Error('You are already on this plan');
+	const subs = await getUserSubs(env, userId);
+	if (subs.some((x) => x.plan === plan.id)) throw new Error('You are already on this plan');
+	const covered = subs.some((x) => plan.agents.every((a) => planById(env, x.plan)?.agents.includes(a)));
+	if (covered) throw new Error('You already have this with another plan');
 	const { header, keyId } = authHeader(env);
 	const res = await fetch('https://api.razorpay.com/v1/subscriptions', {
 		method: 'POST',
@@ -225,19 +271,19 @@ export async function createRazorpaySubscription(env: Env, userId: string, planI
 	return { subscriptionId: sub.id, keyId, plan: plan.id };
 }
 
-// Stops renewals at the end of the period the user already paid for.
-export async function cancelUserSubscription(env: Env, userId: string): Promise<'cancelling' | 'nothing'> {
-	const current = await getUserPlan(env, userId);
-	if (current.plan === 'free' || !current.subscriptionId) return 'nothing';
+// Stops renewals of one plan at the end of the period the user already paid for.
+export async function cancelUserSubscription(env: Env, userId: string, planId: string): Promise<'cancelling' | 'nothing'> {
+	const sub = (await getUserSubs(env, userId)).find((x) => x.plan === planId);
+	if (!sub || !sub.subscriptionId) return 'nothing';
 	const { header } = authHeader(env);
-	const res = await fetch(`https://api.razorpay.com/v1/subscriptions/${encodeURIComponent(current.subscriptionId)}/cancel`, {
+	const res = await fetch(`https://api.razorpay.com/v1/subscriptions/${encodeURIComponent(sub.subscriptionId)}/cancel`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', Authorization: header },
 		body: JSON.stringify({ cancel_at_cycle_end: 1 }),
 	});
 	if (!res.ok) throw new Error(`Razorpay cancel failed (${res.status})`);
 	await ensureTables(env);
-	await env.DB.prepare("UPDATE user_plans SET status = 'cancelling', updated_at = ?2 WHERE user_id = ?1").bind(userId, Date.now()).run();
+	await env.DB.prepare("UPDATE user_subs SET status = 'cancelling', updated_at = ?3 WHERE user_id = ?1 AND plan = ?2").bind(userId, sub.plan, Date.now()).run();
 	return 'cancelling';
 }
 
@@ -245,14 +291,30 @@ export interface BillingStatus {
 	plan: PlanId;
 	status: UserPlan['status'];
 	periodEnd: number | null;
+	subscriptions: UserSub[];
+	access: Record<AgentId, boolean>;
 	balance: number;
 	plans: PlanInfo[];
 	packs: CreditPack[];
 }
 
 export async function getBillingStatus(env: Env, userId: string): Promise<BillingStatus> {
-	const [up, balance] = await Promise.all([getUserPlan(env, userId), getPurchasedBalance(env, userId)]);
-	return { plan: up.plan, status: up.status, periodEnd: up.periodEnd, balance, plans: getPaidPlans(env), packs: getPacks(env) };
+	const [subs, balance] = await Promise.all([getUserSubs(env, userId), getPurchasedBalance(env, userId)]);
+	const top = subs[0];
+	const access: Record<AgentId, boolean> = { caesar: false, louie: false, jack: false };
+	for (const sub of subs) {
+		for (const agent of planById(env, sub.plan)?.agents ?? []) access[agent] = true;
+	}
+	return {
+		plan: top?.plan ?? 'free',
+		status: top?.status ?? 'none',
+		periodEnd: top?.periodEnd ?? null,
+		subscriptions: subs,
+		access,
+		balance,
+		plans: getPaidPlans(env),
+		packs: getPacks(env),
+	};
 }
 
 /* ===================== webhook ===================== */

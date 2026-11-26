@@ -1346,12 +1346,12 @@ class ApiClient {
 		return this.request<BillingStatusData>('/api/payments/status');
 	}
 
-	async createSubscription(plan: 'basic' | 'pro'): Promise<ApiResponse<SubscribeData>> {
+	async createSubscription(plan: PaidPlanId): Promise<ApiResponse<SubscribeData>> {
 		return this.request<SubscribeData>('/api/payments/subscribe', { method: 'POST', body: { plan } });
 	}
 
-	async cancelSubscription(): Promise<ApiResponse<{ result: 'cancelling' | 'nothing' }>> {
-		return this.request<{ result: 'cancelling' | 'nothing' }>('/api/payments/cancel', { method: 'POST', body: {} });
+	async cancelSubscription(plan: PaidPlanId): Promise<ApiResponse<{ result: 'cancelling' | 'nothing' }>> {
+		return this.request<{ result: 'cancelling' | 'nothing' }>('/api/payments/cancel', { method: 'POST', body: { plan } });
 	}
 
 	async createCreditOrder(packId: string): Promise<ApiResponse<CreditOrderData>> {
@@ -1439,19 +1439,23 @@ export const apiClient = new ApiClient();
 export { ApiClient };
 
 
+export type PaidPlanId = 'basic' | 'louie' | 'jack' | 'pro';
+export type AgentId = 'caesar' | 'louie' | 'jack';
 export type BillingStatusData = {
-	plan: 'free' | 'basic' | 'pro';
+	plan: 'free' | PaidPlanId;
 	status: 'none' | 'active' | 'cancelling';
 	periodEnd: number | null;
+	subscriptions: Array<{ plan: PaidPlanId; status: 'active' | 'cancelling'; subscriptionId: string | null; periodEnd: number | null }>;
+	access: Record<AgentId, boolean>;
 	balance: number;
-	plans: Array<{ id: 'basic' | 'pro'; name: string; priceInr: number; monthlyCredits: number; maxLiveSites: number; available: boolean }>;
+	plans: Array<{ id: PaidPlanId; name: string; priceInr: number; monthlyCredits: number; maxLiveSites: number; agents: AgentId[]; available: boolean }>;
 	packs: Array<{ id: string; label: string; credits: number; priceInr: number }>;
 };
-export type SubscribeData = { subscriptionId: string; keyId: string; plan: 'basic' | 'pro' };
+export type SubscribeData = { subscriptionId: string; keyId: string; plan: PaidPlanId };
 export type CreditOrderData = { orderId: string; amount: number; currency: string; keyId: string; packId: string };
 
 export type TroopSite = { id: string; title: string; description: string | null; originalPrompt: string; status: string };
-export type TroopSitesData = { allowed: boolean; plan: 'free' | 'basic' | 'pro'; sites: TroopSite[] };
+export type TroopSitesData = { access: Record<AgentId, boolean>; required: boolean; sites: TroopSite[] };
 export type LouieRequest = { appId: string; goal: string; budgetInr: number; audience?: string; location?: string };
 export type LouieAdContent = {
 	summary: string;

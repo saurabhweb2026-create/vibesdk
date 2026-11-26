@@ -2,7 +2,7 @@ import { BaseController } from '../baseController';
 import { RouteContext } from '../../types/route-context';
 import { ApiResponse, ControllerResponse } from '../types';
 import { createLogger } from '../../../logger';
-import { getUserPlan } from '../../../services/credits/purchasedCredits';
+import type { AgentId } from '../../../services/credits/purchasedCredits';
 import { AdPack, generateAdPack } from '../../../services/troop/louie';
 import { defaultGreeting } from '../../../services/troop/jack';
 import {
@@ -22,8 +22,8 @@ import {
 } from '../../../services/troop/troopStore';
 
 interface SitesData {
-	allowed: boolean;
-	plan: 'free' | 'basic' | 'pro';
+	access: Record<AgentId, boolean>;
+	required: boolean;
 	sites: SiteInfo[];
 }
 
@@ -40,7 +40,8 @@ interface JackSetupData {
 }
 
 const LOUIE_DAILY_LIMIT = 20;
-const NOT_ALLOWED = 'Louie and Jack are part of the Pro plan';
+const NOT_ALLOWED_LOUIE = 'Subscribe to Louie, or to Pro, to use this';
+const NOT_ALLOWED_JACK = 'Subscribe to Jack, or to Pro, to use this';
 const TONES = ['friendly', 'formal', 'short'];
 
 function appIdFrom(request: Request): string {
@@ -53,8 +54,13 @@ export class TroopController extends BaseController {
 	static async listSites(_request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<SitesData>>> {
 		try {
 			const user = context.user!;
-			const [allowed, plan, sites] = await Promise.all([canUseTroop(env, user.id), getUserPlan(env, user.id), listSites(env, user.id)]);
-			return TroopController.createSuccessResponse({ allowed, plan: plan.plan, sites });
+			const [louie, jack, sites] = await Promise.all([
+				canUseTroop(env, user.id, 'louie'),
+				canUseTroop(env, user.id, 'jack'),
+				listSites(env, user.id),
+			]);
+			const required = (env as unknown as Record<string, string | undefined>).TROOP_REQUIRE_PLAN === 'true';
+			return TroopController.createSuccessResponse({ access: { caesar: true, louie, jack }, required, sites });
 		} catch (error) {
 			this.logger.error('Error listing websites:', error);
 			return TroopController.createErrorResponse<SitesData>('Failed to load your websites', 500);
@@ -64,7 +70,7 @@ export class TroopController extends BaseController {
 	static async generateAds(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<SavedAdPack>>> {
 		try {
 			const user = context.user!;
-			if (!(await canUseTroop(env, user.id))) return TroopController.createErrorResponse<SavedAdPack>(NOT_ALLOWED, 403);
+			if (!(await canUseTroop(env, user.id, 'louie'))) return TroopController.createErrorResponse<SavedAdPack>(NOT_ALLOWED_LOUIE, 403);
 
 			const body = (await request.json()) as { appId?: string; goal?: string; budgetInr?: number; audience?: string; location?: string };
 			const site = await getOwnedSite(env, user.id, String(body.appId ?? ''));
@@ -132,7 +138,7 @@ export class TroopController extends BaseController {
 	static async saveJack(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<{ saved: boolean }>>> {
 		try {
 			const user = context.user!;
-			if (!(await canUseTroop(env, user.id))) return TroopController.createErrorResponse<{ saved: boolean }>(NOT_ALLOWED, 403);
+			if (!(await canUseTroop(env, user.id, 'jack'))) return TroopController.createErrorResponse<{ saved: boolean }>(NOT_ALLOWED_JACK, 403);
 
 			const body = (await request.json()) as { appId?: string; businessName?: string; knowledge?: string; tone?: string; greeting?: string; enabled?: boolean };
 			const site = await getOwnedSite(env, user.id, String(body.appId ?? ''));
