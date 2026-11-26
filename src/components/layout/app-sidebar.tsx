@@ -322,6 +322,26 @@ export function AppSidebar() {
 							)}
 							icon={<CompassIcon className="size-4" />}
 						/>
+						<Button
+							shape="square"
+							size="base"
+							variant="ghost"
+							aria-label="Louie, ads"
+							title="Louie, ads"
+							onClick={() => navigate('/louie')}
+							className={cn(pathname === '/louie' && 'bg-(--sidebar-active-bg)')}
+							icon={<BrandFace face="louie" className="size-5" />}
+						/>
+						<Button
+							shape="square"
+							size="base"
+							variant="ghost"
+							aria-label="Jack, support"
+							title="Jack, support"
+							onClick={() => navigate('/jack')}
+							className={cn(pathname === '/jack' && 'bg-(--sidebar-active-bg)')}
+							icon={<BrandFace face="jack" className="size-5" />}
+						/>
 					</div>
 				) : (
 					<div className="flex flex-col gap-1.5">
@@ -357,6 +377,24 @@ export function AppSidebar() {
 								onClick={() => navigate('/discover')}
 							>
 								Discover
+							</Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								active={pathname === '/louie'}
+								icon={<BrandFace face="louie" className="size-5 -mr-1" />}
+								id="louie-link"
+								tooltip="Louie, ads"
+								onClick={() => navigate('/louie')}
+							>
+								Louie · Ads
+							</Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								active={pathname === '/jack'}
+								icon={<BrandFace face="jack" className="size-5 -mr-1" />}
+								id="jack-link"
+								tooltip="Jack, support"
+								onClick={() => navigate('/jack')}
+							>
+								Jack · Support
 							</Sidebar.MenuButton>
 						</Sidebar.Menu>
 

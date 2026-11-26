@@ -8,6 +8,8 @@ import Settings from './routes/settings/index';
 import AppsPage from './routes/apps';
 import AppView from './routes/app';
 import DiscoverPage from './routes/discover';
+import LouiePage from './routes/troop/louie';
+import JackPage from './routes/troop/jack';
 import { ProtectedRoute } from './routes/protected-route';
 
 const routes = [
@@ -54,6 +56,22 @@ const routes = [
 			{
 				path: 'discover',
 				Component: DiscoverPage,
+			},
+			{
+				path: 'louie',
+				element: (
+					<ProtectedRoute>
+						<LouiePage />
+					</ProtectedRoute>
+				),
+			},
+			{
+				path: 'jack',
+				element: (
+					<ProtectedRoute>
+						<JackPage />
+					</ProtectedRoute>
+				),
 			},
 		],
 	},

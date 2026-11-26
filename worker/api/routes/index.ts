@@ -19,6 +19,7 @@ import { Hono } from "hono";
 import { AppEnv } from "../../types/appenv";
 import { setupStatusRoutes } from './statusRoutes';
 import { setupPaymentRoutes } from './paymentRoutes';
+import { setupTroopRoutes } from './troopRoutes';
 
 export function setupRoutes(app: Hono<AppEnv>): void {
     // Health check route
@@ -83,4 +84,5 @@ export function setupRoutes(app: Hono<AppEnv>): void {
 	
     // Plans, credits and Razorpay payments
     setupPaymentRoutes(app);
+    setupTroopRoutes(app);
 }

@@ -1359,6 +1359,30 @@ class ApiClient {
 	}
 
 	// ===============================
+	// Troop: Louie (ads) and Jack (support)
+	// ===============================
+
+	async getTroopSites(): Promise<ApiResponse<TroopSitesData>> {
+		return this.request<TroopSitesData>('/api/troop/sites');
+	}
+
+	async generateLouieAds(body: LouieRequest): Promise<ApiResponse<LouiePack>> {
+		return this.request<LouiePack>('/api/louie/generate', { method: 'POST', body });
+	}
+
+	async getLouiePacks(appId: string): Promise<ApiResponse<{ packs: LouiePack[] }>> {
+		return this.request<{ packs: LouiePack[] }>(`/api/louie/packs?appId=${encodeURIComponent(appId)}`);
+	}
+
+	async getJackSetup(appId: string): Promise<ApiResponse<JackSetupData>> {
+		return this.request<JackSetupData>(`/api/jack/bot?appId=${encodeURIComponent(appId)}`);
+	}
+
+	async saveJackSetup(body: JackSaveRequest): Promise<ApiResponse<{ saved: boolean }>> {
+		return this.request<{ saved: boolean }>('/api/jack/bot', { method: 'PUT', body });
+	}
+
+	// ===============================
 	// Cloudflare Account API Methods
 	// ===============================
 
@@ -1425,3 +1449,31 @@ export type BillingStatusData = {
 };
 export type SubscribeData = { subscriptionId: string; keyId: string; plan: 'basic' | 'pro' };
 export type CreditOrderData = { orderId: string; amount: number; currency: string; keyId: string; packId: string };
+
+export type TroopSite = { id: string; title: string; description: string | null; originalPrompt: string; status: string };
+export type TroopSitesData = { allowed: boolean; plan: 'free' | 'basic' | 'pro'; sites: TroopSite[] };
+export type LouieRequest = { appId: string; goal: string; budgetInr: number; audience?: string; location?: string };
+export type LouieAdContent = {
+	summary: string;
+	audience: string[];
+	googleSearch: { headlines: string[]; descriptions: string[]; keywords: string[] };
+	metaAds: Array<{ primaryText: string; headline: string; cta: string }>;
+	socialPosts: Array<{ caption: string; hashtags: string[] }>;
+	whatsappMessage: string;
+	budgetPlan: Array<{ channel: string; sharePercent: number; why: string }>;
+	firstWeek: string[];
+};
+export type LouiePack = { id: string; appId: string; goal: string | null; budgetInr: number | null; createdAt: number; content: LouieAdContent };
+export type JackTurn = { role: 'user' | 'assistant'; content: string };
+export type JackSetupData = {
+	appId: string;
+	businessName: string;
+	knowledge: string;
+	tone: string;
+	greeting: string;
+	enabled: boolean;
+	embedSnippet: string;
+	conversations: Array<{ visitorId: string; lastAt: number; needsHuman: boolean; turns: JackTurn[] }>;
+	leads: Array<{ visitorId: string; contact: string; note: string; createdAt: number }>;
+};
+export type JackSaveRequest = { appId: string; businessName: string; knowledge: string; tone: string; greeting: string; enabled: boolean };

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export type TroopStatus =
 interface TroopStageProps {
 	status: TroopStatus;
 	fileName?: string;
+	appId?: string;
 }
 
 const TROOP = [
@@ -64,19 +66,20 @@ function caesarLine(status: TroopStatus, fileName?: string): string {
 }
 
 function louieLine(status: TroopStatus): string {
-	if (status === 'done') return 'Nice work, Caesar! I will run ads for this soon.';
-	if (status === 'idle') return 'Soon: I will run ads for your site.';
+	if (status === 'done') return 'Nice work, Caesar! Want ads for this site?';
+	if (status === 'idle') return 'I write your ads once the site is ready.';
 	return 'Taking notes for your ads.';
 }
 
 function jackLine(status: TroopStatus): string {
-	if (status === 'done') return 'And I will answer your customers, soon.';
-	if (status === 'idle') return 'Soon: I will answer your customers.';
+	if (status === 'done') return 'Great site! Want me to answer your customers?';
+	if (status === 'idle') return 'I answer your customers once the site is ready.';
 	return 'Learning your site to help customers.';
 }
 
-export function TroopStage({ status, fileName }: TroopStageProps) {
+export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 	const reduceMotion = useReducedMotion();
+	const navigate = useNavigate();
 	const [collapsed, setCollapsed] = useState(false);
 	const working = status !== 'idle' && status !== 'done';
 	const finished = status === 'done';
@@ -183,10 +186,20 @@ export function TroopStage({ status, fileName }: TroopStageProps) {
 									<span style={{ color: c.color }}>{c.name}</span>
 									{!isCaesar && (
 										<span className="rounded-full border border-white/15 px-1.5 text-[8.5px] text-white/55">
-											Soon
+											{finished ? 'Ready' : 'Waiting'}
 										</span>
 									)}
 								</div>
+								{!isCaesar && finished && appId && (
+									<button
+										type="button"
+										onClick={() => navigate(`/${c.id}?site=${appId}`)}
+										className="mt-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-black"
+										style={{ background: c.color }}
+									>
+										{c.id === 'louie' ? 'Write my ads' : 'Set up Jack'}
+									</button>
+								)}
 							</div>
 						);
 					})}

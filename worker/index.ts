@@ -9,6 +9,8 @@ import { isOriginAllowed } from './config/security';
 import { isDev } from './utils/envs';
 import { proxyToSandbox } from './services/sandbox/request-handler';
 import { handleGitProtocolRequest, isGitProtocolRequest } from './api/handlers/git-protocol';
+import { handleJackPublic, isJackPublicPath } from './api/handlers/jack-public';
+import { handleRazorpayWebhook } from './services/credits/purchasedCredits';
 import {
 	handleSpacePreview,
 	matchSpacePreviewParams,
@@ -295,6 +297,16 @@ const worker = {
 				return handleGitProtocolRequest(request, env, ctx);
 			}
 			
+			// Razorpay webhook: signed by Razorpay, so it must skip the CSRF check
+			if (request.method === 'POST' && pathname === '/api/payments/razorpay-webhook') {
+				return handleRazorpayWebhook(env, request);
+			}
+
+			// Jack chat bubble on customers' own websites: public, no cookies
+			if (isJackPublicPath(pathname)) {
+				return handleJackPublic(env, request);
+			}
+
 			// Cloudflare OAuth connect routes: handle via Hono app even though they are not under /api
 			if (pathname.startsWith('/oauth/') || pathname === '/auth/callback') {
 				// Do not log the full URL: /auth/callback carries sensitive

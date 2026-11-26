@@ -13,18 +13,18 @@ const TROOP = [
 	{
 		name: 'Louie',
 		role: 'Runs your ads',
-		text: 'Louie takes the finished site and turns it into ads that bring visitors.',
+		text: 'Louie reads your finished site and writes your Google, Facebook and Instagram ads, posts and budget plan.',
 		color: '#ec4899',
 		src: '/troop/louie.webp',
-		live: false,
+		live: true,
 	},
 	{
 		name: 'Jack',
 		role: 'Answers your customers',
-		text: 'Jack learns your site and replies to your customers, day and night.',
+		text: 'Jack learns your business and answers your customers on your website, day and night, and saves the leads.',
 		color: '#84cc16',
 		src: '/troop/jack.webp',
-		live: false,
+		live: true,
 	},
 ];
 
@@ -123,7 +123,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 							className="h-44 w-auto object-contain"
 							style={{
 								filter: `drop-shadow(0 0 18px ${c.color}88)`,
-								opacity: c.live ? 1 : 0.85,
+								opacity: 1,
 							}}
 							animate={reduce ? undefined : { y: [0, -6, 0] }}
 							transition={{
