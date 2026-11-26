@@ -260,7 +260,9 @@ export class ThinkAgent extends Think<Env> {
 		// default Responses API (`/compat/responses`). VibeSDK's AI Gateway is
 		// exercised via chat-completions everywhere else; the responses path on
 		// the gateway rejects auth (401 AiGatewayError) for these models.
-		return provider.chat(model.modelName);
+		// Read at request time so existing apps follow a changed THINK_MODEL too.
+		const override = (this.env as unknown as { THINK_MODEL?: string }).THINK_MODEL;
+		return provider.chat(resolveThinkModel(override).id === resolveThinkModel().id ? model.modelName : resolveThinkModel(override).id);
 	}
 
 	/**
