@@ -27,7 +27,7 @@ import { AppService } from 'worker/database/services/AppService';
 import { getConfigurationForModel } from '../../inferutils/core';
 import type { ThinkAgentConfig } from '../../think/ThinkAgent';
 import { withDurableObjectResetRetry } from '../../think/space-workspace-ops';
-import { THINK_MODEL_CONFIG, THINK_MODEL_ID } from '../../think/model-config';
+import { resolveThinkModel } from '../../think/model-config';
 import type { BranchDeploymentBundle } from '@space-do/space';
 import { CloudflareAccountService } from '../../../services/cloudflare/CloudflareAccountService';
 import { deployThinkBundleToPlatform, deployThinkBundleToUserAccount } from '../../../services/deployer/think-user-deploy';
@@ -218,8 +218,9 @@ export class ThinkCodingBehavior
 		const inf = this.getInferenceContext();
 		const userId = this.state.metadata.userId;
 
-		const modelName = THINK_MODEL_ID;
-		const aiModelConfig = THINK_MODEL_CONFIG;
+		const resolved = resolveThinkModel((this.env as unknown as { THINK_MODEL?: string }).THINK_MODEL);
+		const modelName = resolved.id;
+		const aiModelConfig = resolved.config;
 
 		let conf: { baseURL: string; apiKey: string; defaultHeaders?: Record<string, string> };
 		try {
@@ -296,38 +297,18 @@ export class ThinkCodingBehavior
 	 * and the VibeSDK-specific deploy→verify workflow, which the generic prompt
 	 * files don't know about — the environment and custom instructions for the run.
 	 */
-	private buildSystemPrompt(modelName: string, provider: string): string {
+	private buildSystemPrompt(modelName: string, _provider: string): string {
 		return [
-			`You are powered by the model named ${modelName}. The exact model ID is ${provider}/${modelName}.`,
-			'<env>',
-			`  Platform: Cloudflare Workers (SpaceDO preview — no shell, no local filesystem)`,
-			`  Today's date: ${new Date().toDateString()}`,
-			'</env>',
-			'',
+			`Model: ${modelName}. Platform: Cloudflare Workers (SpaceDO preview, no shell). Date: ${new Date().toDateString()}.`,
 			`# Project: ${this.state.projectName || 'app'}`,
-			'',
 			'## User request',
 			this.state.query,
-			'',
-			'## Naming',
-			'If this project does not yet have a clear name (e.g. the request is a long or vague description rather than a concise product name), call the `set_title` tool once, early, with a short human-friendly title (Title Case, under ~60 characters). Skip it if a good title already exists; do not rename on every turn.',
-			'',
-			'## Clarify before building',
-			'If the request is underspecified or ambiguous (e.g. a one-line idea with no details on features, scope, data, or design), do NOT start writing files yet. Instead, on this turn:',
-			'1. Briefly state the assumptions you would make to proceed.',
-			'2. Call the `ask_questions` tool with all the concise, targeted clarifying questions you need answered. Each question can include predefined options and can allow multiple selections and/or a custom free-text answer.',
-			'3. End your turn after calling `ask_questions`. Do not write/edit files or deploy until the scope is clear or the user tells you to proceed with your assumptions.',
-			'If the request is already clear and specific, skip this and go straight to building.',
-			'',
-			'## Deploy & verify workflow (VibeSDK-specific)',
-			'Once you are actively building (the scope is clear or the user confirmed), this app is previewed on Cloudflare Workers via SpaceDO — there is no shell. In a building turn, do NOT end after only writing files:',
-			'1. After writing or editing files, call `deploy_space` to commit and deploy so the preview rebuilds.',
-			'2. Then call `get_browser_console_logs` to inspect the running preview for client-side errors (JS exceptions, failed fetches, missing assets, hydration errors).',
-			'3. If the deploy reports build errors or the console shows errors, fix the code and repeat from step 1 until the deploy succeeds and the console is clean.',
-			'A building turn should finish with a successful `deploy_space` and a clean `get_browser_console_logs` check.',
-			'',
-			'## Commits & restore points',
-			'Each commit is a restore point the user can roll back to, and YOU decide when to create them. Use the `commit` tool to snapshot a coherent unit of work with a short, descriptive message (e.g. before a risky refactor, or after finishing a feature). You do not need to `commit` right before `deploy_space` — deploying already commits. Do not commit after every tiny edit; group related changes into meaningful restore points.',
+			'## Rules',
+			'- Name: if the project has no clear short name, call `set_title` once (Title Case, under 60 chars).',
+			'- Clarify: if the request is vague (no features, scope, data or design), state your assumptions, call `ask_questions` once with all needed questions, then end the turn without writing files. If it is clear, build immediately.',
+			'- Build: write files, then call `deploy_space` (it commits and rebuilds the preview), then `get_browser_console_logs`. Fix any build or console errors and repeat. Finish only after a successful deploy and clean console.',
+			'- Commits: `commit` creates a restore point for a finished unit of work. Do not commit before `deploy_space` or after tiny edits.',
+			'- Be efficient: read only files you need, edit instead of rewriting whole files, batch independent tool calls, and keep replies short.',
 		].join('\n');
 	}
 

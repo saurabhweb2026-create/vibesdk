@@ -25,7 +25,7 @@ import { getUserConfigurableSettings } from '../../config';
 import { RateLimitService } from '../../services/rate-limit/rateLimits';
 import { hasCloudflareConfigured } from '../../services/rate-limit/usageChecker';
 import type { RateLimitSettings } from '../../services/rate-limit/config';
-import { THINK_MODEL_CONFIG } from './model-config';
+import { resolveThinkModel } from './model-config';
 
 /**
  * Per-instance configuration pushed into a {@link ThinkAgent} by the host
@@ -235,6 +235,8 @@ export class ThinkAgent extends Think<Env> {
 		const gatewayFetch: typeof fetch = async (input, init) => {
 			const headers = new Headers(init?.headers);
 			if (model.useStoredKeys) headers.delete('authorization');
+			// Same affinity key for every step of a session so the provider reuses its prompt prefix cache.
+			headers.set('x-session-affinity', this.name);
 			let body = init?.body;
 			if (typeof body === 'string') body = this.injectThoughtSignatures(body);
 			const res = await fetch(input as RequestInfo, { ...(init ?? {}), headers, body });
@@ -370,7 +372,7 @@ export class ThinkAgent extends Think<Env> {
 				'',
 				false,
 				this.turnUsage.hasCloudflareConfigured,
-				{ creditCost: THINK_MODEL_CONFIG.creditCost, throwOnExceeded: false },
+				{ creditCost: resolveThinkModel((this.env as unknown as { THINK_MODEL?: string }).THINK_MODEL).config.creditCost, throwOnExceeded: false },
 			);
 		}
 		if (ctx.stepNumber >= this.maxSteps - 1) {
