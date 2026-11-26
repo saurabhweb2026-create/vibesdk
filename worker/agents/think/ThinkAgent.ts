@@ -242,7 +242,10 @@ export class ThinkAgent extends Think<Env> {
 			headers.set('x-session-affinity', this.name);
 			let body = init?.body;
 			if (typeof body === 'string') body = this.injectThoughtSignatures(body);
-			const res = await fetch(input as RequestInfo, { ...(init ?? {}), headers, body });
+			const isChatCall = typeof body === 'string' && String(input instanceof Request ? input.url : input).includes('/chat/completions');
+			const res = usesWorkersAi && isChatCall
+				? await this.runWorkersAi(body as string, thinkOverride)
+				: await fetch(input as RequestInfo, { ...(init ?? {}), headers, body });
 			if (!res.ok) await this.recordLlmError(res.clone(), thinkOverride);
 			if (!res.body) return res;
 			const outHeaders = new Headers(res.headers);
@@ -267,6 +270,44 @@ export class ThinkAgent extends Think<Env> {
 		// Read at request time so existing apps follow a changed THINK_MODEL too.
 		const override = (this.env as unknown as { THINK_MODEL?: string }).THINK_MODEL;
 		return provider.chat(resolveThinkModel(override).id === resolveThinkModel().id ? model.modelName : resolveThinkModel(override).id);
+	}
+
+	/**
+	 * Runs a Workers AI chat completion through the AI binding (account-level
+	 * auth, routed via the gateway) and returns it as an OpenAI-style response.
+	 */
+	private async runWorkersAi(body: string, modelOverride: string): Promise<Response> {
+		const env = this.env as unknown as {
+			AI: {
+				run(
+					model: string,
+					inputs: Record<string, unknown>,
+					options?: { gateway?: { id: string } },
+				): Promise<ReadableStream | Record<string, unknown>>;
+			};
+			CLOUDFLARE_AI_GATEWAY?: string;
+		};
+		const payload = JSON.parse(body) as Record<string, unknown>;
+		delete payload.model;
+		delete payload.stream_options;
+		const modelId = modelOverride.replace(/^workers-ai\//, '');
+		try {
+			const out = await env.AI.run(
+				modelId,
+				payload,
+				env.CLOUDFLARE_AI_GATEWAY ? { gateway: { id: env.CLOUDFLARE_AI_GATEWAY } } : undefined,
+			);
+			if (out instanceof ReadableStream) {
+				return new Response(out, { status: 200, headers: { 'content-type': 'text/event-stream' } });
+			}
+			return new Response(JSON.stringify(out), { status: 200, headers: { 'content-type': 'application/json' } });
+		} catch (e) {
+			const message = e instanceof Error ? e.message : String(e);
+			return new Response(JSON.stringify({ error: { message } }), {
+				status: 500,
+				headers: { 'content-type': 'application/json' },
+			});
+		}
 	}
 
 	/** Stores the provider's error body so failed model calls can be diagnosed from D1. */
