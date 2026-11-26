@@ -1456,7 +1456,7 @@ export type CreditOrderData = { orderId: string; amount: number; currency: strin
 
 export type TroopSite = { id: string; title: string; description: string | null; originalPrompt: string; status: string };
 export type TroopSitesData = { access: Record<AgentId, boolean>; required: boolean; sites: TroopSite[] };
-export type LouieRequest = { appId: string; goal: string; budgetInr: number; audience?: string; location?: string };
+export type LouieRequest = { appId: string; goal: string; budgetInr: number; audience?: string; location?: string; tone?: string; offer?: string; formats?: string[] };
 export type LouieAdContent = {
 	summary: string;
 	audience: string[];
@@ -1466,6 +1466,8 @@ export type LouieAdContent = {
 	whatsappMessage: string;
 	budgetPlan: Array<{ channel: string; sharePercent: number; why: string }>;
 	firstWeek: string[];
+	videoScripts?: Array<{ title: string; hook: string; scenes: string[]; voiceover: string; cta: string }>;
+	creatives?: Array<{ format: string; visual: string; overlayText: string; caption: string }>;
 };
 export type LouiePack = { id: string; appId: string; goal: string | null; budgetInr: number | null; createdAt: number; content: LouieAdContent };
 export type JackTurn = { role: 'user' | 'assistant'; content: string };

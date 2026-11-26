@@ -4,6 +4,8 @@ import { apiClient, type LouieAdContent, type LouiePack } from '@/lib/api-client
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
 const GOALS = ['Get more bookings', 'Sell more products', 'Bring more visitors', 'Launch something new'];
+const FORMATS = ['Ads', 'Social posts', 'Video scripts', 'Creatives'] as const;
+const TONES = ['Friendly', 'Premium', 'Fun', 'Urgent'];
 const PINK = '#ec4899';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -64,6 +66,20 @@ function AdPackView({ c }: { c: LouieAdContent }) {
 			<Section title="WhatsApp message">
 				<Row text={c.whatsappMessage} />
 			</Section>
+			{!!c.videoScripts?.length && (
+				<Section title="Video scripts">
+					{c.videoScripts.map((v, i) => (
+						<Row key={i} text={`${v.title}\nHook: ${v.hook}\n${v.scenes.map((sc, n) => `${n + 1}. ${sc}`).join('\n')}\nVoiceover: ${v.voiceover}\nEnd: ${v.cta}`} />
+					))}
+				</Section>
+			)}
+			{!!c.creatives?.length && (
+				<Section title="Creatives">
+					{c.creatives.map((cr, i) => (
+						<Row key={i} text={`${cr.format}\nImage: ${cr.visual}\nText on image: ${cr.overlayText}\nCaption: ${cr.caption}`} />
+					))}
+				</Section>
+			)}
 			<Section title="Where to put your budget">
 				{c.budgetPlan.map((b) => (
 					<div key={b.channel} className="border-b border-white/5 py-2 last:border-0">
@@ -95,6 +111,9 @@ export default function LouiePage() {
 	const [budget, setBudget] = useState('10000');
 	const [audience, setAudience] = useState('');
 	const [location, setLocation] = useState('');
+	const [tone, setTone] = useState(TONES[0]);
+	const [offer, setOffer] = useState('');
+	const [formats, setFormats] = useState<string[]>([...FORMATS]);
 	const [busy, setBusy] = useState(false);
 	const [packs, setPacks] = useState<LouiePack[]>([]);
 	const [shown, setShown] = useState(0);
@@ -124,6 +143,9 @@ export default function LouiePage() {
 				budgetInr: Number(budget) || 10000,
 				audience: audience || undefined,
 				location: location || undefined,
+				tone,
+				offer: offer || undefined,
+				formats,
 			});
 			if (res.data) {
 				const pack = res.data;
@@ -168,6 +190,49 @@ export default function LouiePage() {
 									</button>
 								))}
 							</div>
+							<div className="mb-2 text-xs uppercase tracking-wider text-white/50">What should I create?</div>
+							<div className="mb-4 flex flex-wrap gap-2">
+								{FORMATS.map((f) => {
+									const on = formats.includes(f);
+									return (
+										<button
+											key={f}
+											type="button"
+											onClick={() => setFormats((cur) => (on ? cur.filter((x) => x !== f) : [...cur, f]))}
+											className="rounded-full border px-3 py-1.5 text-sm"
+											style={{
+												borderColor: on ? PINK : 'rgba(255,255,255,0.15)',
+												background: on ? `${PINK}22` : 'transparent',
+												color: on ? '#fff' : 'rgba(255,255,255,0.75)',
+											}}
+										>
+											{f}
+										</button>
+									);
+								})}
+							</div>
+							<div className="mb-2 text-xs uppercase tracking-wider text-white/50">Tone</div>
+							<div className="mb-4 flex flex-wrap gap-2">
+								{TONES.map((t) => (
+									<button
+										key={t}
+										type="button"
+										onClick={() => setTone(t)}
+										className="rounded-full border px-3 py-1.5 text-sm"
+										style={{
+											borderColor: tone === t ? PINK : 'rgba(255,255,255,0.15)',
+											background: tone === t ? `${PINK}22` : 'transparent',
+											color: tone === t ? '#fff' : 'rgba(255,255,255,0.75)',
+										}}
+									>
+										{t}
+									</button>
+								))}
+							</div>
+							<label className="mb-4 block">
+								<span className="mb-1 block text-xs text-white/50">Any offer or discount to promote? (optional)</span>
+								<input className={INPUT} value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="20% off first order" />
+							</label>
 							<div className="grid gap-3 sm:grid-cols-3">
 								<label className="block">
 									<span className="mb-1 block text-xs text-white/50">Monthly budget (Rs)</span>
@@ -184,12 +249,12 @@ export default function LouiePage() {
 							</div>
 							<button
 								type="button"
-								disabled={busy}
+								disabled={busy || formats.length === 0}
 								onClick={generate}
 								className="mt-5 rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
 								style={{ background: PINK, boxShadow: `0 0 24px ${PINK}55` }}
 							>
-								{busy ? 'Louie is writing your ads...' : 'Write my ads'}
+								{busy ? 'Louie is creating...' : 'Create my content'}
 							</button>
 						</div>
 					)}

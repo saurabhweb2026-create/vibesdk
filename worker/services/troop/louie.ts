@@ -10,6 +10,8 @@ export interface AdPack {
 	whatsappMessage: string;
 	budgetPlan: Array<{ channel: string; sharePercent: number; why: string }>;
 	firstWeek: string[];
+	videoScripts: Array<{ title: string; hook: string; scenes: string[]; voiceover: string; cta: string }>;
+	creatives: Array<{ format: string; visual: string; overlayText: string; caption: string }>;
 }
 
 export interface AdRequest {
@@ -17,6 +19,9 @@ export interface AdRequest {
 	budgetInr: number;
 	audience: string;
 	location: string;
+	tone: string;
+	offer: string;
+	formats: string[];
 }
 
 const str = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -62,6 +67,19 @@ function normalize(raw: Record<string, unknown>): AdPack {
 			why: str(b.why, 200),
 		})),
 		firstWeek: strList(raw.firstWeek, 7, 200),
+		videoScripts: objList(raw.videoScripts, 3).map((v) => ({
+			title: str(v.title, 80),
+			hook: str(v.hook, 160),
+			scenes: strList(v.scenes, 6, 200),
+			voiceover: str(v.voiceover, 600),
+			cta: str(v.cta, 80),
+		})),
+		creatives: objList(raw.creatives, 4).map((c) => ({
+			format: str(c.format, 40),
+			visual: str(c.visual, 300),
+			overlayText: str(c.overlayText, 80),
+			caption: str(c.caption, 300),
+		})),
 	};
 }
 
@@ -76,9 +94,12 @@ Answer with ONE JSON object only, no markdown, with exactly these keys:
  "socialPosts": [{"caption": "post caption", "hashtags": ["#tag"]}],
  "whatsappMessage": "one short broadcast message",
  "budgetPlan": [{"channel": "name", "sharePercent": 50, "why": "one sentence"}],
- "firstWeek": ["5 simple actions for the first 7 days"]
+ "firstWeek": ["5 simple actions for the first 7 days"],
+ "videoScripts": [{"title": "short title", "hook": "first 3 seconds line", "scenes": ["4 to 5 shot descriptions, each one line"], "voiceover": "full voiceover for a 20 to 30 second reel", "cta": "closing line"}],
+ "creatives": [{"format": "Instagram post | Story | Banner", "visual": "what the image shows, ready to give to a designer or image tool", "overlayText": "short text on the image", "caption": "post caption"}]
 }
-metaAds must have 3 items and socialPosts 3 items. budgetPlan shares must add up to 100.`;
+metaAds must have 3 items, socialPosts 3 items, videoScripts 2 items and creatives 4 items. budgetPlan shares must add up to 100.
+Match the requested tone and use the offer exactly as given. Only fill the content types the user asked for; use empty arrays for the rest.`;
 
 export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): Promise<AdPack> {
 	const brief = [
@@ -89,6 +110,9 @@ export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): 
 		`Monthly budget: Rs ${req.budgetInr}`,
 		req.audience ? `Target customers: ${req.audience}` : '',
 		req.location ? `Location: ${req.location}` : '',
+		req.tone ? `Tone: ${req.tone}` : '',
+		req.offer ? `Offer to promote: ${req.offer}` : '',
+		req.formats.length ? `Content wanted: ${req.formats.join(', ')}` : '',
 	]
 		.filter(Boolean)
 		.join('\n');
@@ -99,7 +123,7 @@ export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): 
 			{ role: 'system', content: SYSTEM },
 			{ role: 'user', content: brief },
 		],
-		{ maxTokens: 3000, temperature: 0.8 },
+		{ maxTokens: 4500, temperature: 0.8 },
 	);
 
 	const raw = parseJsonObject(text);

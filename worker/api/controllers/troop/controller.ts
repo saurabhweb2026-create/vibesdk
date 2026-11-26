@@ -72,7 +72,7 @@ export class TroopController extends BaseController {
 			const user = context.user!;
 			if (!(await canUseTroop(env, user.id, 'louie'))) return TroopController.createErrorResponse<SavedAdPack>(NOT_ALLOWED_LOUIE, 403);
 
-			const body = (await request.json()) as { appId?: string; goal?: string; budgetInr?: number; audience?: string; location?: string };
+			const body = (await request.json()) as { appId?: string; goal?: string; budgetInr?: number; audience?: string; location?: string; tone?: string; offer?: string; formats?: string[] };
 			const site = await getOwnedSite(env, user.id, String(body.appId ?? ''));
 			if (!site) return TroopController.createErrorResponse<SavedAdPack>('Website not found', 404);
 
@@ -88,6 +88,9 @@ export class TroopController extends BaseController {
 				budgetInr,
 				audience: String(body.audience ?? '').trim().slice(0, 200),
 				location: String(body.location ?? '').trim().slice(0, 100),
+				tone: String(body.tone ?? '').trim().slice(0, 60),
+				offer: String(body.offer ?? '').trim().slice(0, 200),
+				formats: Array.isArray(body.formats) ? body.formats.map((f) => String(f).slice(0, 40)).slice(0, 6) : [],
 			});
 			const saved = await saveAdPack(env, { userId: user.id, appId: site.id, goal, budgetInr, content: pack });
 			return TroopController.createSuccessResponse(saved);
