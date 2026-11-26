@@ -20,6 +20,7 @@ import {
 	useSidebar,
 } from '@cloudflare/kumo';
 import { useAuth } from '@/contexts/auth-context';
+import { BrandFace, BrandName } from '@/components/brand/brand-mark';
 import { useApps, useFavoriteApps, useRecentApps } from '@/hooks/use-apps';
 import { AppActionsDropdown } from '@/components/shared/AppActionsDropdown';
 import { OrangeButton } from '@/components/shared/OrangeButton';
@@ -262,10 +263,7 @@ export function AppSidebar() {
 			>
 				{isCollapsed ? (
 					<div className="relative flex size-9 items-center justify-center">
-						<CloudflareLogo
-							variant="glyph"
-							className="size-7 shrink-0 transition-opacity group-hover/sidebar:opacity-0 group-focus-within/sidebar:opacity-0"
-						/>
+						<BrandFace className="size-7 transition-opacity group-hover/sidebar:opacity-0 group-focus-within/sidebar:opacity-0" />
 						<Sidebar.Trigger
 							aria-label="Open sidebar"
 							className="absolute inset-0 flex size-9 items-center justify-center opacity-0 transition-opacity group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100"
@@ -277,13 +275,8 @@ export function AppSidebar() {
 							to="/"
 							className="flex min-w-0 flex-1 items-center gap-2.5 text-kumo-strong"
 						>
-							<CloudflareLogo
-								variant="glyph"
-								className="size-7 shrink-0"
-							/>
-							<span className="min-w-0 flex-1 truncate text-base font-black font-funky-mono uppercase tracking-wide">
-								Build
-							</span>
+							<BrandFace className="size-7" />
+							<BrandName className="min-w-0 flex-1 truncate text-sm" />
 						</Link>
 						<Sidebar.Trigger
 							aria-label="Collapse sidebar"

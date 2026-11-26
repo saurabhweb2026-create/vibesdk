@@ -1,7 +1,7 @@
 import type { RouteObject } from 'react-router';
 
 import App from './App';
-import Home from './routes/home';
+import HomeGate from './routes/home-gate';
 import Chat from './routes/chat/chat';
 import Profile from './routes/profile';
 import Settings from './routes/settings/index';
@@ -17,7 +17,7 @@ const routes = [
 		children: [
 			{
 				index: true,
-				Component: Home,
+				Component: HomeGate,
 			},
 			{
 				path: 'chat/:chatId',

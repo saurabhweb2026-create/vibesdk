@@ -55,11 +55,11 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
 	const [theme, setThemeState] = useState<Theme>(() => {
-		const savedTheme = localStorage.getItem('theme') as Theme | null;
+		const savedTheme = localStorage.getItem('mt-theme') as Theme | null;
 		const initial =
 			savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system'
 				? savedTheme
-				: 'system';
+				: 'dark';
 		// Apply before first paint so dark mode tokens (e.g. bg-bg-4) don't FOUC white
 		applyResolvedTheme(resolveTheme(initial, getSystemTheme()));
 		return initial;
@@ -79,7 +79,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
 	const setTheme = useCallback((newTheme: Theme) => {
 		setThemeState(newTheme);
-		localStorage.setItem('theme', newTheme);
+		localStorage.setItem('mt-theme', newTheme);
 	}, []);
 
 	const value = useMemo(
