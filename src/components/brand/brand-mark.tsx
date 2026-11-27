@@ -8,6 +8,17 @@ const FACE_BORDER = {
 
 const FACE_FILE = { caesar: 'jack', louie: 'john', jack: 'maria' } as const;
 
+export function BrandLogo({ className }: { className?: string }) {
+	return (
+		<img
+			src="/logo-512.png"
+			alt="AlwaysBro"
+			className={cn('shrink-0 object-contain', className)}
+			draggable={false}
+		/>
+	);
+}
+
 export function BrandFace({
 	className,
 	face = 'caesar',
@@ -37,7 +48,7 @@ export function BrandName({ className }: { className?: string }) {
 	return (
 		<span
 			className={cn(
-				'font-sans font-bold tracking-tight',
+				'font-display font-bold tracking-tight',
 				className,
 			)}
 		>

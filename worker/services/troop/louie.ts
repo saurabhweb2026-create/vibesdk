@@ -151,6 +151,7 @@ export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): 
 	const wantsMedia = req.formats.length === 0 || req.formats.some((f) => /video|creative/i.test(f));
 	const wantsCore = req.formats.length === 0 || req.formats.some((f) => !/video|creative/i.test(f));
 
+	let lastProblem = '';
 	const ask = async (schema: string, maxTokens: number): Promise<Record<string, unknown> | null> => {
 		for (let attempt = 0; attempt < 2; attempt += 1) {
 			try {
@@ -164,8 +165,10 @@ export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): 
 				);
 				const raw = parseJsonObject(text);
 				if (raw) return raw;
+				lastProblem = 'the answer was not valid JSON';
 				console.error('John: answer was not valid JSON', text.slice(0, 200));
 			} catch (error) {
+				lastProblem = error instanceof Error ? error.message.slice(0, 120) : 'AI call failed';
 				console.error('John: AI call failed', error);
 			}
 		}
@@ -173,7 +176,7 @@ export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): 
 	};
 
 	const [core, media] = await Promise.all([wantsCore ? ask(CORE_SCHEMA, 2800) : Promise.resolve({}), wantsMedia ? ask(MEDIA_SCHEMA, 2200) : Promise.resolve({})]);
-	if (!core && !media) throw new Error('John could not write the ads this time');
+	if (!core && !media) throw new Error(`John could not write the ads this time (${lastProblem || 'no answer'})`);
 	const pack = normalize({ ...(core ?? {}), ...(media ?? {}) });
 	const empty = pack.googleSearch.headlines.length === 0 && pack.metaAds.length === 0 && pack.socialPosts.length === 0 && pack.videoScripts.length === 0 && pack.creatives.length === 0;
 	if (empty) throw new Error('John could not write the ads this time');

@@ -29,14 +29,14 @@ export function UserMessage({ message }: { message: string }) {
 	const sanitizedMessage = sanitizeMessageForDisplay(message);
 
 	return (
-		<div className="flex flex-col gap-2 min-w-0">
-			<div className="flex items-center gap-2 mb-3">
-				<div className="size-5 flex items-center justify-center rounded-full bg-brand text-white shrink-0">
-					<span className="text-[10px]">U</span>
+		<div className="flex flex-col gap-2 min-w-0 rounded-2xl border border-[#f59e0b]/30 bg-gradient-to-br from-[#f59e0b]/15 via-[#ec4899]/10 to-transparent p-3.5">
+			<div className="flex items-center gap-2 mb-1">
+				<div className="size-6 flex items-center justify-center rounded-full bg-gradient-to-br from-[#f59e0b] to-[#ec4899] text-white shrink-0">
+					<span className="text-[11px] font-display font-semibold">Y</span>
 				</div>
-				<div className="font-medium text-text-50">You</div>
+				<div className="font-display font-semibold text-[#f59e0b]">You</div>
 			</div>
-			<Markdown className="text-text-primary/80">{sanitizedMessage}</Markdown>
+			<Markdown className="text-text-primary/90">{sanitizedMessage}</Markdown>
 		</div>
 	);
 }
@@ -857,11 +857,11 @@ export function AIMessage({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 min-w-0">
-			<div className="font-mono font-medium text-text-50 flex items-center gap-2 mb-3">
-				<img src="/troop/jack-face.webp" alt="" className="size-6 shrink-0 rounded-full object-cover" />
+		<div className="flex flex-col gap-2 min-w-0 rounded-2xl border border-[#3b82f6]/30 bg-gradient-to-br from-[#3b82f6]/15 via-[#8b5cf6]/10 to-transparent p-3.5">
+			<div className="font-display font-semibold text-[#60a5fa] flex items-center gap-2 mb-1">
+				<img src="/troop/jack-face.webp" alt="" className="size-7 shrink-0 rounded-full object-cover ring-2 ring-[#3b82f6]/60" />
 				Jack
-				{isThinking && <Sparkles className="size-3 text-orange-400 animate-pulse" />}
+				{isThinking && <Sparkles className="size-3 text-[#f59e0b] animate-pulse" />}
 			</div>
 			<div className={cn(isThinking && 'animate-pulse')}>
 				<AssistantParts parts={resolvedParts} streaming={!!isThinking} />

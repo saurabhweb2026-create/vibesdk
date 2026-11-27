@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ThumbsUp } from 'lucide-react';
+import { BrandLogo } from './brand-mark';
 import { WavingCharacter } from './waving-character';
 
 const QUESTION = 'Are you available?...';
@@ -109,9 +109,9 @@ export function SplashScreen() {
 									initial={{ opacity: 0, scale: 0, rotate: -25 }}
 									animate={{ opacity: 1, scale: [0, 1.25, 1], rotate: [-25, 10, 0] }}
 									transition={{ duration: 0.7 }}
-									className="flex size-28 items-center justify-center rounded-3xl bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] text-[#facc15] shadow-[0_0_50px_rgba(79,70,229,0.55)]"
+									className="flex size-32 items-center justify-center drop-shadow-[0_0_40px_rgba(59,130,246,0.6)]"
 								>
-									<ThumbsUp className="size-16" fill="currentColor" strokeWidth={1.5} />
+									<BrandLogo className="size-32" />
 								</motion.span>
 								<span className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
 									Always<span className="text-[#818cf8]">Bro</span>

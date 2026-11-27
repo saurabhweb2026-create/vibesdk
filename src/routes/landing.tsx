@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion';
-import { BrandFace, BrandName } from '@/components/brand/brand-mark';
+import { BrandLogo, BrandName } from '@/components/brand/brand-mark';
 import { useAuthModal } from '@/components/auth/AuthModalProvider';
 import { THEME_STORAGE_KEY } from '@/lib/themes';
 import { LandingShowcase } from './landing-sections/landing-showcase';
@@ -37,7 +37,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 			<header className="sticky top-0 z-20 border-b border-white/5 bg-[#08080c]/70 backdrop-blur-xl">
 				<div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
 					<div className="flex items-center gap-2.5">
-						<BrandFace className="size-9" />
+						<BrandLogo className="size-10" />
 						<BrandName className="text-base" />
 					</div>
 					<nav className="hidden items-center gap-8 text-sm text-white/65 md:flex">

@@ -20,7 +20,7 @@ import {
 	useSidebar,
 } from '@cloudflare/kumo';
 import { useAuth } from '@/contexts/auth-context';
-import { BrandFace, BrandName } from '@/components/brand/brand-mark';
+import { BrandFace, BrandLogo, BrandName } from '@/components/brand/brand-mark';
 import { useApps, useFavoriteApps, useRecentApps } from '@/hooks/use-apps';
 import { AppActionsDropdown } from '@/components/shared/AppActionsDropdown';
 import { OrangeButton } from '@/components/shared/OrangeButton';
@@ -263,7 +263,7 @@ export function AppSidebar() {
 			>
 				{isCollapsed ? (
 					<div className="relative flex size-9 items-center justify-center">
-						<BrandFace className="size-7 transition-opacity group-hover/sidebar:opacity-0 group-focus-within/sidebar:opacity-0" />
+						<BrandLogo className="size-8 transition-opacity group-hover/sidebar:opacity-0 group-focus-within/sidebar:opacity-0" />
 						<Sidebar.Trigger
 							aria-label="Open sidebar"
 							className="absolute inset-0 flex size-9 items-center justify-center opacity-0 transition-opacity group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100"
@@ -275,7 +275,7 @@ export function AppSidebar() {
 							to="/"
 							className="flex min-w-0 flex-1 items-center gap-2.5 text-kumo-strong"
 						>
-							<BrandFace className="size-7" />
+							<BrandLogo className="size-8" />
 							<BrandName className="min-w-0 flex-1 truncate text-sm" />
 						</Link>
 						<Sidebar.Trigger
@@ -378,32 +378,38 @@ export function AppSidebar() {
 							>
 								Discover
 							</Sidebar.MenuButton>
+							<div className="mt-2 px-2 font-display text-[11px] font-semibold uppercase tracking-widest text-kumo-subtle">
+								Your crew
+							</div>
 							<Sidebar.MenuButton
+								className="font-display text-[15px] hover:bg-[#ec4899]/10"
 								active={pathname === '/louie'}
-								icon={<BrandFace face="louie" className="size-5 -mr-1" />}
+								icon={<BrandFace face="louie" className="size-7 -mr-1 ring-2 ring-[#ec4899]/60" />}
 								id="louie-link"
 								tooltip="John, ads"
 								onClick={() => navigate('/louie')}
 							>
-								John · Ads
+								John · Ads and posts
 							</Sidebar.MenuButton>
 							<Sidebar.MenuButton
+								className="font-display text-[15px] hover:bg-[#14b8a6]/10"
 								active={pathname === '/jack'}
-								icon={<BrandFace face="jack" className="size-5 -mr-1" />}
+								icon={<BrandFace face="jack" className="size-7 -mr-1 ring-2 ring-[#14b8a6]/60" />}
 								id="jack-link"
 								tooltip="Maria, support"
 								onClick={() => navigate('/jack')}
 							>
-								Maria · Support
+								Maria · Customer chat
 							</Sidebar.MenuButton>
 							<Sidebar.MenuButton
+								className="font-display text-[15px] hover:bg-[#3b82f6]/10"
 								active={pathname === '/team'}
-								icon={<BrandFace face="caesar" className="size-5 -mr-1" />}
+								icon={<BrandFace face="caesar" className="size-7 -mr-1 ring-2 ring-[#3b82f6]/60" />}
 								id="team-link"
 								tooltip="Your team"
 								onClick={() => navigate('/team')}
 							>
-								Your team
+								Your team page
 							</Sidebar.MenuButton>
 						</Sidebar.Menu>
 

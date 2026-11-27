@@ -18,6 +18,7 @@ import { useAuthGuard } from '../hooks/useAuthGuard';
 import { usePaginatedApps } from '@/hooks/use-paginated-apps';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { AppCard } from '@/components/shared/AppCard';
+import { SidekickRow, ThemeChips } from './home-sections/home-playground';
 import { LinkButton, cn } from '@cloudflare/kumo';
 import { useImageUpload } from '@/hooks/use-image-upload';
 import { useDragDrop } from '@/hooks/use-drag-drop';
@@ -132,11 +133,11 @@ export default function Home() {
 	});
 
 	// Discover section should appear only when enough apps are available and loading is done
-	const discoverReady = useMemo(
-		() => !loading && (apps?.length ?? 0) > 0,
-		[loading, apps],
+	const discoverApps = useMemo(
+		() => (apps ?? []).filter((a) => Boolean(a.screenshotUrl)).slice(0, 9),
+		[apps],
 	);
-	const discoverApps = useMemo(() => (apps ?? []).slice(0, 9), [apps]);
+	const discoverReady = !loading && discoverApps.length > 0;
 
 	const handleCreateApp = (query: string, mode: ProjectType) => {
 		if (query.length > MAX_AGENT_QUERY_LENGTH) {
@@ -220,9 +221,9 @@ export default function Home() {
 						)}
 					>
 						<div className="mb-6 sm:mb-7 grid gap-2">
-							<h1 className="w-full text-center text-[clamp(1.75rem,4.5vw,2.5rem)] font-semibold leading-[1.12] text-kumo-strong/80 z-20">
+							<h1 className="w-full text-center font-display text-[clamp(2rem,5.5vw,3.25rem)] font-bold leading-[1.1] text-kumo-strong z-20">
 								What should we{' '}
-								<span className="font-funky-mono font-bold text-[1.1em] tracking-tighter uppercase text-brand-emphasis">
+								<span className="bg-gradient-to-r from-[#3b82f6] via-[#ec4899] to-[#14b8a6] bg-clip-text text-transparent">
 									build
 								</span>{' '}
 								today?
@@ -264,6 +265,12 @@ export default function Home() {
 									/>
 								) : undefined
 							}
+						/>
+						<ThemeChips
+							onPick={(id) => {
+								const theme = THEMES.find((t) => t.id === id);
+								if (theme) setQuery(`[theme:${theme.id}] Build my website using the ${theme.name} theme. `);
+							}}
 						/>
 					</motion.div>
 				</div>
@@ -359,6 +366,7 @@ export default function Home() {
 						</motion.section>
 					)}
 				</AnimatePresence>
+				<SidekickRow />
 			</LayoutGroup>
 
 			{/* Usage limit dialogs */}

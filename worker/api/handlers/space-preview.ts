@@ -36,6 +36,28 @@ function getSpaceNamespace(env: Env): DurableObjectNamespace | null {
 	return spaceNamespace ?? null;
 }
 
+// Adds Maria's chat bubble to preview pages. The widget script stays silent until the owner switches Maria on.
+function withSupportWidget(response: Response, env: Env, spaceName: string): Response {
+	const type = response.headers.get('Content-Type') ?? '';
+	if (!type.includes('text/html') || !env.CUSTOM_DOMAIN || !response.body) return response;
+	const script = `<script src="https://${env.CUSTOM_DOMAIN}/api/jack/widget.js?bot=${encodeURIComponent(spaceName)}" async></script>`;
+	let present = false;
+	return new HTMLRewriter()
+		.on('script', {
+			element(el) {
+				if ((el.getAttribute('src') ?? '').includes('/api/jack/widget.js')) present = true;
+			},
+		})
+		.on('body', {
+			element(el) {
+				el.onEndTag((end) => {
+					if (!present) end.before(script, { html: true });
+				});
+			},
+		})
+		.transform(response);
+}
+
 async function forwardToSpacePreview(
 	request: Request,
 	env: Env,
@@ -51,7 +73,8 @@ async function forwardToSpacePreview(
 	const forwardedRequest = new Request(forwardedUrl.toString(), request);
 	const stub = namespace.get(namespace.idFromName(spaceName));
 	try {
-		return await stub.fetch(forwardedRequest);
+		const response = await stub.fetch(forwardedRequest);
+		return withSupportWidget(response, env, spaceName);
 	} catch (e) {
 		// A SpaceDO failure (e.g. no deployment yet, or a build error in the
 		// generated app) must not escape as an unhandled exception — that

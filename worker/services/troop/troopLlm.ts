@@ -9,15 +9,27 @@ interface CompletionResponse {
 	choices?: Array<{ message?: { content?: string | null } }>;
 }
 
+interface WorkersAiAnswer {
+	response?: string | null;
+	result?: { response?: string | null };
+	choices?: Array<{ message?: { content?: string | null }; text?: string | null }>;
+}
+
 interface WorkersAiRunner {
-	run(model: string, input: { messages: TroopChatMessage[]; max_tokens: number; temperature: number }): Promise<{ response?: string } | string>;
+	run(model: string, input: { messages: TroopChatMessage[]; max_tokens: number; temperature: number }): Promise<WorkersAiAnswer | string>;
+}
+
+// Workers AI models answer in either the classic { response } shape or the OpenAI-style { choices } shape.
+function readWorkersAiText(out: WorkersAiAnswer | string): string {
+	if (typeof out === 'string') return out;
+	return out.response || out.result?.response || out.choices?.[0]?.message?.content || out.choices?.[0]?.text || '';
 }
 
 // TROOP_MODEL can name a Cloudflare Workers AI model (starts with @cf/) to run John and Maria on the free daily allowance.
 async function completeWithWorkersAi(env: Env, model: string, messages: TroopChatMessage[], maxTokens: number, temperature: number): Promise<string> {
 	const runner = env.AI as unknown as WorkersAiRunner;
 	const out = await runner.run(model, { messages, max_tokens: maxTokens, temperature });
-	const text = typeof out === 'string' ? out : out.response;
+	const text = readWorkersAiText(out);
 	if (!text) throw new Error('AI returned an empty answer');
 	return text;
 }
@@ -30,7 +42,11 @@ export async function troopComplete(
 ): Promise<string> {
 	const override = (env as unknown as Record<string, string | undefined>).TROOP_MODEL?.trim();
 	if (override && override.startsWith('@cf/')) {
-		return completeWithWorkersAi(env, override, messages, opts.maxTokens ?? 2048, opts.temperature ?? 0.7);
+		try {
+			return await completeWithWorkersAi(env, override, messages, opts.maxTokens ?? 2048, opts.temperature ?? 0.7);
+		} catch (error) {
+			console.error('Workers AI failed, falling back to the gateway model', error);
+		}
 	}
 
 	const gateway = env.AI.gateway(env.CLOUDFLARE_AI_GATEWAY);
@@ -45,7 +61,7 @@ export async function troopComplete(
 			'cf-aig-authorization': `Bearer ${token}`,
 		},
 		body: JSON.stringify({
-			model: override || THINK_MODEL_ID,
+			model: override && !override.startsWith('@cf/') ? override : THINK_MODEL_ID,
 			messages,
 			max_tokens: opts.maxTokens ?? 2048,
 			temperature: opts.temperature ?? 0.7,
