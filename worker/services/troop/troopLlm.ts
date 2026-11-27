@@ -10,8 +10,8 @@ interface CompletionResponse {
 }
 
 interface WorkersAiAnswer {
-	response?: string | null;
-	result?: { response?: string | null };
+	response?: unknown;
+	result?: { response?: unknown };
 	choices?: Array<{ message?: { content?: string | null }; text?: string | null }>;
 }
 
@@ -22,7 +22,9 @@ interface WorkersAiRunner {
 // Workers AI models answer in either the classic { response } shape or the OpenAI-style { choices } shape.
 function readWorkersAiText(out: WorkersAiAnswer | string): string {
 	if (typeof out === 'string') return out;
-	return out.response || out.result?.response || out.choices?.[0]?.message?.content || out.choices?.[0]?.text || '';
+	const picked = out.response || out.result?.response || out.choices?.[0]?.message?.content || out.choices?.[0]?.text || '';
+	// Workers AI parses JSON answers into objects; hand callers text either way.
+	return typeof picked === 'string' ? picked : JSON.stringify(picked);
 }
 
 // TROOP_MODEL can name a Cloudflare Workers AI model (starts with @cf/) to run John and Maria on the free daily allowance.
