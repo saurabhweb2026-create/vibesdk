@@ -49,7 +49,7 @@ export async function composeCreative(imageUrl: string, overlayText: string, bra
 
 	ctx.fillStyle = '#ffffff';
 	ctx.textBaseline = 'alphabetic';
-	ctx.font = '700 86px Fredoka, Inter, system-ui, sans-serif';
+	ctx.font = '700 86px 'DM Sans', Inter, system-ui, sans-serif';
 	const lines = wrap(ctx, overlayText, w - 160);
 	const lineHeight = 98;
 	let y = h - 170 - (lines.length - 1) * lineHeight;

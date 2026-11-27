@@ -46,11 +46,11 @@
 
 @theme {
 	--font-sans:
-		'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+		'DM Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
 		'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-	--font-display: 'Fredoka', 'Inter', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
 	--font-funky-mono: var(--font-sans);
-	--font-mono: 'Inter', ui-sans-serif, system-ui, sans-serif;
+	--font-mono: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
 
 	--color-brand: #4f46e5;
 	--color-text: #000;
@@ -544,10 +544,17 @@
 }
 
 @font-face {
-	font-family: 'Fredoka';
-	src: url('/fonts/Fredoka.woff') format('woff');
-	font-weight: 300 700;
+	font-family: 'DM Sans';
+	src: url('/fonts/DMSans-Variable.woff') format('woff');
+	font-weight: 100 1000;
+	font-style: normal;
 	font-display: swap;
+}
+
+.font-label {
+	font-family: 'Departure Mono', ui-monospace, monospace;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
 }
 
 /* Animated colour backdrop. Palette comes from the active look (see lib/skins.ts). */

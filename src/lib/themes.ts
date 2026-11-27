@@ -15,3 +15,5 @@ export const THEMES: SiteTheme[] = [
 ];
 
 export const THEME_STORAGE_KEY = 'alwaysbro-theme';
+
+export const PROMPT_STORAGE_KEY = 'alwaysbro-first-prompt';

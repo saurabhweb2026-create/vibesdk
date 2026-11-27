@@ -13,7 +13,7 @@ export interface SkinLook {
 
 /** Palettes only; names and prices come from the server so they stay in one place. */
 export const SKIN_LOOKS: SkinLook[] = [
-	{ id: 'midnight', name: 'Midnight', tagline: 'Calm dark with a gentle glow', base: '#05060d', blobs: ['#4f46e5', '#ec4899', '#14b8a6'], kind: 'look', motion: 'full' },
+	{ id: 'midnight', name: 'Midnight', tagline: 'Clean, calm and quiet', base: '#0b0b0d', blobs: ['#334155', '#3f3f5a', '#1f4d44'], kind: 'look', motion: 'calm' },
 	{ id: 'sunset', name: 'Sunset Chai', tagline: 'Warm, toasty and cheerful', base: '#140806', blobs: ['#f97316', '#ec4899', '#f59e0b'], kind: 'look', motion: 'full' },
 	{ id: 'ocean', name: 'Ocean Splash', tagline: 'Cool waves, clear head', base: '#04101a', blobs: ['#0ea5e9', '#14b8a6', '#6366f1'], kind: 'look', motion: 'full' },
 	{ id: 'bubblegum', name: 'Bubblegum', tagline: 'Pink, loud and proud', base: '#16060f', blobs: ['#ec4899', '#a855f7', '#f472b6'], kind: 'look', motion: 'full' },

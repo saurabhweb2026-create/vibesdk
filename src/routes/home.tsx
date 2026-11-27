@@ -1,4 +1,4 @@
-import { THEMES, THEME_STORAGE_KEY } from '@/lib/themes';
+import { PROMPT_STORAGE_KEY, THEMES, THEME_STORAGE_KEY } from '@/lib/themes';
 import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import { ArrowUpRight, Loader2 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -34,6 +34,11 @@ import { startCloudflareConnect } from '@/lib/cloudflare-connect';
 /** A theme picked on the landing page becomes the first words of the builder prompt, once. */
 function takeThemePrompt(): string {
 	try {
+		const typed = sessionStorage.getItem(PROMPT_STORAGE_KEY);
+		if (typed) {
+			sessionStorage.removeItem(PROMPT_STORAGE_KEY);
+			return typed;
+		}
 		const id = sessionStorage.getItem(THEME_STORAGE_KEY);
 		if (!id) return '';
 		sessionStorage.removeItem(THEME_STORAGE_KEY);
