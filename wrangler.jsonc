@@ -146,6 +146,7 @@
 		}
 	],
 	"vars": {
+		"META_APP_ID": "1013186861253891",
 		"TEMPLATES_REPOSITORY": "https://github.com/cloudflare/vibesdk-templates",
 		"CLOUDFLARE_ACCOUNT_ID": "d189e2100261fc9cdafc7fc8a337f6f6",
 		"CLOUDFLARE_AI_GATEWAY": "monkeytrooprs-v2-gateway",
