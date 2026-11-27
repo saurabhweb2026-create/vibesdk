@@ -5,6 +5,7 @@ import { createLogger } from '../../../logger';
 import type { AgentId } from '../../../services/credits/purchasedCredits';
 import { AdPack, generateAdPack } from '../../../services/troop/louie';
 import { defaultGreeting } from '../../../services/troop/jack';
+import { buildImagePrompt, generateCreativeImage } from '../../../services/troop/louieImage';
 import { addXp } from '../../../services/troop/team';
 import {
 	InboxConversation,
@@ -105,6 +106,26 @@ export class TroopController extends BaseController {
 			this.logger.error('Error generating ads:', error);
 			const message = error instanceof Error && error.message.startsWith('John') ? error.message : 'John could not write the ads. Please try again.';
 			return TroopController.createErrorResponse<SavedAdPack>(message, 500);
+		}
+	}
+
+	static async generateImage(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<{ image: string }>>> {
+		try {
+			const user = context.user!;
+			if (!(await canUseTroop(env, user.id, 'louie'))) return TroopController.createErrorResponse<{ image: string }>(NOT_ALLOWED_LOUIE, 403);
+			const body = (await request.json()) as { appId?: string; prompt?: string; style?: string };
+			const site = await getOwnedSite(env, user.id, String(body.appId ?? ''));
+			if (!site) return TroopController.createErrorResponse<{ image: string }>('Website not found', 404);
+			const idea = String(body.prompt ?? '').trim();
+			if (idea.length < 5) return TroopController.createErrorResponse<{ image: string }>('Tell John what the picture should show', 400);
+			if (!(await takeUsage(env, `louie-img:${user.id}`, 60))) {
+				return TroopController.createErrorResponse<{ image: string }>('John has drawn enough pictures for today. Please try again tomorrow.', 429);
+			}
+			const image = await generateCreativeImage(env, buildImagePrompt(idea, site.title, String(body.style ?? 'photo')));
+			return TroopController.createSuccessResponse({ image });
+		} catch (error) {
+			this.logger.error('Error drawing creative:', error);
+			return TroopController.createErrorResponse<{ image: string }>('John could not draw that picture. Please try again.', 500);
 		}
 	}
 

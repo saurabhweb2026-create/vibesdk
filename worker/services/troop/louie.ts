@@ -12,8 +12,8 @@ export interface AdPack {
 	budgetPlan: Array<{ channel: string; sharePercent: number; why: string }>;
 	firstWeek: string[];
 	hashtags: { broad: string[]; niche: string[]; local: string[] };
-	videoScripts: Array<{ title: string; hook: string; scenes: string[]; shots: Array<{ seconds: number; text: string }>; voiceover: string; cta: string }>;
-	creatives: Array<{ format: string; visual: string; overlayText: string; caption: string }>;
+	videoScripts: Array<{ title: string; hook: string; scenes: string[]; shots: Array<{ seconds: number; text: string; imagePrompt: string }>; voiceover: string; cta: string }>;
+	creatives: Array<{ format: string; visual: string; imagePrompt: string; overlayText: string; caption: string }>;
 }
 
 export interface AdRequest {
@@ -82,6 +82,7 @@ function normalize(raw: Record<string, unknown>): AdPack {
 			shots: objList(v.shots, 5).map((sh) => ({
 				seconds: Math.max(1, Math.min(4, Math.round(Number(sh.seconds) || 2))),
 				text: str(sh.text, 70),
+				imagePrompt: str(sh.imagePrompt, 300),
 			})),
 			voiceover: str(v.voiceover, 600),
 			cta: str(v.cta, 80),
@@ -89,6 +90,7 @@ function normalize(raw: Record<string, unknown>): AdPack {
 		creatives: objList(raw.creatives, 4).map((c) => ({
 			format: str(c.format, 40),
 			visual: str(c.visual, 300),
+			imagePrompt: str(c.imagePrompt, 400),
 			overlayText: str(c.overlayText, 80),
 			caption: str(c.caption, 300),
 		})),
@@ -107,6 +109,8 @@ Craft rules you always follow:
 - Platform limits: Google headlines at most 30 characters and descriptions at most 90. Meta primary text shows about 125 characters before "more", so put the hook and the offer first; Meta headline at most 40 characters. Instagram captions allow 2,200 characters but show about 125 before "more".
 - Hashtags: Instagram and TikTok take at most 5, Facebook 1 or 2, YouTube Shorts 1 to 5. Per post use 3 to 5. Build the hashtags field from three groups: broad (3 to 5), niche for the exact product or service (5 to 8), local for the city, area or festival (2 to 5). Never use banned or spammy tags. These are relevant ideas, not live trend data.
 - Short videos are 6 to 10 seconds in total and vertical. Shot 1 is the hook and appears in the first second. Middle shots show the product, the result or proof from the brief. The last shot is the call to action. Keep on-screen text under 7 words per shot.
+- Story and trend sense: build every video as a tiny story with a beginning (the problem or desire), a middle (the product making it better) and an end (the action). Use formats people already watch: before and after, a day in the life, three quick tips, a surprising detail, behind the scenes, a customer moment. Mention trending formats or sounds only as ideas to try, never as claims about what is trending right now.
+- Image prompts describe one real, photographable scene with a clear subject, never abstract art or a collage, and never ask for text in the picture.
 - Time suggestions around Indian festivals or seasons only when the brief or location makes it relevant.`;
 
 const CORE_SCHEMA = `Answer with ONE JSON object only, no markdown, with exactly these keys:
@@ -126,8 +130,8 @@ Match the requested tone and use the offer exactly as given. Only fill the conte
 
 const MEDIA_SCHEMA = `Answer with ONE JSON object only, no markdown, with exactly these keys:
 {
- "videoScripts": [{"title": "short title", "hook": "first 3 seconds line", "scenes": ["4 to 5 shot descriptions, each one line"], "shots": [{"seconds": 2, "text": "on-screen text, at most 7 words"}], "voiceover": "full voiceover for a 20 to 30 second reel", "cta": "closing line"}],
- "creatives": [{"format": "Instagram post | Story | Banner", "visual": "what the image shows, ready to give to a designer or image tool", "overlayText": "short text on the image", "caption": "post caption"}]
+ "videoScripts": [{"title": "short title", "hook": "first 3 seconds line", "scenes": ["4 to 5 shot descriptions, each one line"], "shots": [{"seconds": 2, "text": "on-screen text, at most 7 words", "imagePrompt": "one concrete picture for this shot: subject, setting, light, camera angle, mood. No text in the picture"}], "voiceover": "full voiceover for a 20 to 30 second reel", "cta": "closing line"}],
+ "creatives": [{"format": "Instagram post | Story | Banner", "visual": "what the image shows in plain words", "imagePrompt": "an image-generator prompt: subject, setting, lighting, camera angle, mood, colours. 30 to 50 words. Never ask for text, letters or logos in the picture", "overlayText": "short text on the image", "caption": "post caption"}]
 }
 videoScripts must have 2 items, each with 4 or 5 shots whose seconds add up to between 6 and 10. creatives must have 4 items.
 Match the requested tone and use the offer exactly as given. Fill only the content types the user asked for; use empty arrays for the rest.`;
@@ -175,7 +179,7 @@ export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): 
 		return null;
 	};
 
-	const [core, media] = await Promise.all([wantsCore ? ask(CORE_SCHEMA, 2800) : Promise.resolve({}), wantsMedia ? ask(MEDIA_SCHEMA, 2200) : Promise.resolve({})]);
+	const [core, media] = await Promise.all([wantsCore ? ask(CORE_SCHEMA, 2800) : Promise.resolve({}), wantsMedia ? ask(MEDIA_SCHEMA, 3200) : Promise.resolve({})]);
 	if (!core && !media) throw new Error(`John could not write the ads this time (${lastProblem || 'no answer'})`);
 	const pack = normalize({ ...(core ?? {}), ...(media ?? {}) });
 	const empty = pack.googleSearch.headlines.length === 0 && pack.metaAds.length === 0 && pack.socialPosts.length === 0 && pack.videoScripts.length === 0 && pack.creatives.length === 0;

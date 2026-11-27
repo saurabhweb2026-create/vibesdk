@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { apiClient, type LouieAdContent, type LouiePack } from '@/lib/api-client';
-import { renderShortVideo } from '@/lib/short-video';
+import { composeCreative, loadImage } from '@/lib/creative-image';
+import { renderShortVideo, type VideoShot } from '@/lib/short-video';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
 const GOALS = ['Get more bookings', 'Sell more products', 'Bring more visitors', 'Launch something new'];
@@ -29,45 +30,114 @@ function Row({ text }: { text: string }) {
 	);
 }
 
-function MakeVideoButton({ script }: { script: NonNullable<LouieAdContent['videoScripts']>[number] }) {
-	const [busy, setBusy] = useState(false);
+const IMAGE_SHOTS = 3;
+
+function MakeVideoButton({ script, appId }: { script: NonNullable<LouieAdContent['videoScripts']>[number]; appId: string }) {
+	const [busy, setBusy] = useState('');
 	const [url, setUrl] = useState<string | null>(null);
 	const [ext, setExt] = useState('webm');
 
-	const make = async () => {
-		setBusy(true);
+	const make = async (withPictures: boolean) => {
+		setBusy(withPictures ? 'John is drawing the scenes…' : 'Making your video…');
 		try {
-			const { blob } = await renderShortVideo({ shots: script.shots ?? [], cta: script.cta, brand: script.title, accent: PINK });
+			const shots: VideoShot[] = (script.shots ?? []).map((sh) => ({ seconds: sh.seconds, text: sh.text }));
+			if (withPictures) {
+				const wanted = (script.shots ?? [])
+					.map((sh, i) => ({ i, prompt: sh.imagePrompt ?? '' }))
+					.filter((x) => x.prompt.length > 4)
+					.slice(0, IMAGE_SHOTS);
+				for (const [n, w] of wanted.entries()) {
+					setBusy(`John is drawing scene ${n + 1} of ${wanted.length}…`);
+					const res = await apiClient.generateLouieImage({ appId, prompt: w.prompt });
+					if (res.data?.image) shots[w.i].image = await loadImage(res.data.image);
+				}
+				// Scenes without their own picture reuse the nearest drawn one so the video stays full of visuals.
+				shots.forEach((sh, i) => {
+					if (sh.image) return;
+					sh.image = shots.slice(0, i).reverse().find((x) => x.image)?.image ?? shots.find((x) => x.image)?.image ?? null;
+				});
+				setBusy('Putting the video together…');
+			}
+			const { blob } = await renderShortVideo({ shots, cta: script.cta, brand: script.title, accent: PINK, music: withPictures });
 			if (url) URL.revokeObjectURL(url);
 			setExt(blob.type.includes('mp4') ? 'mp4' : 'webm');
 			setUrl(URL.createObjectURL(blob));
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : 'Could not make the video');
 		}
-		setBusy(false);
+		setBusy('');
 	};
 
 	return (
 		<div className="mt-2 flex flex-wrap items-center gap-3">
 			<button
 				type="button"
-				disabled={busy}
-				onClick={make}
+				disabled={!!busy}
+				onClick={() => make(true)}
+				className="rounded-full px-4 py-1.5 text-sm font-semibold text-black disabled:opacity-50"
+				style={{ background: PINK }}
+			>
+				{busy || 'Make a video with pictures and music'}
+			</button>
+			<button
+				type="button"
+				disabled={!!busy}
+				onClick={() => make(false)}
 				className="rounded-full border border-white/15 px-4 py-1.5 text-sm text-white hover:bg-white/10 disabled:opacity-50"
 			>
-				{busy ? 'Making your video…' : 'Make a short video'}
+				Quick text video
 			</button>
 			{url && (
 				<a href={url} download={`${script.title || 'video'}.${ext}`} className="text-sm text-[#a5b4fc] underline">
 					Download video
 				</a>
 			)}
-			{url && <video src={url} controls className="mt-2 h-72 rounded-xl border border-white/10" />}
+			{url && <video src={url} controls className="mt-2 h-80 rounded-xl border border-white/10" />}
 		</div>
 	);
 }
 
-function AdPackView({ c }: { c: LouieAdContent }) {
+function CreativeCard({ creative, appId, brand }: { creative: NonNullable<LouieAdContent['creatives']>[number]; appId: string; brand: string }) {
+	const [busy, setBusy] = useState(false);
+	const [picture, setPicture] = useState<string | null>(null);
+
+	const draw = async () => {
+		setBusy(true);
+		try {
+			const res = await apiClient.generateLouieImage({ appId, prompt: creative.imagePrompt || creative.visual });
+			if (!res.data?.image) throw new Error('John could not draw that picture');
+			setPicture(await composeCreative(res.data.image, creative.overlayText, brand, PINK));
+		} catch (e) {
+			toast.error(e instanceof Error ? e.message : 'Could not draw the picture');
+		}
+		setBusy(false);
+	};
+
+	return (
+		<div>
+			<Row text={`${creative.format}\nImage: ${creative.visual}\nText on image: ${creative.overlayText}\nCaption: ${creative.caption}`} />
+			<div className="mt-2 flex flex-wrap items-start gap-3">
+				<button
+					type="button"
+					disabled={busy}
+					onClick={draw}
+					className="rounded-full px-4 py-1.5 text-sm font-semibold text-black disabled:opacity-50"
+					style={{ background: PINK }}
+				>
+					{busy ? 'John is drawing…' : picture ? 'Draw another' : 'Draw this picture'}
+				</button>
+				{picture && (
+					<a href={picture} download={`${creative.overlayText || 'creative'}.png`} className="self-center text-sm text-[#a5b4fc] underline">
+						Download picture
+					</a>
+				)}
+			</div>
+			{picture && <img src={picture} alt={creative.overlayText} className="mt-3 h-96 rounded-xl border border-white/10" />}
+		</div>
+	);
+}
+
+function AdPackView({ c, appId, brand }: { c: LouieAdContent; appId: string; brand: string }) {
 	return (
 		<div className="mt-6 grid gap-4">
 			<Section title="The idea">
@@ -115,7 +185,7 @@ function AdPackView({ c }: { c: LouieAdContent }) {
 					{c.videoScripts.map((v, i) => (
 						<div key={i}>
 							<Row text={`${v.title}\nHook: ${v.hook}\n${v.scenes.map((sc, n) => `${n + 1}. ${sc}`).join('\n')}\nVoiceover: ${v.voiceover}\nEnd: ${v.cta}`} />
-							{!!v.shots?.length && <MakeVideoButton script={v} />}
+							{!!v.shots?.length && <MakeVideoButton script={v} appId={appId} />}
 						</div>
 					))}
 				</Section>
@@ -123,7 +193,7 @@ function AdPackView({ c }: { c: LouieAdContent }) {
 			{!!c.creatives?.length && (
 				<Section title="Creatives">
 					{c.creatives.map((cr, i) => (
-						<Row key={i} text={`${cr.format}\nImage: ${cr.visual}\nText on image: ${cr.overlayText}\nCaption: ${cr.caption}`} />
+						<CreativeCard key={i} creative={cr} appId={appId} brand={brand} />
 					))}
 				</Section>
 			)}
@@ -320,7 +390,7 @@ export default function LouiePage() {
 							))}
 						</div>
 					)}
-					{current && <AdPackView c={current.content} />}
+					{current && <AdPackView c={current.content} appId={current.appId} brand={sites.find((x) => x.id === current.appId)?.title ?? 'AlwaysBro'} />}
 				</>
 			)}
 		</div>

@@ -1366,6 +1366,10 @@ class ApiClient {
 		return this.request<TroopSitesData>('/api/troop/sites');
 	}
 
+	async generateLouieImage(body: { appId: string; prompt: string; style?: string }): Promise<ApiResponse<{ image: string }>> {
+		return this.request<{ image: string }>('/api/louie/image', { method: 'POST', body });
+	}
+
 	async generateLouieAds(body: LouieRequest): Promise<ApiResponse<LouiePack>> {
 		return this.request<LouiePack>('/api/louie/generate', { method: 'POST', body });
 	}
@@ -1499,8 +1503,8 @@ export type LouieAdContent = {
 	budgetPlan: Array<{ channel: string; sharePercent: number; why: string }>;
 	firstWeek: string[];
 	hashtags?: { broad: string[]; niche: string[]; local: string[] };
-	videoScripts?: Array<{ title: string; hook: string; scenes: string[]; shots?: Array<{ seconds: number; text: string }>; voiceover: string; cta: string }>;
-	creatives?: Array<{ format: string; visual: string; overlayText: string; caption: string }>;
+	videoScripts?: Array<{ title: string; hook: string; scenes: string[]; shots?: Array<{ seconds: number; text: string; imagePrompt?: string }>; voiceover: string; cta: string }>;
+	creatives?: Array<{ format: string; visual: string; imagePrompt?: string; overlayText: string; caption: string }>;
 };
 export type LouiePack = { id: string; appId: string; goal: string | null; budgetInr: number | null; createdAt: number; content: LouieAdContent };
 export type SkinData = { balance: number; skins: Array<{ id: string; name: string; price: number }>; owned: string[]; active: string };
