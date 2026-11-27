@@ -4,14 +4,16 @@ import { createApp } from './app';
 // import * as Sentry from '@sentry/cloudflare';
 // import { sentryOptions } from './observability/sentry';
 import { DORateLimitStore as BaseDORateLimitStore } from './services/rate-limit/DORateLimitStore';
-import { getPreviewDomain, getProtocolForHost, isSeparatePreviewDomain } from './utils/urls';
+import { buildSpacePreviewPath, getPreviewDomain, getProtocolForHost, isSeparatePreviewDomain } from './utils/urls';
 import { isOriginAllowed } from './config/security';
 import { isDev } from './utils/envs';
 import { proxyToSandbox } from './services/sandbox/request-handler';
 import { handleGitProtocolRequest, isGitProtocolRequest } from './api/handlers/git-protocol';
+import { appForHostname } from './services/domains/customDomains';
 import { handleJackPublic, isJackPublicPath } from './api/handlers/jack-public';
 import { handleRazorpayWebhook } from './services/credits/purchasedCredits';
 import {
+	forwardToSpacePreview,
 	handleSpacePreview,
 	matchSpacePreviewParams,
 } from './api/handlers/space-preview';
@@ -335,6 +337,15 @@ const worker = {
 		// Route 2: User App Request (e.g., xyz.build.cloudflare.dev or test.localhost)
 		if (isSubdomainRequest) {
 			return handleUserAppRequest(request, env);
+		}
+
+		// Route 3: a customer's own domain pointing at one of their websites
+		const connectedAppId = await appForHostname(env, hostname);
+		if (connectedAppId) {
+			const target = new URL(request.url);
+			target.hostname = env.CUSTOM_DOMAIN;
+			target.pathname = `${buildSpacePreviewPath(connectedAppId, 'main')}${pathname.replace(/^\//, '')}`;
+			return forwardToSpacePreview(new Request(target.toString(), request), env, connectedAppId);
 		}
 
 		return new Response('Not Found', { status: 404 });

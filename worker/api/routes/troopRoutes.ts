@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { AppEnv } from '../../types/appenv';
 import { TroopController } from '../controllers/troop/controller';
+import { DomainController } from '../controllers/domains/controller';
 import { TeamController } from '../controllers/team/controller';
 import { adaptController } from '../honoAdapter';
 import { AuthConfig, setAuthLevel } from '../../middleware/auth/routeAuth';
@@ -20,5 +21,8 @@ export function setupTroopRoutes(app: Hono<AppEnv>): void {
 	app.get('/api/skins', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.getSkins));
 	app.post('/api/skins/buy', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.buySkin));
 	app.post('/api/skins/equip', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.equipSkin));
+	app.get('/api/domains/:appId', setAuthLevel(AuthConfig.authenticated), adaptController(DomainController, DomainController.get));
+	app.post('/api/domains/:appId', setAuthLevel(AuthConfig.authenticated), adaptController(DomainController, DomainController.connect));
+	app.delete('/api/domains/:appId', setAuthLevel(AuthConfig.authenticated), adaptController(DomainController, DomainController.remove));
 	app.post('/api/team/bonus', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.bonus));
 }

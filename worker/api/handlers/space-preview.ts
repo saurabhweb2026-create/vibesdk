@@ -58,7 +58,7 @@ function withSupportWidget(response: Response, env: Env, spaceName: string): Res
 		.transform(response);
 }
 
-async function forwardToSpacePreview(
+export async function forwardToSpacePreview(
 	request: Request,
 	env: Env,
 	spaceName: string,

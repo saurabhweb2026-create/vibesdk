@@ -1366,6 +1366,18 @@ class ApiClient {
 		return this.request<TroopSitesData>('/api/troop/sites');
 	}
 
+	async getDomain(appId: string): Promise<ApiResponse<{ domain: DomainState | null }>> {
+		return this.request<{ domain: DomainState | null }>(`/api/domains/${encodeURIComponent(appId)}`);
+	}
+
+	async connectDomain(appId: string, hostname: string): Promise<ApiResponse<{ domain: DomainState }>> {
+		return this.request<{ domain: DomainState }>(`/api/domains/${encodeURIComponent(appId)}`, { method: 'POST', body: { hostname } });
+	}
+
+	async removeDomain(appId: string): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>(`/api/domains/${encodeURIComponent(appId)}`, { method: 'DELETE' });
+	}
+
 	async generateLouieImage(body: { appId: string; prompt: string; style?: string }): Promise<ApiResponse<{ image: string }>> {
 		return this.request<{ image: string }>('/api/louie/image', { method: 'POST', body });
 	}
@@ -1507,6 +1519,7 @@ export type LouieAdContent = {
 	creatives?: Array<{ format: string; visual: string; imagePrompt?: string; overlayText: string; caption: string }>;
 };
 export type LouiePack = { id: string; appId: string; goal: string | null; budgetInr: number | null; createdAt: number; content: LouieAdContent };
+export type DomainState = { hostname: string; status: 'pending' | 'active' | 'failed'; records: Array<{ type: 'CNAME' | 'TXT'; name: string; value: string }>; note: string };
 export type SkinData = { balance: number; skins: Array<{ id: string; name: string; price: number }>; owned: string[]; active: string };
 export type TeamOutfit = { id: string; name: string; price: number; color: string; perk: string };
 export type TeamMember = {

@@ -1,3 +1,4 @@
+import { DomainButton } from '@/components/domain-dialog';
 import {
 	useCallback,
 	useEffect,
@@ -438,6 +439,7 @@ function ChatSession() {
 							</Button>
 						</>
 					)}
+					{isOwner && app && <DomainButton appId={app.id} />}
 					{isOwner && app?.visibility === 'private' && (
 						<Button
 							variant="secondary"
