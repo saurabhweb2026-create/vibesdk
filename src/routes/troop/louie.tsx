@@ -16,7 +16,7 @@ type OnPost = (text: string, image?: string | null) => void;
 function Section({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<div className={PANEL}>
-			<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: PINK }}>
+			<div className="mb-3 font-label text-[11px]" style={{ color: PINK }}>
 				{title}
 			</div>
 			{children}
@@ -77,8 +77,8 @@ function MakeVideoButton({ script, appId }: { script: NonNullable<LouieAdContent
 				type="button"
 				disabled={!!busy}
 				onClick={() => make(true)}
-				className="rounded-full px-4 py-1.5 text-sm font-semibold text-black disabled:opacity-50"
-				style={{ background: PINK }}
+				className="rounded-full px-4 py-1.5 text-sm font-medium text-black disabled:opacity-50"
+				style={{ background: '#fff' }}
 			>
 				{busy || 'Make a video with pictures and music'}
 			</button>
@@ -91,7 +91,7 @@ function MakeVideoButton({ script, appId }: { script: NonNullable<LouieAdContent
 				Quick text video
 			</button>
 			{url && (
-				<a href={url} download={`${script.title || 'video'}.${ext}`} className="text-sm text-[#a5b4fc] underline">
+				<a href={url} download={`${script.title || 'video'}.${ext}`} className="text-sm text-[#8bf0c4] underline">
 					Download video
 				</a>
 			)}
@@ -124,13 +124,13 @@ function CreativeCard({ creative, appId, brand, onPost }: { creative: NonNullabl
 					type="button"
 					disabled={busy}
 					onClick={draw}
-					className="rounded-full px-4 py-1.5 text-sm font-semibold text-black disabled:opacity-50"
-					style={{ background: PINK }}
+					className="rounded-full px-4 py-1.5 text-sm font-medium text-black disabled:opacity-50"
+					style={{ background: '#fff' }}
 				>
 					{busy ? 'John is drawing…' : picture ? 'Draw another' : 'Draw this picture'}
 				</button>
 				{picture && (
-					<a href={picture} download={`${creative.overlayText || 'creative'}.png`} className="self-center text-sm text-[#a5b4fc] underline">
+					<a href={picture} download={`${creative.overlayText || 'creative'}.png`} className="self-center text-sm text-[#8bf0c4] underline">
 						Download picture
 					</a>
 				)}
@@ -172,7 +172,7 @@ function AdPackView({ c, appId, brand, onPost }: { c: LouieAdContent; appId: str
 				{c.metaAds.map((a, i) => (
 					<div key={i}>
 						<Row text={`${a.headline}\n${a.primaryText}\nButton: ${a.cta}`} />
-						<button type="button" onClick={() => onPost(`${a.headline}\n\n${a.primaryText}`)} className="mt-1 text-sm text-[#f9a8d4] underline">Post on Meta</button>
+						<button type="button" onClick={() => onPost(`${a.headline}\n\n${a.primaryText}`)} className="mt-1 text-sm text-[#8bf0c4] underline">Post on Meta</button>
 					</div>
 				))}
 			</Section>
@@ -180,7 +180,7 @@ function AdPackView({ c, appId, brand, onPost }: { c: LouieAdContent; appId: str
 				{c.socialPosts.map((p, i) => (
 					<div key={i}>
 						<Row text={`${p.caption}\n${p.hashtags.join(' ')}`} />
-						<button type="button" onClick={() => onPost(`${p.caption}\n\n${p.hashtags.join(' ')}`)} className="mt-1 text-sm text-[#f9a8d4] underline">Post on Meta</button>
+						<button type="button" onClick={() => onPost(`${p.caption}\n\n${p.hashtags.join(' ')}`)} className="mt-1 text-sm text-[#8bf0c4] underline">Post on Meta</button>
 					</div>
 				))}
 			</Section>
@@ -302,7 +302,7 @@ function MetaPanel({ status, refresh }: { status: MetaStatus | null; refresh: ()
 					(status.connected ? (
 						<button type="button" disabled={busy} onClick={() => void unlink()} className="text-sm text-white/60 underline">Disconnect</button>
 					) : (
-						<button type="button" disabled={busy} onClick={() => void connect()} className="rounded-full px-4 py-1.5 text-sm font-semibold text-black disabled:opacity-50" style={{ background: PINK }}>
+						<button type="button" disabled={busy} onClick={() => void connect()} className="rounded-full px-4 py-1.5 text-sm font-medium text-black disabled:opacity-50" style={{ background: '#fff' }}>
 							{busy ? 'Opening Meta…' : 'Connect Meta'}
 						</button>
 					))}
@@ -403,8 +403,8 @@ export default function LouiePage() {
 										onClick={() => setGoal(g)}
 										className="rounded-full border px-3 py-1.5 text-sm"
 										style={{
-											borderColor: goal === g ? PINK : 'rgba(255,255,255,0.15)',
-											background: goal === g ? `${PINK}22` : 'transparent',
+											borderColor: goal === g ? '#8bf0c4' : 'rgba(255,255,255,0.15)',
+											background: goal === g ? '#8bf0c41a' : 'transparent',
 											color: goal === g ? '#fff' : 'rgba(255,255,255,0.75)',
 										}}
 									>
@@ -423,8 +423,8 @@ export default function LouiePage() {
 											onClick={() => setFormats((cur) => (on ? cur.filter((x) => x !== f) : [...cur, f]))}
 											className="rounded-full border px-3 py-1.5 text-sm"
 											style={{
-												borderColor: on ? PINK : 'rgba(255,255,255,0.15)',
-												background: on ? `${PINK}22` : 'transparent',
+												borderColor: on ? '#8bf0c4' : 'rgba(255,255,255,0.15)',
+												background: on ? '#8bf0c41a' : 'transparent',
 												color: on ? '#fff' : 'rgba(255,255,255,0.75)',
 											}}
 										>
@@ -442,8 +442,8 @@ export default function LouiePage() {
 										onClick={() => setTone(t)}
 										className="rounded-full border px-3 py-1.5 text-sm"
 										style={{
-											borderColor: tone === t ? PINK : 'rgba(255,255,255,0.15)',
-											background: tone === t ? `${PINK}22` : 'transparent',
+											borderColor: tone === t ? '#8bf0c4' : 'rgba(255,255,255,0.15)',
+											background: tone === t ? '#8bf0c41a' : 'transparent',
 											color: tone === t ? '#fff' : 'rgba(255,255,255,0.75)',
 										}}
 									>
@@ -473,8 +473,8 @@ export default function LouiePage() {
 								type="button"
 								disabled={busy || formats.length === 0}
 								onClick={generate}
-								className="mt-5 rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-								style={{ background: PINK, boxShadow: `0 0 24px ${PINK}55` }}
+								className="mt-5 rounded-full px-6 py-2.5 text-sm font-medium text-black disabled:opacity-60"
+								style={{ background: '#fff' }}
 							>
 								{busy ? 'John is creating...' : 'Create my content'}
 							</button>
@@ -488,7 +488,7 @@ export default function LouiePage() {
 									type="button"
 									onClick={() => setShown(i)}
 									className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/75"
-									style={i === shown ? { borderColor: PINK, color: '#fff' } : undefined}
+									style={i === shown ? { borderColor: '#8bf0c4', color: '#fff' } : undefined}
 								>
 									{new Date(p.createdAt).toLocaleString()}
 								</button>

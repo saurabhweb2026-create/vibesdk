@@ -51,7 +51,7 @@ function TestChat({ appId, enabled }: { appId: string; enabled: boolean }) {
 
 	return (
 		<div className={PANEL}>
-			<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: LIME }}>
+			<div className="mb-3 font-label text-[11px]" style={{ color: LIME }}>
 				Try Maria
 			</div>
 			{!enabled && <div className="mb-3 text-sm text-white/60">Switch Maria on and press Save to try him here.</div>}
@@ -75,7 +75,7 @@ function TestChat({ appId, enabled }: { appId: string; enabled: boolean }) {
 				}}
 			>
 				<input className={INPUT} value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask a customer question" maxLength={500} />
-				<button type="submit" disabled={busy || !enabled} className="rounded-xl px-4 text-sm font-semibold text-black disabled:opacity-50" style={{ background: LIME }}>
+				<button type="submit" disabled={busy || !enabled} className="rounded-xl px-4 text-sm font-medium text-black disabled:opacity-50" style={{ background: '#fff' }}>
 					Send
 				</button>
 			</form>
@@ -156,11 +156,11 @@ export default function JackPage() {
 						<div className="grid gap-4">
 							<div className={PANEL}>
 								<div className="mb-3 flex items-center justify-between">
-									<div className="font-sans text-xs tracking-wide" style={{ color: LIME }}>
+									<div className="font-label text-[11px]" style={{ color: LIME }}>
 										What Maria knows
 									</div>
 									<label className="flex cursor-pointer items-center gap-2 text-sm text-white/85">
-										<input type="checkbox" checked={setup.enabled} onChange={(e) => patch({ enabled: e.target.checked })} className="size-4 accent-lime-500" />
+										<input type="checkbox" checked={setup.enabled} onChange={(e) => patch({ enabled: e.target.checked })} className="size-4 accent-[#8bf0c4]" />
 										Maria is on
 									</label>
 								</div>
@@ -187,8 +187,8 @@ export default function JackPage() {
 												onClick={() => patch({ tone: t.id })}
 												className="rounded-full border px-3 py-1.5 text-sm"
 												style={{
-													borderColor: setup.tone === t.id ? LIME : 'rgba(255,255,255,0.15)',
-													background: setup.tone === t.id ? `${LIME}22` : 'transparent',
+													borderColor: setup.tone === t.id ? '#8bf0c4' : 'rgba(255,255,255,0.15)',
+													background: setup.tone === t.id ? '#8bf0c41a' : 'transparent',
 												}}
 											>
 												{t.label}
@@ -200,7 +200,7 @@ export default function JackPage() {
 									<span className="mb-1 block text-xs text-white/50">First message customers see</span>
 									<input className={INPUT} value={setup.greeting} onChange={(e) => patch({ greeting: e.target.value })} maxLength={200} />
 								</label>
-								<button type="button" disabled={saving} onClick={save} className="rounded-full px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-60" style={{ background: LIME }}>
+								<button type="button" disabled={saving} onClick={save} className="rounded-full px-6 py-2.5 text-sm font-medium text-black disabled:opacity-60" style={{ background: '#fff' }}>
 									{saving ? 'Saving...' : 'Save'}
 								</button>
 							</div>
@@ -208,7 +208,7 @@ export default function JackPage() {
 							<TestChat appId={setup.appId} enabled={setup.enabled} />
 
 							<div className={PANEL}>
-								<div className="mb-2 font-sans text-xs tracking-wide" style={{ color: LIME }}>
+								<div className="mb-2 font-label text-[11px]" style={{ color: LIME }}>
 									Your website
 								</div>
 								{setup.enabled ? (
@@ -221,8 +221,8 @@ export default function JackPage() {
 												type="button"
 												disabled={saving}
 												onClick={connect}
-												className="rounded-full px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-60"
-												style={{ background: LIME }}
+												className="rounded-full px-6 py-2.5 text-sm font-medium text-black disabled:opacity-60"
+												style={{ background: '#fff' }}
 											>
 												Yes, connect
 											</button>
@@ -242,7 +242,7 @@ export default function JackPage() {
 							</div>
 
 							<div className={PANEL}>
-								<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: LIME }}>
+								<div className="mb-3 font-label text-[11px]" style={{ color: LIME }}>
 									Customers who left their details
 								</div>
 								{setup.leads.length === 0 && <div className="text-sm text-white/55">Nobody yet. When Maria cannot answer, he asks for a phone number or email and it shows here.</div>}
@@ -257,7 +257,7 @@ export default function JackPage() {
 							</div>
 
 							<div className={PANEL}>
-								<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: LIME }}>
+								<div className="mb-3 font-label text-[11px]" style={{ color: LIME }}>
 									Recent chats
 								</div>
 								{setup.conversations.length === 0 && <div className="text-sm text-white/55">No chats yet.</div>}

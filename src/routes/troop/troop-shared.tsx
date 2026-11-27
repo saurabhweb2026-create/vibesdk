@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { apiClient, type TroopSitesData } from '@/lib/api-client';
+import { GlyphMatrix } from '@/components/brand/glyph-matrix';
 
 export const PANEL = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5';
 export const INPUT =
@@ -60,19 +61,23 @@ export function CopyButton({ text, label }: { text: string; label?: string }) {
 
 export function TroopHeader({ face, name, color, role, line }: { face: string; name: string; color: string; role: string; line: string }) {
 	return (
-		<div className="mb-6 flex items-center gap-4">
-			<img
-				src={face}
-				alt={name}
-				className="size-16 rounded-full border-2 bg-[#120c0a] object-cover"
-				style={{ borderColor: color, boxShadow: `0 0 24px ${color}55` }}
-				draggable={false}
-			/>
-			<div>
-				<div className="font-sans text-xs tracking-wide" style={{ color }}>
-					{name} - {role}
+		<div className="relative mb-8 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-7 sm:px-8">
+			<GlyphMatrix className="opacity-50" />
+			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,#0b0b0d_20%,transparent_80%)]" />
+			<div className="relative flex items-center gap-5">
+				<img
+					src={face}
+					alt={name}
+					className="size-20 shrink-0 rounded-full bg-[#120c0a] object-cover ring-1 ring-white/20"
+					style={{ boxShadow: `0 0 40px ${color}40` }}
+					draggable={false}
+				/>
+				<div className="min-w-0">
+					<div className="font-label text-[11px]" style={{ color }}>
+						{name} / {role}
+					</div>
+					<div className="mt-1.5 text-2xl font-medium leading-tight tracking-[-0.03em] text-white sm:text-3xl">{line}</div>
 				</div>
-				<div className="text-lg font-semibold text-white">{line}</div>
 			</div>
 		</div>
 	);
@@ -91,7 +96,7 @@ export function SitePicker({
 		return (
 			<div className={PANEL}>
 				<div className="text-white">You have no websites yet.</div>
-				<a href="/" className="mt-2 inline-block text-sm text-[#a5b4fc] underline">
+				<a href="/" className="mt-2 inline-block text-sm text-[#8bf0c4] underline">
 					Ask Jack to build your first website
 				</a>
 			</div>

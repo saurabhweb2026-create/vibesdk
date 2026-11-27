@@ -166,7 +166,7 @@ export default function TeamPage() {
 	return (
 		<div className="mx-auto max-w-5xl px-5 py-8 text-white">
 			<title>Your team - AlwaysBro</title>
-			<h1 className="text-2xl font-semibold">Your team</h1>
+			<h1 className="text-4xl font-medium tracking-[-0.03em]">Your team</h1>
 			<p className="mt-1 text-sm text-white/60">
 				Jack, John and Maria grow as they work for you. Reward good work with a bonus and watch their story unfold.
 			</p>
@@ -179,7 +179,7 @@ export default function TeamPage() {
 							<MemberCard key={m.id} m={m} data={data} reload={reload} />
 						))}
 					</div>
-					<h2 className="mt-8 text-lg font-semibold">Outfit shop</h2>
+					<h2 className="mt-8 text-xl font-medium tracking-[-0.02em]">Outfit shop</h2>
 					<div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
 						{data.outfits.map((o) => {
 							const owned = data.owned.includes(o.id);

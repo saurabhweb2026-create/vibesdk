@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { FlowField } from './flow-field';
 import { GlyphMatrix } from './glyph-matrix';
 import { BrandLogo } from './brand-mark';
 import { WavingCharacter } from './waving-character';
@@ -69,8 +70,16 @@ export function SplashScreen() {
 					exit={{ opacity: 0 }}
 					transition={{ duration: 0.5 }}
 				>
-					<GlyphMatrix />
-					<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,#0b0b0d_25%,transparent_75%)]" />
+					<FlowField />
+					<GlyphMatrix className="opacity-40" />
+					<motion.div
+						aria-hidden
+						className="pointer-events-none absolute left-1/2 top-1/2 size-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(139,240,196,0.16),transparent_65%)]"
+						animate={reduceMotion ? undefined : { scale: [1, 1.18, 1], opacity: [0.6, 1, 0.6] }}
+						transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+					/>
+					<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(11,11,13,0.65)_0%,transparent_70%)]" />
+					<button type="button" onClick={finish} className="font-label absolute right-6 top-6 text-[11px] text-white/40 transition-colors hover:text-white">Skip</button>
 					<AnimatePresence mode="wait">
 						{!showBrand ? (
 							<motion.div
@@ -79,8 +88,8 @@ export function SplashScreen() {
 								exit={{ opacity: 0, y: -10 }}
 								transition={{ duration: 0.3 }}
 							>
-								<p className="min-h-[1.5em] text-center text-3xl font-medium tracking-[-0.02em] sm:text-5xl">
-									<span className="font-label mb-3 block min-h-[1.2em] text-xs font-normal text-white/50 sm:text-sm">{FULL_TEXT.slice(0, Math.min(typed, LEAD.length))}</span>
+								<p className="min-h-[1.5em] text-center text-4xl font-medium tracking-[-0.035em] sm:text-7xl">
+									<span className="font-label mb-5 block min-h-[1.2em] text-xs font-normal text-[#8bf0c4]/80 sm:text-sm">{FULL_TEXT.slice(0, Math.min(typed, LEAD.length))}</span>
 									{typed > LEAD.length + 1 && FULL_TEXT.slice(LEAD.length + 1, typed)}
 									<span className="ml-0.5 inline-block w-[2px] animate-pulse bg-[#8bf0c4] align-middle">&nbsp;</span>
 								</p>
@@ -112,7 +121,7 @@ export function SplashScreen() {
 								>
 									<BrandLogo className="size-32" />
 								</motion.span>
-								<span className="text-4xl font-medium tracking-[-0.03em] sm:text-6xl">
+								<span className="text-5xl font-medium tracking-[-0.04em] sm:text-7xl">
 									Always<span className="text-[#8bf0c4]">Bro</span>
 								</span>
 								<div className="mt-2 flex items-end gap-4 sm:gap-8">
