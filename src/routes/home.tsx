@@ -234,14 +234,12 @@ export default function Home() {
 						)}
 					>
 						<div className="mb-6 sm:mb-7 grid gap-2">
-							<h1 className="w-full text-center font-display text-[clamp(2rem,5.5vw,3.25rem)] font-bold leading-[1.1] text-kumo-strong z-20">
-								<span className="mb-1 block bg-gradient-to-r from-[#f59e0b] via-[#ec4899] to-[#8b5cf6] bg-clip-text text-transparent">
+							<h1 className="w-full text-center font-display text-[clamp(2rem,5.5vw,3.25rem)] font-medium leading-[1.1] tracking-[-0.03em] text-kumo-strong z-20">
+								<span className="mb-1 block text-[#8bf0c4]">
 									Hey {greetingName}!
 								</span>
 								What should we{' '}
-								<span className="bg-gradient-to-r from-[#3b82f6] via-[#ec4899] to-[#14b8a6] bg-clip-text text-transparent">
-									build
-								</span>{' '}
+								<span>build</span>{' '}
 								today?
 							</h1>
 						</div>
