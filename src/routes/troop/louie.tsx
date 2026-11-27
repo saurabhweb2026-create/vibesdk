@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { apiClient, type LouieAdContent, type LouiePack } from '@/lib/api-client';
+import { renderShortVideo } from '@/lib/short-video';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
 const GOALS = ['Get more bookings', 'Sell more products', 'Bring more visitors', 'Launch something new'];
@@ -24,6 +25,44 @@ function Row({ text }: { text: string }) {
 		<div className="flex items-start justify-between gap-3 border-b border-white/5 py-2 text-sm text-white/90 last:border-0">
 			<span className="min-w-0 whitespace-pre-wrap break-words">{text}</span>
 			<CopyButton text={text} />
+		</div>
+	);
+}
+
+function MakeVideoButton({ script }: { script: NonNullable<LouieAdContent['videoScripts']>[number] }) {
+	const [busy, setBusy] = useState(false);
+	const [url, setUrl] = useState<string | null>(null);
+	const [ext, setExt] = useState('webm');
+
+	const make = async () => {
+		setBusy(true);
+		try {
+			const { blob } = await renderShortVideo({ shots: script.shots ?? [], cta: script.cta, brand: script.title, accent: PINK });
+			if (url) URL.revokeObjectURL(url);
+			setExt(blob.type.includes('mp4') ? 'mp4' : 'webm');
+			setUrl(URL.createObjectURL(blob));
+		} catch (e) {
+			toast.error(e instanceof Error ? e.message : 'Could not make the video');
+		}
+		setBusy(false);
+	};
+
+	return (
+		<div className="mt-2 flex flex-wrap items-center gap-3">
+			<button
+				type="button"
+				disabled={busy}
+				onClick={make}
+				className="rounded-full border border-white/15 px-4 py-1.5 text-sm text-white hover:bg-white/10 disabled:opacity-50"
+			>
+				{busy ? 'Making your video…' : 'Make a short video'}
+			</button>
+			{url && (
+				<a href={url} download={`${script.title || 'video'}.${ext}`} className="text-sm text-[#a5b4fc] underline">
+					Download video
+				</a>
+			)}
+			{url && <video src={url} controls className="mt-2 h-72 rounded-xl border border-white/10" />}
 		</div>
 	);
 }
@@ -63,13 +102,21 @@ function AdPackView({ c }: { c: LouieAdContent }) {
 					<Row key={i} text={`${p.caption}\n${p.hashtags.join(' ')}`} />
 				))}
 			</Section>
+			{!!c.hashtags && (c.hashtags.broad.length + c.hashtags.niche.length + c.hashtags.local.length > 0) && (
+				<Section title="Hashtag ideas">
+					<Row text={`Broad: ${c.hashtags.broad.join(' ')}\nNiche: ${c.hashtags.niche.join(' ')}\nLocal: ${c.hashtags.local.join(' ')}`} />
+				</Section>
+			)}
 			<Section title="WhatsApp message">
 				<Row text={c.whatsappMessage} />
 			</Section>
 			{!!c.videoScripts?.length && (
 				<Section title="Video scripts">
 					{c.videoScripts.map((v, i) => (
-						<Row key={i} text={`${v.title}\nHook: ${v.hook}\n${v.scenes.map((sc, n) => `${n + 1}. ${sc}`).join('\n')}\nVoiceover: ${v.voiceover}\nEnd: ${v.cta}`} />
+						<div key={i}>
+							<Row text={`${v.title}\nHook: ${v.hook}\n${v.scenes.map((sc, n) => `${n + 1}. ${sc}`).join('\n')}\nVoiceover: ${v.voiceover}\nEnd: ${v.cta}`} />
+							{!!v.shots?.length && <MakeVideoButton script={v} />}
+						</div>
 					))}
 				</Section>
 			)}

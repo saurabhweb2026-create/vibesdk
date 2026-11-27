@@ -1486,7 +1486,8 @@ export type LouieAdContent = {
 	whatsappMessage: string;
 	budgetPlan: Array<{ channel: string; sharePercent: number; why: string }>;
 	firstWeek: string[];
-	videoScripts?: Array<{ title: string; hook: string; scenes: string[]; voiceover: string; cta: string }>;
+	hashtags?: { broad: string[]; niche: string[]; local: string[] };
+	videoScripts?: Array<{ title: string; hook: string; scenes: string[]; shots?: Array<{ seconds: number; text: string }>; voiceover: string; cta: string }>;
 	creatives?: Array<{ format: string; visual: string; overlayText: string; caption: string }>;
 };
 export type LouiePack = { id: string; appId: string; goal: string | null; budgetInr: number | null; createdAt: number; content: LouieAdContent };

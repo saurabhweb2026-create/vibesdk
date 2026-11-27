@@ -10,7 +10,8 @@ export interface AdPack {
 	whatsappMessage: string;
 	budgetPlan: Array<{ channel: string; sharePercent: number; why: string }>;
 	firstWeek: string[];
-	videoScripts: Array<{ title: string; hook: string; scenes: string[]; voiceover: string; cta: string }>;
+	hashtags: { broad: string[]; niche: string[]; local: string[] };
+	videoScripts: Array<{ title: string; hook: string; scenes: string[]; shots: Array<{ seconds: number; text: string }>; voiceover: string; cta: string }>;
 	creatives: Array<{ format: string; visual: string; overlayText: string; caption: string }>;
 }
 
@@ -43,6 +44,7 @@ function objList(v: unknown, maxItems: number): Array<Record<string, unknown>> {
 
 function normalize(raw: Record<string, unknown>): AdPack {
 	const google = (raw.googleSearch ?? {}) as Record<string, unknown>;
+	const hashtagGroup = (raw.hashtags ?? {}) as Record<string, unknown>;
 	return {
 		summary: str(raw.summary, 400),
 		audience: strList(raw.audience, 6, 120),
@@ -67,10 +69,19 @@ function normalize(raw: Record<string, unknown>): AdPack {
 			why: str(b.why, 200),
 		})),
 		firstWeek: strList(raw.firstWeek, 7, 200),
+		hashtags: {
+			broad: strList(hashtagGroup.broad, 5, 40),
+			niche: strList(hashtagGroup.niche, 8, 40),
+			local: strList(hashtagGroup.local, 5, 40),
+		},
 		videoScripts: objList(raw.videoScripts, 3).map((v) => ({
 			title: str(v.title, 80),
 			hook: str(v.hook, 160),
 			scenes: strList(v.scenes, 6, 200),
+			shots: objList(v.shots, 5).map((sh) => ({
+				seconds: Math.max(1, Math.min(4, Math.round(Number(sh.seconds) || 2))),
+				text: str(sh.text, 70),
+			})),
 			voiceover: str(v.voiceover, 600),
 			cta: str(v.cta, 80),
 		})),
@@ -83,8 +94,17 @@ function normalize(raw: Record<string, unknown>): AdPack {
 	};
 }
 
-const SYSTEM = `You are John, the advertising specialist of the AlwaysBro AI team. You write ready-to-use ad material for small businesses in India.
-Write in clear, simple English. Be specific to the business. Never invent prices, offers or claims that are not in the brief.
+const SYSTEM = `You are John, the advertising and social media specialist of the AlwaysBro AI team. You write ready-to-use marketing material for small businesses in India.
+Write in clear, simple English. Be specific to the business. Never invent prices, offers, awards or claims that are not in the brief.
+
+Craft rules you always follow:
+- Every ad and post opens with a hook in the first line: a concrete benefit, a question the customer really asks, or a sharp problem. Use the problem-agitate-solve or attention-interest-desire pattern, not both in one piece.
+- One message and one call to action per piece. Prefer verbs: Book, Order, Call, Visit, Get.
+- Google headlines carry the main keyword and a benefit. Meta primary text is short, scannable and ends on the call to action.
+- Hashtags: no banned or spammy tags. Mix three groups: broad (high reach, 3 to 5), niche (the exact product or service, 5 to 8) and local (city, area or festival, 2 to 5). These are relevant ideas, not live trend data.
+- Short videos are 6 to 10 seconds in total and vertical. Shot 1 is the hook, the middle shots show the product or result, the last shot is the call to action. Keep on-screen text under 7 words per shot.
+- Suggest timing around Indian festivals or seasons only when the brief or location makes it relevant.
+
 Answer with ONE JSON object only, no markdown, with exactly these keys:
 {
  "summary": "2 sentences: the angle of the campaign",
@@ -92,13 +112,14 @@ Answer with ONE JSON object only, no markdown, with exactly these keys:
  "googleSearch": {"headlines": ["6 headlines, each at most 30 characters"], "descriptions": ["3 descriptions, each at most 90 characters"], "keywords": ["8 to 10 search keywords"]},
  "metaAds": [{"primaryText": "short ad text", "headline": "short headline", "cta": "button text"}],
  "socialPosts": [{"caption": "post caption", "hashtags": ["#tag"]}],
+ "hashtags": {"broad": ["#tag"], "niche": ["#tag"], "local": ["#tag"]},
  "whatsappMessage": "one short broadcast message",
  "budgetPlan": [{"channel": "name", "sharePercent": 50, "why": "one sentence"}],
  "firstWeek": ["5 simple actions for the first 7 days"],
- "videoScripts": [{"title": "short title", "hook": "first 3 seconds line", "scenes": ["4 to 5 shot descriptions, each one line"], "voiceover": "full voiceover for a 20 to 30 second reel", "cta": "closing line"}],
+ "videoScripts": [{"title": "short title", "hook": "first 3 seconds line", "scenes": ["4 to 5 shot descriptions, each one line"], "shots": [{"seconds": 2, "text": "on-screen text, at most 7 words"}], "voiceover": "full voiceover for a 20 to 30 second reel", "cta": "closing line"}],
  "creatives": [{"format": "Instagram post | Story | Banner", "visual": "what the image shows, ready to give to a designer or image tool", "overlayText": "short text on the image", "caption": "post caption"}]
 }
-metaAds must have 3 items, socialPosts 3 items, videoScripts 2 items and creatives 4 items. budgetPlan shares must add up to 100.
+metaAds must have 3 items, socialPosts 3 items, videoScripts 2 items and creatives 4 items. Each video has 4 or 5 shots whose seconds add up to between 6 and 10. budgetPlan shares must add up to 100.
 Match the requested tone and use the offer exactly as given. Only fill the content types the user asked for; use empty arrays for the rest.`;
 
 export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): Promise<AdPack> {
