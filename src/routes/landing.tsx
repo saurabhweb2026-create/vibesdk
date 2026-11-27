@@ -61,7 +61,18 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 				</button>
 			</header>
 
-			<section className="mx-auto max-w-4xl px-5 pb-6 pt-10 text-center sm:pt-16">
+			<motion.section
+				initial={reduce ? false : { opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.6 }}
+				className="relative mx-auto max-w-4xl px-5 pb-6 pt-10 text-center sm:pt-16"
+			>
+				<motion.div
+					aria-hidden
+					className="pointer-events-none absolute left-1/2 top-0 -z-10 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-[#4f46e5]/25 blur-3xl"
+					animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [1, 1.08, 1] }}
+					transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+				/>
 				<p className="mb-4 font-sans text-xs tracking-wide text-[#a5b4fc]">
 					Your AI team
 				</p>
@@ -76,13 +87,15 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 					not have to.
 				</p>
 				<div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-					<button
+					<motion.button
 						type="button"
 						onClick={onEnter}
+						whileHover={reduce ? undefined : { scale: 1.05 }}
+						whileTap={reduce ? undefined : { scale: 0.97 }}
 						className="rounded-full bg-[#4f46e5] px-7 py-3 text-base font-semibold text-white shadow-[0_0_30px_rgba(79,70,229,0.4)] hover:bg-[#6366f1]"
 					>
 						Start building free
-					</button>
+					</motion.button>
 					<a
 						href="#plans"
 						className="rounded-full border border-white/20 px-6 py-3 text-base text-white/90 hover:bg-white/10"
@@ -90,7 +103,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 						See plans
 					</a>
 				</div>
-			</section>
+			</motion.section>
 
 			<section className="mx-auto grid max-w-5xl grid-cols-1 gap-4 px-5 py-10 sm:grid-cols-3">
 				{TROOP.map((c, i) => (
@@ -100,6 +113,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true }}
 						transition={{ duration: 0.5, delay: i * 0.12 }}
+						whileHover={reduce ? undefined : { y: -6, scale: 1.02 }}
 						className="flex flex-col items-center rounded-2xl border border-white/10 bg-white/[0.03] px-5 pb-6 pt-5 text-center"
 						style={{ boxShadow: `0 0 40px ${c.color}14` }}
 					>
@@ -112,9 +126,10 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 								filter: `drop-shadow(0 0 18px ${c.color}88)`,
 								opacity: 1,
 							}}
-							animate={reduce ? undefined : { y: [0, -6, 0] }}
+							animate={reduce ? undefined : { y: [0, -8, 0], rotate: [-1.5, 1.5, -1.5] }}
+							whileHover={reduce ? undefined : { scale: 1.08, rotate: [0, -6, 6, -4, 0], transition: { duration: 0.6 } }}
 							transition={{
-								duration: 2.8,
+								duration: 3.2,
 								repeat: Infinity,
 								ease: 'easeInOut',
 								delay: i * 0.4,
