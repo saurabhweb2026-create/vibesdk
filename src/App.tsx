@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { AuthProvider } from './contexts/auth-context';
+import { AuroraBackground } from './components/brand/aurora-background';
 import { AuthModalProvider } from './components/auth/AuthModalProvider';
 import { ThemeProvider } from './contexts/theme-context';
 import { LimitsProvider } from './contexts/limits-context';
@@ -36,6 +37,7 @@ export default function App() {
 							<AppsQuerySync />
 							<LimitsProvider>
 								<AuthModalProvider>
+									<AuroraBackground />
 									<AppLayout>
 										<Toasty>
 											<AppLinkProvider>

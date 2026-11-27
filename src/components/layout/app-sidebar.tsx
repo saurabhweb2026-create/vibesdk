@@ -26,6 +26,7 @@ import { AppActionsDropdown } from '@/components/shared/AppActionsDropdown';
 import { OrangeButton } from '@/components/shared/OrangeButton';
 import { AuthButton } from '@/components/auth/auth-button';
 import { useUsageLimitsBadgeState } from '@/components/usage-limits-badge';
+import { SkinPicker } from './skin-picker';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { startCloudflareConnect } from '@/lib/cloudflare-connect';
 
@@ -677,6 +678,7 @@ export function AppSidebar() {
 								/>
 							</div>
 						)}
+						<SkinPicker className="size-9 shrink-0 rounded-lg hover:bg-white/10" />
 						<ThemeToggle
 							align="end"
 							className="size-9 shrink-0 rounded-lg"

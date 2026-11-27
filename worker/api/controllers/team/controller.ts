@@ -2,6 +2,7 @@ import { BaseController } from '../baseController';
 import { RouteContext } from '../../types/route-context';
 import { ApiResponse, ControllerResponse } from '../types';
 import { createLogger } from '../../../logger';
+import { SkinData, buySkin, equipSkin, loadSkins } from '../../../services/troop/skins';
 import { TeamData, buyOutfit, equipOutfit, giveBonus, loadTeam, renameMember } from '../../../services/troop/team';
 
 interface TeamBody {
@@ -47,6 +48,26 @@ export class TeamController extends BaseController {
 			await equipOutfit(env, context.user!.id, String(body.agentId ?? ''), body.outfitId ? String(body.outfitId) : null);
 			return { ok: true };
 		}, 'Could not change the outfit');
+	}
+
+	static async getSkins(_request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<SkinData>>> {
+		return this.handle(() => loadSkins(env, context.user!.id), 'Could not load the looks');
+	}
+
+	static async buySkin(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<{ ok: boolean }>>> {
+		const body = (await request.json()) as { skinId?: string };
+		return this.handle(async () => {
+			await buySkin(env, context.user!.id, String(body.skinId ?? ''));
+			return { ok: true };
+		}, 'Could not unlock the look');
+	}
+
+	static async equipSkin(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<{ ok: boolean }>>> {
+		const body = (await request.json()) as { skinId?: string };
+		return this.handle(async () => {
+			await equipSkin(env, context.user!.id, String(body.skinId ?? ''));
+			return { ok: true };
+		}, 'Could not switch the look');
 	}
 
 	static async bonus(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<{ reply: string }>>> {

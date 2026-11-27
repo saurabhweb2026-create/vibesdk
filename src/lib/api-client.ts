@@ -1390,6 +1390,18 @@ class ApiClient {
 		return this.request<{ ok: boolean }>('/api/team/outfit/equip', { method: 'POST', body: { agentId, outfitId } });
 	}
 
+	async getSkins(): Promise<ApiResponse<SkinData>> {
+		return this.request<SkinData>('/api/skins');
+	}
+
+	async buySkin(skinId: string): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>('/api/skins/buy', { method: 'POST', body: { skinId } });
+	}
+
+	async equipSkin(skinId: string): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>('/api/skins/equip', { method: 'POST', body: { skinId } });
+	}
+
 	async giveBonus(agentId: AgentId, amount: number): Promise<ApiResponse<{ reply: string }>> {
 		return this.request<{ reply: string }>('/api/team/bonus', { method: 'POST', body: { agentId, amount } });
 	}
@@ -1491,6 +1503,7 @@ export type LouieAdContent = {
 	creatives?: Array<{ format: string; visual: string; overlayText: string; caption: string }>;
 };
 export type LouiePack = { id: string; appId: string; goal: string | null; budgetInr: number | null; createdAt: number; content: LouieAdContent };
+export type SkinData = { balance: number; skins: Array<{ id: string; name: string; price: number }>; owned: string[]; active: string };
 export type TeamOutfit = { id: string; name: string; price: number; color: string; perk: string };
 export type TeamMember = {
 	id: AgentId;
