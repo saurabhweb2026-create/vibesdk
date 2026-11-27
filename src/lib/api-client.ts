@@ -1374,6 +1374,26 @@ class ApiClient {
 		return this.request<{ packs: LouiePack[] }>(`/api/louie/packs?appId=${encodeURIComponent(appId)}`);
 	}
 
+	async getTeam(): Promise<ApiResponse<TeamData>> {
+		return this.request<TeamData>('/api/team');
+	}
+
+	async renameTeamMember(agentId: AgentId, name: string): Promise<ApiResponse<{ name: string }>> {
+		return this.request<{ name: string }>('/api/team/name', { method: 'PUT', body: { agentId, name } });
+	}
+
+	async buyOutfit(outfitId: string): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>('/api/team/outfit/buy', { method: 'POST', body: { outfitId } });
+	}
+
+	async equipOutfit(agentId: AgentId, outfitId: string | null): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>('/api/team/outfit/equip', { method: 'POST', body: { agentId, outfitId } });
+	}
+
+	async giveBonus(agentId: AgentId, amount: number): Promise<ApiResponse<{ reply: string }>> {
+		return this.request<{ reply: string }>('/api/team/bonus', { method: 'POST', body: { agentId, amount } });
+	}
+
 	async getJackSetup(appId: string): Promise<ApiResponse<JackSetupData>> {
 		return this.request<JackSetupData>(`/api/jack/bot?appId=${encodeURIComponent(appId)}`);
 	}
@@ -1470,6 +1490,26 @@ export type LouieAdContent = {
 	creatives?: Array<{ format: string; visual: string; overlayText: string; caption: string }>;
 };
 export type LouiePack = { id: string; appId: string; goal: string | null; budgetInr: number | null; createdAt: number; content: LouieAdContent };
+export type TeamOutfit = { id: string; name: string; price: number; color: string; perk: string };
+export type TeamMember = {
+	id: AgentId;
+	name: string;
+	role: string;
+	outfit: string | null;
+	xp: number;
+	level: number;
+	nextLevelXp: number | null;
+	morale: number;
+	story: string[];
+};
+export type TeamData = {
+	canCustomize: boolean;
+	balance: number;
+	members: TeamMember[];
+	outfits: TeamOutfit[];
+	owned: string[];
+	bonusAmounts: number[];
+};
 export type JackTurn = { role: 'user' | 'assistant'; content: string };
 export type JackSetupData = {
 	appId: string;

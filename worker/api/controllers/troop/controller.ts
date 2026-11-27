@@ -5,6 +5,7 @@ import { createLogger } from '../../../logger';
 import type { AgentId } from '../../../services/credits/purchasedCredits';
 import { AdPack, generateAdPack } from '../../../services/troop/louie';
 import { defaultGreeting } from '../../../services/troop/jack';
+import { addXp } from '../../../services/troop/team';
 import {
 	InboxConversation,
 	InboxLead,
@@ -93,6 +94,7 @@ export class TroopController extends BaseController {
 				formats: Array.isArray(body.formats) ? body.formats.map((f) => String(f).slice(0, 40)).slice(0, 6) : [],
 			});
 			const saved = await saveAdPack(env, { userId: user.id, appId: site.id, goal, budgetInr, content: pack });
+			await addXp(env, user.id, 'louie', 25);
 			return TroopController.createSuccessResponse(saved);
 		} catch (error) {
 			this.logger.error('Error generating ads:', error);

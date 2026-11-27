@@ -396,6 +396,15 @@ export function AppSidebar() {
 							>
 								Maria · Support
 							</Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								active={pathname === '/team'}
+								icon={<BrandFace face="caesar" className="size-5 -mr-1" />}
+								id="team-link"
+								tooltip="Your team"
+								onClick={() => navigate('/team')}
+							>
+								Your team
+							</Sidebar.MenuButton>
 						</Sidebar.Menu>
 
 						{user && (

@@ -10,6 +10,7 @@ import AppView from './routes/app';
 import DiscoverPage from './routes/discover';
 import LouiePage from './routes/troop/louie';
 import JackPage from './routes/troop/jack';
+import TeamPage from './routes/troop/team';
 import { ProtectedRoute } from './routes/protected-route';
 
 const routes = [
@@ -62,6 +63,14 @@ const routes = [
 				element: (
 					<ProtectedRoute>
 						<LouiePage />
+					</ProtectedRoute>
+				),
+			},
+			{
+				path: 'team',
+				element: (
+					<ProtectedRoute>
+						<TeamPage />
 					</ProtectedRoute>
 				),
 			},
