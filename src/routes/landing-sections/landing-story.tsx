@@ -97,8 +97,9 @@ function ProgressDots({ progress }: { progress: MotionValue<number> }) {
 
 function ProgressDot({ index, color, progress }: { index: number; color: string; progress: MotionValue<number> }) {
 	const c = (index + 0.5) / STEPS.length;
-	const scaleX = useTransform(progress, [c - 0.2, c, c + 0.2], [1, 3, 1]);
-	const opacity = useTransform(progress, [c - 0.2, c, c + 0.2], [0.3, 1, 0.3]);
+	const range = [Math.max(0, c - 0.2), c, Math.min(1, c + 0.2)];
+	const scaleX = useTransform(progress, range, [1, 3, 1]);
+	const opacity = useTransform(progress, range, [0.3, 1, 0.3]);
 	return <motion.span className="h-1.5 w-3 rounded-full" style={{ background: color, scaleX, opacity }} />;
 }
 
