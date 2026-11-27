@@ -71,7 +71,7 @@ export function GlobalHeader() {
 							))}
 					</div>
 
-					<div className="flex items-center justify-end gap-1.5 shrink-0">
+					<div className="flex min-w-0 max-w-[65%] items-center justify-end gap-1.5 overflow-x-auto whitespace-nowrap sm:max-w-none [&>*]:shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 						   <BuyCredits />
 						{content?.trailing}
 						{!authLoading && !user && (

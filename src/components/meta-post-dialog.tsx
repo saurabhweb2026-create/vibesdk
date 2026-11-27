@@ -79,7 +79,7 @@ export function MetaPostDialog({ appId, initialText, image, status, onClose, onD
 
 	return createPortal(
 		<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={onClose}>
-			<div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/10 bg-[#0e0e12] p-6 text-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+			<div className="max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/10 bg-[#0e0e12] p-5 text-white shadow-2xl sm:p-6" onClick={(e) => e.stopPropagation()}>
 				<div className="flex items-start justify-between">
 					<h2 className="text-2xl font-medium">Post with John</h2>
 					<button type="button" onClick={onClose} className="rounded-full bg-white/10 px-3 py-1 text-sm hover:bg-white/20">Close</button>

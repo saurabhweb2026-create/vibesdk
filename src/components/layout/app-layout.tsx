@@ -62,7 +62,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 			<HeaderProvider>
 				<SidebarKeyboardShortcut />
 				<AppSidebar />
-				<main className="bg-kumo-canvas flex flex-col h-screen relative flex-1 min-w-0 overflow-hidden">
+				<main className="bg-kumo-canvas flex flex-col h-dvh relative flex-1 min-w-0 overflow-hidden">
 					<GlobalHeader />
 					<div className="flex-1 min-h-0 overflow-auto bg-kumo-canvas">
 						{children || <Outlet />}

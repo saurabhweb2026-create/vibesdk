@@ -165,6 +165,9 @@ function ChatSession() {
 	// Manual refresh trigger for preview
 	const [manualRefreshTrigger, setManualRefreshTrigger] = useState(0);
 
+	// Below the large breakpoint the chat and the preview share one screen, so one is shown at a time.
+	const [mobilePane, setMobilePane] = useState<'chat' | 'preview'>('chat');
+
 	// Deploy gate popup (backend-reported Cloudflare connection failures)
 	const [showDeployGateDialog, setShowDeployGateDialog] = useState<React.ReactElement | null>(null);
 	const handleCloudflareDeployGate = useCallback((code: CloudflareDeploymentErrorCode) => {
@@ -1081,10 +1084,33 @@ function ChatSession() {
 				{headerTitle ? `${headerTitle} - Build` : 'Chat - Build'}
 			</title>
 			<div className="size-full flex flex-col min-h-0 text-text-primary">
+				{showMainView && (
+					<div className="flex shrink-0 gap-1 border-b border-kumo-line p-1.5 lg:hidden" role="tablist" aria-label="Chat or preview">
+						{(['chat', 'preview'] as const).map((pane) => (
+							<button
+								key={pane}
+								type="button"
+								role="tab"
+								aria-selected={mobilePane === pane}
+								onClick={() => setMobilePane(pane)}
+								className={cn(
+									'flex-1 rounded-lg py-1.5 text-sm font-medium capitalize transition-colors',
+									mobilePane === pane ? 'bg-kumo-elevated text-kumo-strong' : 'text-kumo-subtle',
+								)}
+							>
+								{pane}
+							</button>
+						))}
+					</div>
+				)}
 				<div className="flex-1 flex min-h-0 overflow-hidden justify-center">
 					<motion.div
 						layout="position"
-						className={cn("flex-1 shrink-0 flex flex-col basis-0 relative z-10 h-full min-h-0", showMainView ? 'max-w-xl' : 'max-w-3xl')}
+						className={cn(
+							'flex-1 shrink-0 flex-col basis-0 relative z-10 h-full min-h-0',
+							showMainView && mobilePane === 'preview' ? 'hidden lg:flex' : 'flex',
+							showMainView ? 'lg:max-w-xl' : 'max-w-3xl',
+						)}
 					>
 						<div
 							className={cn(
@@ -1366,7 +1392,7 @@ function ChatSession() {
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0 }}
-								className="flex-1 flex shrink-0 basis-0 z-30 min-h-0"
+								className={cn('flex-1 shrink-0 basis-0 z-30 min-h-0', mobilePane === 'chat' ? 'hidden lg:flex' : 'flex')}
 							>
 								<MainContentPanel
 									view={view}

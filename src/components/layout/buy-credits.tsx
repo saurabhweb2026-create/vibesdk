@@ -222,7 +222,7 @@ export function BuyCredits() {
 			</OrangeButton>
 
 			<Dialog open={open} onOpenChange={setOpen}>
-				<DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-[#0b0b14]/95 p-6 text-white">
+				<DialogContent className="max-h-[88dvh] max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-[#0b0b14]/95 p-4 sm:p-6 text-white">
 					<DialogHeader>
 						<DialogTitle className="font-display text-3xl font-bold">Pick your crew</DialogTitle>
 						<DialogDescription className="text-white/60">

@@ -61,8 +61,8 @@ export function DomainButton({ appId }: { appId: string }) {
 			{open &&
 				createPortal(
 					<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setOpen(false)}>
-						<div className="w-full max-w-xl rounded-3xl border border-white/10 bg-[#0b0b14]/95 p-6 text-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
-							<div className="flex items-start justify-between">
+						<div className="max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/10 bg-[#0b0b14]/95 p-5 text-white shadow-2xl sm:p-6" onClick={(e) => e.stopPropagation()}>
+							<div className="flex items-start justify-between gap-3">
 								<div>
 									<h2 className="font-display text-2xl font-bold">Your own domain</h2>
 									<p className="mt-1 text-sm text-white/60">Show this website on an address you own, like www.mybakery.com.</p>
