@@ -19,6 +19,13 @@ import FRONTEND_DESIGN_SAAS from './skills/frontend-design-saas/SKILL.md?raw';
 import FRONTEND_DESIGN_LANDING_PAGE_REFERENCE from './skills/frontend-design-landing-page-reference/SKILL.md?raw';
 import FRONTEND_DESIGN_SAAS_REFERENCE from './skills/frontend-design-saas-reference/SKILL.md?raw';
 
+import THEME_AGENCY from './skills/theme-agency/SKILL.md?raw';
+import THEME_FREELANCER from './skills/theme-freelancer/SKILL.md?raw';
+import THEME_SHOP_HOMEPAGE from './skills/theme-shop-homepage/SKILL.md?raw';
+import THEME_RESUME from './skills/theme-resume/SKILL.md?raw';
+import THEME_LANDING_PAGE from './skills/theme-landing-page/SKILL.md?raw';
+import THEME_GRAYSCALE from './skills/theme-grayscale/SKILL.md?raw';
+
 /** Raw `SKILL.md` contents keyed by their source directory name. */
 const RAW_SKILLS: Record<string, string> = {
 	'app-file-structure': APP_FILE_STRUCTURE,
@@ -28,6 +35,12 @@ const RAW_SKILLS: Record<string, string> = {
 	'frontend-design-saas': FRONTEND_DESIGN_SAAS,
 	'frontend-design-landing-page-reference': FRONTEND_DESIGN_LANDING_PAGE_REFERENCE,
 	'frontend-design-saas-reference': FRONTEND_DESIGN_SAAS_REFERENCE,
+	'theme-agency': THEME_AGENCY,
+	'theme-freelancer': THEME_FREELANCER,
+	'theme-shop-homepage': THEME_SHOP_HOMEPAGE,
+	'theme-resume': THEME_RESUME,
+	'theme-landing-page': THEME_LANDING_PAGE,
+	'theme-grayscale': THEME_GRAYSCALE,
 };
 
 function buildEntries(): SkillManifestEntry[] {

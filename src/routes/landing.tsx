@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { BrandFace, BrandName } from '@/components/brand/brand-mark';
 import { useAuthModal } from '@/components/auth/AuthModalProvider';
+import { THEME_STORAGE_KEY } from '@/lib/themes';
 import { LandingShowcase } from './landing-sections/landing-showcase';
 import { LandingStory } from './landing-sections/landing-story';
 
@@ -18,6 +19,14 @@ const BACKDROP =
 export default function Landing({ onEnter }: { onEnter: () => void }) {
 	const reduce = useReducedMotion();
 	const { showAuthModal } = useAuthModal();
+	const pickTheme = (id: string) => {
+		try {
+			sessionStorage.setItem(THEME_STORAGE_KEY, id);
+		} catch {
+			// without storage the builder simply opens empty
+		}
+		onEnter();
+	};
 	const signIn = () => showAuthModal('Sign in to meet your team', onEnter);
 
 	return (
@@ -60,13 +69,13 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 				<p className="mx-auto mb-6 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1 text-xs text-[#a5b4fc]">
 					Your AI team for your business
 				</p>
-				<h1 className="text-[clamp(2.25rem,6.5vw,4.5rem)] font-semibold leading-[1.04] tracking-tight">
-					Build it. Promote it.
+				<h1 className="font-display text-[clamp(2.25rem,6.5vw,4.5rem)] font-semibold leading-[1.04] tracking-tight">
+					Dream it. Show it.
 					<br />
-					<span className="bg-gradient-to-r from-[#818cf8] to-[#4f46e5] bg-clip-text text-transparent">Support it.</span>
+					<span className="bg-gradient-to-r from-[#818cf8] to-[#4f46e5] bg-clip-text text-transparent">Keep it chatty.</span>
 				</h1>
 				<p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/60 sm:text-lg">
-					Jack builds your website. John runs your ads. Maria answers your customers. They pass the work to each other, so you do not have to.
+					Meet three AI friends with one job: your business. Jack builds the website, John tells the world about it, and Maria chats with every customer. They hand the baton to each other, so you can finally finish your chai.
 				</p>
 				<div className="mt-9 flex flex-wrap items-center justify-center gap-3">
 					<motion.button
@@ -89,17 +98,18 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 			</motion.section>
 
 			<section id="themes" className="pb-24">
-				<LandingShowcase />
+				<h2 className="mb-8 px-5 text-center font-display text-2xl font-semibold sm:text-4xl">Pick a look. Jack does the rest.</h2>
+				<LandingShowcase onPick={pickTheme} />
 			</section>
 
 			<section className="pb-4 pt-8 text-center">
-				<h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">How your team works</h2>
-				<p className="mt-3 text-white/55">Scroll to meet them.</p>
+				<h2 className="font-display text-3xl font-semibold tracking-tight sm:text-5xl">A tiny story about three busy helpers</h2>
+				<p className="mt-3 text-white/55">Scroll down. They will introduce themselves.</p>
 			</section>
 			<LandingStory />
 
 			<section id="plans" className="mx-auto max-w-6xl px-5 py-24">
-				<h2 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">Simple plans</h2>
+				<h2 className="text-center font-display text-3xl font-semibold tracking-tight sm:text-5xl">Pick your sidekicks</h2>
 				<div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
 					{PLANS.map((p) => (
 						<div

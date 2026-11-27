@@ -80,7 +80,7 @@ export function SplashScreen() {
 								exit={{ opacity: 0, y: -10 }}
 								transition={{ duration: 0.3 }}
 							>
-								<p className="min-h-[1.5em] text-center text-2xl font-medium tracking-tight sm:text-4xl">
+								<p className="min-h-[1.5em] text-center font-display text-3xl font-medium tracking-tight sm:text-4xl">
 									{QUESTION.slice(0, typed)}
 									<span className="ml-0.5 inline-block w-[2px] animate-pulse bg-white align-middle">&nbsp;</span>
 								</p>
@@ -113,7 +113,7 @@ export function SplashScreen() {
 								>
 									<ThumbsUp className="size-16" fill="currentColor" strokeWidth={1.5} />
 								</motion.span>
-								<span className="text-3xl font-bold tracking-tight sm:text-5xl">
+								<span className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
 									Always<span className="text-[#818cf8]">Bro</span>
 								</span>
 								<div className="mt-2 flex items-end gap-4 sm:gap-8">

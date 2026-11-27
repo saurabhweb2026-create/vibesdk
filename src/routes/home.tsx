@@ -1,3 +1,4 @@
+import { THEMES, THEME_STORAGE_KEY } from '@/lib/themes';
 import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import { ArrowUpRight, Loader2 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -27,12 +28,27 @@ import { PromptBox } from '@/components/prompt-box';
 import { InfoIcon, PaperPlaneTiltIcon } from '@phosphor-icons/react';
 import { startCloudflareConnect } from '@/lib/cloudflare-connect';
 
+
+
+/** A theme picked on the landing page becomes the first words of the builder prompt, once. */
+function takeThemePrompt(): string {
+	try {
+		const id = sessionStorage.getItem(THEME_STORAGE_KEY);
+		if (!id) return '';
+		sessionStorage.removeItem(THEME_STORAGE_KEY);
+		const theme = THEMES.find((t) => t.id === id);
+		return theme ? `[theme:${theme.id}] Build my website using the ${theme.name} theme. ` : '';
+	} catch {
+		return '';
+	}
+}
+
 export default function Home() {
 	const navigate = useNavigate();
 	const { requireAuth } = useAuthGuard();
 	const [projectMode, setProjectMode] = useState<ProjectType>('app');
 	const behaviorMode: Extract<BehaviorType, 'think' | 'phasic'> = 'think';
-	const [query, setQuery] = useState('');
+	const [query, setQuery] = useState(takeThemePrompt);
 	const { user } = useAuth();
 	const { isLoadingCapabilities, capabilities, getEnabledFeatures } =
 		useFeature();
