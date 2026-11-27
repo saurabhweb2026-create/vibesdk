@@ -34,6 +34,8 @@ async function completeWithWorkersAi(env: Env, model: string, messages: TroopCha
 	return text;
 }
 
+const FALLBACK_WORKERS_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+
 // One plain completion through the platform AI Gateway (the same route the builder uses).
 export async function troopComplete(
 	env: Env,
@@ -41,11 +43,13 @@ export async function troopComplete(
 	opts: { maxTokens?: number; temperature?: number } = {},
 ): Promise<string> {
 	const override = (env as unknown as Record<string, string | undefined>).TROOP_MODEL?.trim();
-	if (override && override.startsWith('@cf/')) {
+	// Plain (non-reasoning) models first: a reasoning model can spend a small token budget thinking and return nothing.
+	const workersModels = [override && override.startsWith('@cf/') ? override : '', FALLBACK_WORKERS_MODEL].filter((m, i, all) => m && all.indexOf(m) === i);
+	for (const model of workersModels) {
 		try {
-			return await completeWithWorkersAi(env, override, messages, opts.maxTokens ?? 2048, opts.temperature ?? 0.7);
+			return await completeWithWorkersAi(env, model, messages, opts.maxTokens ?? 2048, opts.temperature ?? 0.7);
 		} catch (error) {
-			console.error('Workers AI failed, falling back to the gateway model', error);
+			console.error(`Workers AI model ${model} failed`, error);
 		}
 	}
 

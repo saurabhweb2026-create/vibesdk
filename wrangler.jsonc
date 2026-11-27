@@ -170,7 +170,7 @@
 		"RAZORPAY_KEY_ID": "rzp_test_U4fg1SCx58xcXL",
 		"RAZORPAY_PLAN_BASIC": "plan_U4fbDLUn3oykSQ",
 		"RAZORPAY_PLAN_PRO": "plan_U4fcTbtTnCGqkD",
-		"TROOP_MODEL": "@cf/google/gemma-4-26b-a4b-it",
+		"TROOP_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
 		"THINK_MODEL": "@cf/zai-org/glm-5.3"
 	},
 	"workers_dev": true,
