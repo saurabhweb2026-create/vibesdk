@@ -48,16 +48,20 @@ function useBand(index: number, progress: MotionValue<number>) {
 	const half = 0.5 / count;
 	const first = index === 0;
 	const last = index === count - 1;
+	// Scroll-linked values must stay inside [0, 1] and never decrease.
 	const input = [
-		first ? -2 : center - half * 1.15,
-		first ? -1 : center - half * 0.55,
-		last ? 2 : center + half * 0.55,
-		last ? 3 : center + half * 1.15,
+		first ? 0 : center - half * 1.15,
+		first ? 0 : center - half * 0.55,
+		last ? 1 : center + half * 0.55,
+		last ? 1 : center + half * 1.15,
 	];
+	const turn = [first ? 0 : -80, 0, 0, last ? 0 : 80];
+	const fade = [first ? 1 : 0, 1, 1, last ? 1 : 0];
+	const lift = [first ? 0 : 24, 0, 0, last ? 0 : -24];
 	return {
-		rotate: useTransform(progress, input, [-80, 0, 0, 80]),
-		opacity: useTransform(progress, input, [0, 1, 1, 0]),
-		textY: useTransform(progress, input, [24, 0, 0, -24]),
+		rotate: useTransform(progress, input, turn),
+		opacity: useTransform(progress, input, fade),
+		textY: useTransform(progress, input, lift),
 	};
 }
 
