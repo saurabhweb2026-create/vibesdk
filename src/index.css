@@ -650,8 +650,7 @@ html[data-mode='dark'] main.bg-kumo-canvas > div.bg-kumo-canvas {
 }
 
 html[data-mode='dark'] .vibesdk-sidebar-wrapper {
-	--sidebar-bg: rgb(0 0 0 / 0.38);
-	backdrop-filter: blur(14px);
+	--sidebar-bg: rgb(0 0 0 / 0.42);
 }
 
 @media (prefers-reduced-motion: reduce) {
