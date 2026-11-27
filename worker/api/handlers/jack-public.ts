@@ -40,7 +40,7 @@ var C=${cfg};
 if(window.__mtJack)return;window.__mtJack=1;
 var vid;try{vid=localStorage.getItem('mt_jack_v');if(!vid){vid='v'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('mt_jack_v',vid);}}catch(e){vid='v'+Math.random().toString(36).slice(2);}
 function el(t,s,x){var n=document.createElement(t);if(s)n.style.cssText=s;if(x)n.textContent=x;return n;}
-var btn=el('button','position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;border:2px solid #84cc16;background:#0c0c0c url('+C.origin+'/troop/jack-face.webp) center/cover;cursor:pointer;z-index:2147483646;box-shadow:0 6px 24px rgba(0,0,0,.35)');
+var btn=el('button','position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;border:2px solid #84cc16;background:#0c0c0c url('+C.origin+'/troop/jack-face.svg) center/cover;cursor:pointer;z-index:2147483646;box-shadow:0 6px 24px rgba(0,0,0,.35)');
 btn.setAttribute('aria-label','Chat with '+C.name);
 var box=el('div','position:fixed;right:20px;bottom:92px;width:340px;max-width:calc(100vw - 24px);height:460px;max-height:calc(100vh - 120px);background:#0c0c0c;color:#fff;border:1px solid #2a2a2a;border-radius:16px;display:none;flex-direction:column;overflow:hidden;z-index:2147483646;font:14px/1.4 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.45)');
 var head=el('div','padding:12px 14px;background:#161616;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;gap:10px');

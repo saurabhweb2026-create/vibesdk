@@ -69,7 +69,7 @@ export function TroopHeader({ face, name, color, role, line }: { face: string; n
 				draggable={false}
 			/>
 			<div>
-				<div className="font-mono text-xs uppercase tracking-widest" style={{ color }}>
+				<div className="font-sans text-xs tracking-wide" style={{ color }}>
 					{name} - {role}
 				</div>
 				<div className="text-lg font-semibold text-white">{line}</div>
@@ -91,15 +91,15 @@ export function SitePicker({
 		return (
 			<div className={PANEL}>
 				<div className="text-white">You have no websites yet.</div>
-				<a href="/" className="mt-2 inline-block text-sm text-[#fdba74] underline">
-					Ask Caesar to build your first website
+				<a href="/" className="mt-2 inline-block text-sm text-[#a5b4fc] underline">
+					Ask John to build your first website
 				</a>
 			</div>
 		);
 	}
 	return (
 		<label className="mb-5 block">
-			<span className="mb-1.5 block text-xs uppercase tracking-wider text-white/50">Website</span>
+			<span className="mb-1.5 block text-xs tracking-wide text-white/50">Website</span>
 			<select value={selectedId} onChange={(e) => onSelect(e.target.value)} className={INPUT}>
 				{sites.map((s) => (
 					<option key={s.id} value={s.id} className="bg-neutral-900">
@@ -111,7 +111,7 @@ export function SitePicker({
 	);
 }
 
-export function LockedNotice({ agent }: { agent: 'Louie' | 'Jack' }) {
+export function LockedNotice({ agent }: { agent: 'Maria' | 'Jack' }) {
 	return (
 		<div className={PANEL}>
 			<div className="font-semibold text-white">{agent} is a paid helper</div>

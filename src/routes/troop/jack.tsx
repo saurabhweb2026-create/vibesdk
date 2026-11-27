@@ -51,7 +51,7 @@ function TestChat({ appId, enabled }: { appId: string; enabled: boolean }) {
 
 	return (
 		<div className={PANEL}>
-			<div className="mb-3 font-mono text-xs uppercase tracking-wider" style={{ color: LIME }}>
+			<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: LIME }}>
 				Try Jack
 			</div>
 			{!enabled && <div className="mb-3 text-sm text-white/60">Switch Jack on and press Save to try him here.</div>}
@@ -125,8 +125,8 @@ export default function JackPage() {
 
 	return (
 		<div className="mx-auto max-w-3xl px-5 py-8 text-white">
-			<title>Jack - Monkeytrooprs</title>
-			<TroopHeader face="/troop/jack-face.webp" name="Jack" color={LIME} role="Customer support" line="Teach me your business and I will answer your customers." />
+			<title>Jack - AlwaysBro</title>
+			<TroopHeader face="/troop/jack-face.svg" name="Jack" color={LIME} role="Customer support" line="Teach me your business and I will answer your customers." />
 			{error && <div className={PANEL}>{error}</div>}
 			{data && !data.access.jack && <LockedNotice agent="Jack" />}
 			{data && data.access.jack && (
@@ -136,7 +136,7 @@ export default function JackPage() {
 						<div className="grid gap-4">
 							<div className={PANEL}>
 								<div className="mb-3 flex items-center justify-between">
-									<div className="font-mono text-xs uppercase tracking-wider" style={{ color: LIME }}>
+									<div className="font-sans text-xs tracking-wide" style={{ color: LIME }}>
 										What Jack knows
 									</div>
 									<label className="flex cursor-pointer items-center gap-2 text-sm text-white/85">
@@ -188,7 +188,7 @@ export default function JackPage() {
 							<TestChat appId={setup.appId} enabled={setup.enabled} />
 
 							<div className={PANEL}>
-								<div className="mb-2 font-mono text-xs uppercase tracking-wider" style={{ color: LIME }}>
+								<div className="mb-2 font-sans text-xs tracking-wide" style={{ color: LIME }}>
 									Put Jack on your website
 								</div>
 								<p className="mb-3 text-sm text-white/65">Paste this line just before the closing body tag of your website.</p>
@@ -199,7 +199,7 @@ export default function JackPage() {
 							</div>
 
 							<div className={PANEL}>
-								<div className="mb-3 font-mono text-xs uppercase tracking-wider" style={{ color: LIME }}>
+								<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: LIME }}>
 									Customers who left their details
 								</div>
 								{setup.leads.length === 0 && <div className="text-sm text-white/55">Nobody yet. When Jack cannot answer, he asks for a phone number or email and it shows here.</div>}
@@ -214,7 +214,7 @@ export default function JackPage() {
 							</div>
 
 							<div className={PANEL}>
-								<div className="mb-3 font-mono text-xs uppercase tracking-wider" style={{ color: LIME }}>
+								<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: LIME }}>
 									Recent chats
 								</div>
 								{setup.conversations.length === 0 && <div className="text-sm text-white/55">No chats yet.</div>}

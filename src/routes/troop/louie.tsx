@@ -11,7 +11,7 @@ const PINK = '#ec4899';
 function Section({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<div className={PANEL}>
-			<div className="mb-3 font-mono text-xs uppercase tracking-wider" style={{ color: PINK }}>
+			<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: PINK }}>
 				{title}
 			</div>
 			{children}
@@ -151,7 +151,7 @@ export default function LouiePage() {
 				const pack = res.data;
 				setPacks((p) => [pack, ...p]);
 				setShown(0);
-				toast.success('Louie finished your ads');
+				toast.success('Maria finished your ads');
 			}
 		} catch {
 			// the API client already shows the reason
@@ -163,16 +163,16 @@ export default function LouiePage() {
 
 	return (
 		<div className="mx-auto max-w-3xl px-5 py-8 text-white">
-			<title>Louie - Monkeytrooprs</title>
-			<TroopHeader face="/troop/louie-face.webp" name="Louie" color={PINK} role="Ads" line="Tell me your goal and I will write your ads." />
+			<title>Maria - AlwaysBro</title>
+			<TroopHeader face="/troop/maria-face.svg" name="Maria" color={PINK} role="Ads" line="Tell me your goal and I will write your ads." />
 			{error && <div className={PANEL}>{error}</div>}
-			{data && !data.access.louie && <LockedNotice agent="Louie" />}
+			{data && !data.access.louie && <LockedNotice agent="Maria" />}
 			{data && data.access.louie && (
 				<>
 					<SitePicker sites={sites} selectedId={selectedId} onSelect={select} />
 					{selectedId && (
 						<div className={PANEL}>
-							<div className="mb-2 text-xs uppercase tracking-wider text-white/50">Your goal</div>
+							<div className="mb-2 text-xs tracking-wide text-white/50">Your goal</div>
 							<div className="mb-4 flex flex-wrap gap-2">
 								{GOALS.map((g) => (
 									<button
@@ -190,7 +190,7 @@ export default function LouiePage() {
 									</button>
 								))}
 							</div>
-							<div className="mb-2 text-xs uppercase tracking-wider text-white/50">What should I create?</div>
+							<div className="mb-2 text-xs tracking-wide text-white/50">What should I create?</div>
 							<div className="mb-4 flex flex-wrap gap-2">
 								{FORMATS.map((f) => {
 									const on = formats.includes(f);
@@ -211,7 +211,7 @@ export default function LouiePage() {
 									);
 								})}
 							</div>
-							<div className="mb-2 text-xs uppercase tracking-wider text-white/50">Tone</div>
+							<div className="mb-2 text-xs tracking-wide text-white/50">Tone</div>
 							<div className="mb-4 flex flex-wrap gap-2">
 								{TONES.map((t) => (
 									<button
@@ -254,7 +254,7 @@ export default function LouiePage() {
 								className="mt-5 rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
 								style={{ background: PINK, boxShadow: `0 0 24px ${PINK}55` }}
 							>
-								{busy ? 'Louie is creating...' : 'Create my content'}
+								{busy ? 'Maria is creating...' : 'Create my content'}
 							</button>
 						</div>
 					)}

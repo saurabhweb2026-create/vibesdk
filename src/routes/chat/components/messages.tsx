@@ -859,8 +859,8 @@ export function AIMessage({
 	return (
 		<div className="flex flex-col gap-2 min-w-0">
 			<div className="font-mono font-medium text-text-50 flex items-center gap-2 mb-3">
-				<img src="/troop/caesar-face.webp" alt="" className="size-6 shrink-0 rounded-full object-cover" />
-				Caesar
+				<img src="/troop/john-face.svg" alt="" className="size-6 shrink-0 rounded-full object-cover" />
+				John
 				{isThinking && <Sparkles className="size-3 text-orange-400 animate-pulse" />}
 			</div>
 			<div className={cn(isThinking && 'animate-pulse')}>

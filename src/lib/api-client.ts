@@ -1359,7 +1359,7 @@ class ApiClient {
 	}
 
 	// ===============================
-	// Troop: Louie (ads) and Jack (support)
+	// Troop: Maria (ads) and Jack (support)
 	// ===============================
 
 	async getTroopSites(): Promise<ApiResponse<TroopSitesData>> {

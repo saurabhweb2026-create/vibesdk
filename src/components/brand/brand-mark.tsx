@@ -1,10 +1,12 @@
 import { cn } from '@cloudflare/kumo';
 
 const FACE_BORDER = {
-	caesar: 'border-[#f97316]/50',
+	caesar: 'border-[#3b82f6]/50',
 	louie: 'border-[#ec4899]/50',
 	jack: 'border-[#84cc16]/50',
 } as const;
+
+const FACE_FILE = { caesar: 'john', louie: 'maria', jack: 'jack' } as const;
 
 export function BrandFace({
 	className,
@@ -16,14 +18,14 @@ export function BrandFace({
 	return (
 		<span
 			className={cn(
-				'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border bg-[#1a1008]',
+				'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border bg-[#eef2ff]',
 				FACE_BORDER[face],
 				className,
 			)}
 		>
 			<img
-				src={`/troop/${face}-face.webp`}
-				alt={face === 'caesar' ? 'Monkeytrooprs' : face}
+				src={`/troop/${FACE_FILE[face]}-face.svg`}
+				alt={FACE_FILE[face]}
 				className="size-full object-cover"
 				draggable={false}
 			/>
@@ -35,11 +37,11 @@ export function BrandName({ className }: { className?: string }) {
 	return (
 		<span
 			className={cn(
-				'font-funky-mono font-black uppercase tracking-wide',
+				'font-sans font-bold tracking-tight',
 				className,
 			)}
 		>
-			Monkey<span className="text-[#f97316]">trooprs</span>
+			Always<span className="text-[#4f46e5]">Bro</span>
 		</span>
 	);
 }

@@ -13,7 +13,7 @@ interface WorkersAiRunner {
 	run(model: string, input: { messages: TroopChatMessage[]; max_tokens: number; temperature: number }): Promise<{ response?: string } | string>;
 }
 
-// TROOP_MODEL can name a Cloudflare Workers AI model (starts with @cf/) to run Louie and Jack on the free daily allowance.
+// TROOP_MODEL can name a Cloudflare Workers AI model (starts with @cf/) to run Maria and Jack on the free daily allowance.
 async function completeWithWorkersAi(env: Env, model: string, messages: TroopChatMessage[], maxTokens: number, temperature: number): Promise<string> {
 	const runner = env.AI as unknown as WorkersAiRunner;
 	const out = await runner.run(model, { messages, max_tokens: maxTokens, temperature });

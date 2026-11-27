@@ -48,12 +48,12 @@ function num(v: string | undefined, fallback: number): number {
 }
 
 // Change these numbers from the Cloudflare dashboard (Variables), no code needed:
-// PLAN_PRICE_<X>, PLAN_CREDITS_<X>, PLAN_SITES_<X>, RAZORPAY_PLAN_<X> where <X> is BASIC (Caesar), LOUIE, JACK or PRO (all three).
+// PLAN_PRICE_<X>, PLAN_CREDITS_<X>, PLAN_SITES_<X>, RAZORPAY_PLAN_<X> where <X> is BASIC (John), LOUIE, JACK or PRO (all three).
 export function getPaidPlans(env: Env): PlanInfo[] {
 	const v = vars(env);
 	return [
-		{ id: 'basic', name: 'Caesar', priceInr: num(v.PLAN_PRICE_BASIC, 1999), monthlyCredits: num(v.PLAN_CREDITS_BASIC, 1500), maxLiveSites: num(v.PLAN_SITES_BASIC, 3), agents: ['caesar'], available: !!v.RAZORPAY_PLAN_BASIC },
-		{ id: 'louie', name: 'Louie', priceInr: num(v.PLAN_PRICE_LOUIE, 2999), monthlyCredits: num(v.PLAN_CREDITS_LOUIE, 0), maxLiveSites: 0, agents: ['louie'], available: !!v.RAZORPAY_PLAN_LOUIE },
+		{ id: 'basic', name: 'John', priceInr: num(v.PLAN_PRICE_BASIC, 1999), monthlyCredits: num(v.PLAN_CREDITS_BASIC, 1500), maxLiveSites: num(v.PLAN_SITES_BASIC, 3), agents: ['caesar'], available: !!v.RAZORPAY_PLAN_BASIC },
+		{ id: 'louie', name: 'Maria', priceInr: num(v.PLAN_PRICE_LOUIE, 2999), monthlyCredits: num(v.PLAN_CREDITS_LOUIE, 0), maxLiveSites: 0, agents: ['louie'], available: !!v.RAZORPAY_PLAN_LOUIE },
 		{ id: 'jack', name: 'Jack', priceInr: num(v.PLAN_PRICE_JACK, 2499), monthlyCredits: num(v.PLAN_CREDITS_JACK, 0), maxLiveSites: 0, agents: ['jack'], available: !!v.RAZORPAY_PLAN_JACK },
 		{ id: 'pro', name: 'Pro: all three', priceInr: num(v.PLAN_PRICE_PRO, 6999), monthlyCredits: num(v.PLAN_CREDITS_PRO, 6000), maxLiveSites: num(v.PLAN_SITES_PRO, 3), agents: ['caesar', 'louie', 'jack'], available: !!v.RAZORPAY_PLAN_PRO },
 	];
@@ -155,7 +155,7 @@ export interface UserPlan {
 
 const PLAN_RANK: PaidPlanId[] = ['pro', 'basic', 'louie', 'jack'];
 
-// Every plan the user pays for. Louie and Jack can be taken on their own, so there can be several.
+// Every plan the user pays for. Maria and Jack can be taken on their own, so there can be several.
 export async function getUserSubs(env: Env, userId: string): Promise<UserSub[]> {
 	try {
 		await ensureTables(env);
@@ -183,7 +183,7 @@ export async function getUserPlan(env: Env, userId: string): Promise<UserPlan> {
 	return { plan: top.plan, status: top.status, subscriptionId: top.subscriptionId, periodEnd: top.periodEnd };
 }
 
-// Which of the troop the user has paid for (Caesar also works on free daily credits).
+// Which of the troop the user has paid for (John also works on free daily credits).
 export async function getAgentAccess(env: Env, userId: string): Promise<Record<AgentId, boolean>> {
 	const access: Record<AgentId, boolean> = { caesar: false, louie: false, jack: false };
 	for (const sub of await getUserSubs(env, userId)) {

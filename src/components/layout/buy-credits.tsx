@@ -21,13 +21,13 @@ declare global {
 type PaidPlan = PaidPlanId;
 
 const PLAN_LINES: Record<PaidPlan, string[]> = {
-	basic: ['Caesar, the AI website builder', 'Websites live (see your limit below)', 'Monthly credits for building and editing'],
-	louie: ['Louie writes your ads', 'Google, Facebook and Instagram ads, posts and a budget plan', 'Works on any website you built'],
+	basic: ['John, the AI website builder', 'Websites live (see your limit below)', 'Monthly credits for building and editing'],
+	louie: ['Maria writes your ads', 'Google, Facebook and Instagram ads, posts and a budget plan', 'Works on any website you built'],
 	jack: ['Jack answers your customers on your website', 'Saves the customers who leave their details', 'You teach him your prices, timings and offers'],
-	pro: ['Caesar, Louie and Jack together', 'Cheaper than taking all three one by one', 'More monthly credits'],
+	pro: ['John, Maria and Jack together', 'Cheaper than taking all three one by one', 'More monthly credits'],
 };
 
-const PLAN_NAMES: Record<PaidPlan, string> = { basic: 'Caesar', louie: 'Louie', jack: 'Jack', pro: 'Pro' };
+const PLAN_NAMES: Record<PaidPlan, string> = { basic: 'John', louie: 'Maria', jack: 'Jack', pro: 'Pro' };
 const PLAN_ORDER: PaidPlan[] = ['basic', 'louie', 'jack', 'pro'];
 
 function loadRazorpay(): Promise<boolean> {
@@ -123,7 +123,7 @@ export function BuyCredits() {
 			const checkout = new window.Razorpay({
 				key: res.data.keyId,
 				subscription_id: res.data.subscriptionId,
-				name: 'Monkeytrooprs',
+				name: 'AlwaysBro',
 				description: PLAN_NAMES[plan] + ' plan, billed monthly',
 				prefill: { email: user.email },
 				theme: { color: '#f97316' },
@@ -175,7 +175,7 @@ export function BuyCredits() {
 				order_id: order.orderId,
 				amount: order.amount,
 				currency: order.currency,
-				name: 'Monkeytrooprs',
+				name: 'AlwaysBro',
 				description: `${label}: ${credits} credits`,
 				prefill: { email: user.email },
 				theme: { color: '#f97316' },

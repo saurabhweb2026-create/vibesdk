@@ -40,7 +40,7 @@ interface JackSetupData {
 }
 
 const LOUIE_DAILY_LIMIT = 20;
-const NOT_ALLOWED_LOUIE = 'Subscribe to Louie, or to Pro, to use this';
+const NOT_ALLOWED_LOUIE = 'Subscribe to Maria, or to Pro, to use this';
 const NOT_ALLOWED_JACK = 'Subscribe to Jack, or to Pro, to use this';
 const TONES = ['friendly', 'formal', 'short'];
 
@@ -80,7 +80,7 @@ export class TroopController extends BaseController {
 			const budgetInr = Math.max(500, Math.min(10_000_000, Math.round(Number(body.budgetInr) || 10_000)));
 
 			if (!(await takeUsage(env, `louie-user:${user.id}`, LOUIE_DAILY_LIMIT))) {
-				return TroopController.createErrorResponse<SavedAdPack>('Louie has reached today\'s limit. Please try again tomorrow.', 429);
+				return TroopController.createErrorResponse<SavedAdPack>('Maria has reached today\'s limit. Please try again tomorrow.', 429);
 			}
 
 			const pack: AdPack = await generateAdPack(env, site, {
@@ -96,7 +96,7 @@ export class TroopController extends BaseController {
 			return TroopController.createSuccessResponse(saved);
 		} catch (error) {
 			this.logger.error('Error generating ads:', error);
-			const message = error instanceof Error && error.message.startsWith('Louie') ? error.message : 'Louie could not write the ads. Please try again.';
+			const message = error instanceof Error && error.message.startsWith('Maria') ? error.message : 'Maria could not write the ads. Please try again.';
 			return TroopController.createErrorResponse<SavedAdPack>(message, 500);
 		}
 	}

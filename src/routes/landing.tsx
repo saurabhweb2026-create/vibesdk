@@ -3,19 +3,19 @@ import { BrandFace, BrandName } from '@/components/brand/brand-mark';
 
 const TROOP = [
 	{
-		name: 'Caesar',
+		name: 'John',
 		role: 'Builds your website',
-		text: 'Tell Caesar your idea. He plans, designs and writes your site, then hands it over.',
-		color: '#f97316',
-		src: '/troop/caesar.webp',
+		text: 'Tell John your idea. He plans, designs and writes your site, then hands it over.',
+		color: '#3b82f6',
+		src: '/troop/john.svg',
 		live: true,
 	},
 	{
-		name: 'Louie',
+		name: 'Maria',
 		role: 'Runs your ads',
-		text: 'Louie reads your finished site and writes your Google, Facebook and Instagram ads, posts and budget plan.',
+		text: 'Maria reads your finished site and writes your Google, Facebook and Instagram ads, posts and budget plan.',
 		color: '#ec4899',
-		src: '/troop/louie.webp',
+		src: '/troop/maria.svg',
 		live: true,
 	},
 	{
@@ -23,17 +23,17 @@ const TROOP = [
 		role: 'Answers your customers',
 		text: 'Jack learns your business and answers your customers on your website, day and night, and saves the leads.',
 		color: '#84cc16',
-		src: '/troop/jack.webp',
+		src: '/troop/jack.svg',
 		live: true,
 	},
 ];
 
 const PLANS = [
-	{ name: 'Free', price: '₹0', line: '20 free credits every day', points: ['Try Caesar', 'No card needed'] },
-	{ name: 'Caesar', price: '₹1,999', line: 'per month', points: ['The website builder', '3 live websites'] },
-	{ name: 'Louie', price: '₹2,999', line: 'per month', points: ['Ads for your website', 'Google, Facebook, Instagram'] },
+	{ name: 'Free', price: '₹0', line: '20 free credits every day', points: ['Try John', 'No card needed'] },
+	{ name: 'John', price: '₹1,999', line: 'per month', points: ['The website builder', '3 live websites'] },
+	{ name: 'Maria', price: '₹2,999', line: 'per month', points: ['Ads for your website', 'Google, Facebook, Instagram'] },
 	{ name: 'Jack', price: '₹2,499', line: 'per month', points: ['Answers your customers', 'Saves your leads'] },
-	{ name: 'Pro', price: '₹6,999', line: 'per month', points: ['Caesar, Louie and Jack', 'Best value'] },
+	{ name: 'Pro', price: '₹6,999', line: 'per month', points: ['John, Maria and Jack', 'Best value'] },
 ];
 
 export default function Landing({ onEnter }: { onEnter: () => void }) {
@@ -62,16 +62,16 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 			</header>
 
 			<section className="mx-auto max-w-4xl px-5 pb-6 pt-10 text-center sm:pt-16">
-				<p className="mb-4 font-mono text-[11px] uppercase tracking-[0.25em] text-[#fdba74]">
+				<p className="mb-4 font-sans text-xs tracking-wide text-[#a5b4fc]">
 					Your AI team
 				</p>
 				<h1 className="text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[1.05]">
 					Three AI teammates.
 					<br />
-					<span className="text-[#f97316]">One business.</span>
+					<span className="text-[#4f46e5]">One business.</span>
 				</h1>
 				<p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:text-lg">
-					Caesar builds your website. Louie runs your ads. Jack answers
+					John builds your website. Maria runs your ads. Jack answers
 					your customers. They pass the work to each other, so you do
 					not have to.
 				</p>
@@ -79,7 +79,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 					<button
 						type="button"
 						onClick={onEnter}
-						className="rounded-full bg-[#f97316] px-7 py-3 text-base font-semibold text-black shadow-[0_0_30px_rgba(249,115,22,0.45)] hover:bg-[#fb923c]"
+						className="rounded-full bg-[#4f46e5] px-7 py-3 text-base font-semibold text-white shadow-[0_0_30px_rgba(79,70,229,0.4)] hover:bg-[#6366f1]"
 					>
 						Start building free
 					</button>
@@ -120,7 +120,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 								delay: i * 0.4,
 							}}
 						/>
-						<div className="mt-3 flex items-center gap-2 font-mono text-sm uppercase tracking-wider">
+						<div className="mt-3 flex items-center gap-2 font-sans text-sm tracking-wide">
 							<span style={{ color: c.color }}>{c.name}</span>
 							<span
 								className="rounded-full border px-2 text-[10px]"
@@ -150,7 +150,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 							key={p.name}
 							className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
 						>
-							<div className="font-mono text-xs uppercase tracking-wider text-[#fdba74]">
+							<div className="font-sans text-xs tracking-wide text-[#a5b4fc]">
 								{p.name}
 							</div>
 							<div className="mt-2 text-3xl font-semibold">{p.price}</div>
@@ -167,15 +167,15 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 					<button
 						type="button"
 						onClick={onEnter}
-						className="rounded-full bg-[#f97316] px-7 py-3 text-base font-semibold text-black hover:bg-[#fb923c]"
+						className="rounded-full bg-[#4f46e5] px-7 py-3 text-base font-semibold text-white hover:bg-[#6366f1]"
 					>
-						Meet Caesar
+						Meet John
 					</button>
 				</div>
 			</section>
 
 			<footer className="border-t border-white/10 py-6 text-center text-xs text-white/40">
-				© Monkeytrooprs
+				© AlwaysBro
 			</footer>
 		</div>
 	);

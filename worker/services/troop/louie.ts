@@ -83,7 +83,7 @@ function normalize(raw: Record<string, unknown>): AdPack {
 	};
 }
 
-const SYSTEM = `You are Louie, the advertising specialist of the Monkeytrooprs AI team. You write ready-to-use ad material for small businesses in India.
+const SYSTEM = `You are Maria, the advertising specialist of the AlwaysBro AI team. You write ready-to-use ad material for small businesses in India.
 Write in clear, simple English. Be specific to the business. Never invent prices, offers or claims that are not in the brief.
 Answer with ONE JSON object only, no markdown, with exactly these keys:
 {
@@ -127,10 +127,10 @@ export async function generateAdPack(env: Env, site: SiteInfo, req: AdRequest): 
 	);
 
 	const raw = parseJsonObject(text);
-	if (!raw) throw new Error('Louie could not write the ads this time');
+	if (!raw) throw new Error('Maria could not write the ads this time');
 	const pack = normalize(raw);
 	if (pack.googleSearch.headlines.length === 0 && pack.metaAds.length === 0) {
-		throw new Error('Louie could not write the ads this time');
+		throw new Error('Maria could not write the ads this time');
 	}
 	return pack;
 }

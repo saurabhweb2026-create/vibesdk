@@ -20,9 +20,9 @@ interface TroopStageProps {
 }
 
 const TROOP = [
-	{ id: 'caesar', name: 'Caesar', role: 'Builds your site', color: '#f97316', src: '/troop/caesar.webp' },
-	{ id: 'louie', name: 'Louie', role: 'Ads', color: '#ec4899', src: '/troop/louie.webp' },
-	{ id: 'jack', name: 'Jack', role: 'Customer support', color: '#84cc16', src: '/troop/jack.webp' },
+	{ id: 'caesar', name: 'John', role: 'Builds your site', color: '#3b82f6', src: '/troop/john.svg' },
+	{ id: 'louie', name: 'Maria', role: 'Ads', color: '#ec4899', src: '/troop/maria.svg' },
+	{ id: 'jack', name: 'Jack', role: 'Customer support', color: '#84cc16', src: '/troop/jack.svg' },
 ] as const;
 
 const STEPS = ['Plan', 'Build', 'Preview', 'Ready'];
@@ -66,7 +66,7 @@ function caesarLine(status: TroopStatus, fileName?: string): string {
 }
 
 function louieLine(status: TroopStatus): string {
-	if (status === 'done') return 'Nice work, Caesar! Want ads for this site?';
+	if (status === 'done') return 'Nice work, John! Want ads for this site?';
 	if (status === 'idle') return 'I write your ads once the site is ready.';
 	return 'Taking notes for your ads.';
 }
@@ -89,10 +89,10 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 
 	const header = (
 		<div className="flex items-center justify-between px-3 pt-2">
-			<div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/60">
+			<div className="flex items-center gap-2 font-sans text-xs tracking-wide text-white/60">
 				<span
 					className="inline-block size-1.5 rounded-full"
-					style={{ background: working ? '#f97316' : finished ? '#22c55e' : '#6b7280' }}
+					style={{ background: working ? '#3b82f6' : finished ? '#22c55e' : '#6b7280' }}
 				/>
 				The troop
 			</div>
@@ -113,7 +113,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 				<div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c0c] text-white shadow-lg">
 					{header}
 					<div className="flex items-center gap-3 px-3 pb-2 pt-1">
-						<img src={TROOP[0].src} alt="Caesar" className="h-9 w-auto shrink-0" />
+						<img src={TROOP[0].src} alt="John" className="h-9 w-auto shrink-0" />
 						<div className="min-w-0 flex-1 truncate text-xs text-white/90">{lines[0]}</div>
 					</div>
 				</div>
@@ -127,7 +127,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 				className="overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c0c] text-white shadow-lg"
 				style={{
 					backgroundImage:
-						'radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.16), transparent 60%), linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+						'radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.14), transparent 60%), linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
 					backgroundSize: '100% 100%, 22px 22px, 22px 22px',
 				}}
 			>
@@ -141,7 +141,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 						return (
 							<div key={c.id} className="flex min-w-0 flex-col items-center">
 								<div
-									className="relative mb-1 w-full min-h-[38px] rounded-xl border px-2 py-1 text-center text-[10.5px] leading-snug"
+									className="relative mb-1 w-full min-h-[38px] rounded-xl border px-2 py-1 text-center text-xs leading-snug"
 									style={{
 										borderColor: `${c.color}${isCaesar ? '99' : '44'}`,
 										background: isCaesar ? `${c.color}22` : 'rgba(255,255,255,0.04)',
@@ -153,7 +153,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 										className="absolute left-1/2 top-full size-2 -translate-x-1/2 -translate-y-1 rotate-45 border-b border-r"
 										style={{
 											borderColor: `${c.color}${isCaesar ? '99' : '44'}`,
-											background: isCaesar ? '#2a1a0e' : '#161616',
+											background: isCaesar ? '#0f1b33' : '#161616',
 										}}
 									/>
 								</div>
@@ -182,10 +182,10 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 									/>
 								</motion.div>
 
-								<div className="mt-0.5 flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider">
+								<div className="mt-0.5 flex items-center gap-1 font-sans text-xs tracking-wide">
 									<span style={{ color: c.color }}>{c.name}</span>
 									{!isCaesar && (
-										<span className="rounded-full border border-white/15 px-1.5 text-[8.5px] text-white/55">
+										<span className="rounded-full border border-white/15 px-1.5 text-xs text-white/55">
 											{finished ? 'Ready' : 'Waiting'}
 										</span>
 									)}
@@ -194,7 +194,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 									<button
 										type="button"
 										onClick={() => navigate(`/${c.id}?site=${appId}`)}
-										className="mt-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-black"
+										className="mt-1 rounded-full px-2.5 py-0.5 text-xs font-semibold text-black"
 										style={{ background: c.color }}
 									>
 										{c.id === 'louie' ? 'Write my ads' : 'Set up Jack'}
@@ -208,7 +208,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 						<div className="pointer-events-none absolute inset-x-0 top-[62px] h-6">
 							<motion.div
 								className="absolute size-3.5 rounded-[4px] border"
-								style={{ borderColor: '#fb923c', background: 'rgba(249,115,22,0.55)', boxShadow: '0 0 10px #f97316' }}
+								style={{ borderColor: '#60a5fa', background: 'rgba(59,130,246,0.5)', boxShadow: '0 0 10px #3b82f6' }}
 								animate={{ left: ['20%', '47%'], opacity: [0, 1, 1, 0], y: [0, -8, -8, 0] }}
 								transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
 							/>
@@ -231,15 +231,15 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 								<div className="h-1 overflow-hidden rounded-full bg-white/10">
 									<motion.div
 										className="h-full rounded-full"
-										style={{ background: '#f97316' }}
+										style={{ background: '#3b82f6' }}
 										initial={false}
 										animate={{ width: complete ? '100%' : current ? '55%' : '0%' }}
 										transition={{ duration: 0.5 }}
 									/>
 								</div>
 								<span
-									className="font-mono text-[9px] uppercase tracking-wider"
-									style={{ color: complete || current ? '#fdba74' : 'rgba(255,255,255,0.4)' }}
+									className="font-sans text-[11px] tracking-wide"
+									style={{ color: complete || current ? '#bfdbfe' : 'rgba(255,255,255,0.4)' }}
 								>
 									{label}
 								</span>
