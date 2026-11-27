@@ -542,3 +542,10 @@
 	from { transform: translateX(0); }
 	to { transform: translateX(-50%); }
 }
+
+@font-face {
+	font-family: 'Fredoka';
+	src: url('/fonts/Fredoka.woff') format('woff');
+	font-weight: 300 700;
+	font-display: swap;
+}
