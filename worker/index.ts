@@ -262,6 +262,10 @@ const worker = {
 			return new Response('Access denied. Please use the assigned domain name.', { status: 403 });
 		}
 
+		if (hostname === `www.${env.CUSTOM_DOMAIN}`) {
+			return Response.redirect(`https://${env.CUSTOM_DOMAIN}${pathname}${url.search}`, 301);
+		}
+
 		// --- Domain-based Routing ---
 
 		// Normalize hostnames for both local development (localhost) and production.
