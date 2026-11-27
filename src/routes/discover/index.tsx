@@ -133,7 +133,7 @@ export default function DiscoverPage() {
 
 					{/* Unified App List */}
 					<AppListContainer
-						apps={apps}
+						apps={apps.filter((a) => Boolean(a.screenshotUrl))}
 						loading={loading}
 						loadingMore={loadingMore}
 						error={error}
