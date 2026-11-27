@@ -27,7 +27,7 @@ interface Pulse {
 	speed: number;
 }
 
-const LINK_DISTANCE = 170;
+const LINK_DISTANCE = 200;
 const MAX_NODES = 70;
 
 function cssColor(name: string, fallback: string): string {
@@ -64,13 +64,13 @@ export function AiWorldCanvas() {
 		let palette = ['#4f46e5', '#ec4899', '#14b8a6'];
 
 		const seed = () => {
-			const count = Math.min(MAX_NODES, Math.round((width * height) / 22000));
+			const count = Math.min(MAX_NODES, Math.round((width * height) / 14000));
 			nodes = Array.from({ length: count }, () => ({
 				x: Math.random() * width,
 				y: Math.random() * height,
 				vx: (Math.random() - 0.5) * 22,
 				vy: (Math.random() - 0.5) * 22,
-				r: 1.2 + Math.random() * 1.8,
+				r: 1.8 + Math.random() * 2.2,
 			}));
 			shapes = Array.from({ length: 7 }, (_, i) => ({
 				x: Math.random() * width,
@@ -126,11 +126,11 @@ export function AiWorldCanvas() {
 				if (s.x > width + 120) s.x = -120;
 				if (s.y < -120) s.y = height + 120;
 				if (s.y > height + 120) s.y = -120;
-				ctx.strokeStyle = withAlpha(palette[s.colorIndex], 0.22);
-				ctx.lineWidth = 1;
+				ctx.strokeStyle = withAlpha(palette[s.colorIndex], 0.4);
+				ctx.lineWidth = 1.2;
 				polygon(s);
 				ctx.stroke();
-				ctx.strokeStyle = withAlpha(palette[s.colorIndex], 0.1);
+				ctx.strokeStyle = withAlpha(palette[s.colorIndex], 0.2);
 				const inner = { ...s, size: s.size * 0.6, angle: -s.angle };
 				polygon(inner);
 				ctx.stroke();
@@ -153,9 +153,9 @@ export function AiWorldCanvas() {
 					if (dist < LINK_DISTANCE) {
 						const next = Math.min(1, grown + dt * 1.6);
 						links.set(key, next);
-						if (next < 0.05 && Math.random() < 0.002 && pulses.length < 14) pulses.push({ a: i, b: j, t: 0, speed: 0.5 + Math.random() * 0.6 });
+						if (next < 0.05 && Math.random() < 0.006 && pulses.length < 14) pulses.push({ a: i, b: j, t: 0, speed: 0.5 + Math.random() * 0.6 });
 						const fade = 1 - dist / LINK_DISTANCE;
-						ctx.strokeStyle = withAlpha(palette[(i + j) % 3], 0.32 * fade * next + 0.04);
+						ctx.strokeStyle = withAlpha(palette[(i + j) % 3], 0.6 * fade * next + 0.08);
 						ctx.lineWidth = 1;
 						ctx.beginPath();
 						ctx.moveTo(a.x, a.y);
