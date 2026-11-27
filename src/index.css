@@ -681,3 +681,23 @@ html[data-mode='dark'] .vibesdk-sidebar-wrapper {
 		animation: none;
 	}
 }
+
+html[data-motion='off'] .aurora__blob,
+html[data-motion='off'] .aurora__grid {
+	animation: none;
+	opacity: 0.12;
+}
+
+html[data-motion='calm'] .aurora__blob {
+	animation-duration: 70s;
+}
+
+html[data-motion='hyper'] .aurora__blob {
+	animation-duration: 9s;
+	opacity: 0.5;
+}
+
+html[data-motion='hyper'] .aurora__grid {
+	animation-duration: 2.5s;
+	opacity: 0.3;
+}

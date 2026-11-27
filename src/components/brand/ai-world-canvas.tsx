@@ -114,9 +114,15 @@ export function AiWorldCanvas() {
 		};
 
 		const frame = (now: number) => {
-			const dt = Math.min(0.05, (now - last) / 1000);
+			const motion = document.documentElement.dataset.motion ?? 'full';
+			const speed = motion === 'hyper' ? 2.4 : motion === 'calm' ? 0.45 : 1;
+			const dt = Math.min(0.05, (now - last) / 1000) * speed;
 			last = now;
 			ctx.clearRect(0, 0, width, height);
+			if (motion === 'off') {
+				if (!reduce && !document.hidden) raf = requestAnimationFrame(frame);
+				return;
+			}
 
 			for (const s of shapes) {
 				s.x += s.vx * dt;

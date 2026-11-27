@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PaletteIcon } from '@phosphor-icons/react';
 import { toast } from 'sonner';
@@ -14,6 +15,7 @@ export function SkinPicker({ className }: { className?: string }) {
 	const [open, setOpen] = useState(false);
 	const [data, setData] = useState<SkinData | null>(null);
 	const [busy, setBusy] = useState('');
+	const [tab, setTab] = useState<'mood' | 'look'>('mood');
 
 	const refresh = useCallback(async () => {
 		if (!user) return;
@@ -65,6 +67,7 @@ export function SkinPicker({ className }: { className?: string }) {
 			>
 				<PaletteIcon className="mx-auto size-4" weight="duotone" />
 			</button>
+			{createPortal(
 			<AnimatePresence>
 				{open && (
 					<motion.div
@@ -85,7 +88,7 @@ export function SkinPicker({ className }: { className?: string }) {
 						>
 							<div className="flex items-start justify-between gap-4">
 								<div>
-									<h2 className="font-display text-2xl font-bold">Pick a look</h2>
+									<h2 className="font-display text-2xl font-bold">Set your vibe</h2>
 									<p className="mt-1 text-sm text-white/60">Unlock once with credits, keep it forever.</p>
 								</div>
 								<div className="flex items-center gap-3">
@@ -93,8 +96,20 @@ export function SkinPicker({ className }: { className?: string }) {
 									<button type="button" onClick={close} className="rounded-full bg-white/10 px-3 py-1 text-sm hover:bg-white/20">Done</button>
 								</div>
 							</div>
-							<div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-								{SKIN_LOOKS.map((look) => {
+							<div className="mt-4 inline-flex rounded-full bg-white/10 p-1 text-sm">
+								{(['mood', 'look'] as const).map((t) => (
+									<button
+										key={t}
+										type="button"
+										onClick={() => setTab(t)}
+										className={`rounded-full px-4 py-1.5 font-display font-medium transition-colors ${tab === t ? 'bg-white text-black' : 'text-white/70 hover:text-white'}`}
+									>
+										{t === 'mood' ? 'Moods' : 'Colour looks'}
+									</button>
+								))}
+							</div>
+							<div className="mt-4 grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3">
+								{SKIN_LOOKS.filter((l) => l.kind === tab || l.id === 'midnight' && tab === 'look').map((look) => {
 									const meta = data?.skins.find((s) => s.id === look.id);
 									const price = meta?.price ?? (look.id === 'midnight' ? 0 : null);
 									const owned = look.id === 'midnight' || (data?.owned.includes(look.id) ?? false);
@@ -113,6 +128,7 @@ export function SkinPicker({ className }: { className?: string }) {
 											<div className="p-3">
 												<div className="font-display text-base font-semibold">{look.name}</div>
 												<div className="text-xs text-white/55">{look.tagline}</div>
+												<div className="mt-1 text-[10px] uppercase tracking-wider text-white/40">{look.motion === 'off' ? 'Still' : look.motion === 'calm' ? 'Slow motion' : look.motion === 'hyper' ? 'Hyper motion' : 'Flowing'}</div>
 												<div className="mt-3 flex gap-2">
 													{owned ? (
 														<button
@@ -152,7 +168,9 @@ export function SkinPicker({ className }: { className?: string }) {
 						</motion.div>
 					</motion.div>
 				)}
-			</AnimatePresence>
+			</AnimatePresence>,
+			document.body,
+			)}
 		</>
 	);
 }

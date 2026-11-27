@@ -15,6 +15,11 @@ export const SKINS: Skin[] = [
 	{ id: 'bubblegum', name: 'Bubblegum', price: 30 },
 	{ id: 'forest', name: 'Jungle Party', price: 30 },
 	{ id: 'galaxy', name: 'Galaxy Brain', price: 50 },
+	{ id: 'focus', name: 'Concentrate', price: 15 },
+	{ id: 'lofi', name: 'Lo-fi Study', price: 25 },
+	{ id: 'zen', name: 'Zen Garden', price: 25 },
+	{ id: 'vibecheck', name: 'Vibe Check', price: 40 },
+	{ id: 'neon', name: 'Neon Night', price: 40 },
 ];
 
 const FREE_SKIN = 'midnight';

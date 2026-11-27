@@ -12,6 +12,7 @@ export function AuroraBackground() {
 	useEffect(() => {
 		const root = document.documentElement;
 		root.dataset.skin = skin.id;
+		root.dataset.motion = skin.motion;
 		root.style.setProperty('--skin-base', skin.base);
 		root.style.setProperty('--skin-a', skin.blobs[0]);
 		root.style.setProperty('--skin-b', skin.blobs[1]);
