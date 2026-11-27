@@ -3,10 +3,10 @@ import { cn } from '@cloudflare/kumo';
 const FACE_BORDER = {
 	caesar: 'border-[#3b82f6]/50',
 	louie: 'border-[#ec4899]/50',
-	jack: 'border-[#84cc16]/50',
+	jack: 'border-[#14b8a6]/50',
 } as const;
 
-const FACE_FILE = { caesar: 'john', louie: 'maria', jack: 'jack' } as const;
+const FACE_FILE = { caesar: 'jack', louie: 'john', jack: 'maria' } as const;
 
 export function BrandFace({
 	className,
@@ -24,7 +24,7 @@ export function BrandFace({
 			)}
 		>
 			<img
-				src={`/troop/${FACE_FILE[face]}-face.svg`}
+				src={`/troop/${FACE_FILE[face]}-face.webp`}
 				alt={FACE_FILE[face]}
 				className="size-full object-cover"
 				draggable={false}

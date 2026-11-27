@@ -1,6 +1,6 @@
 import { getAgentAccess } from '../credits/purchasedCredits';
 
-// Maria (ads) and Jack (support) data. Tables are created on first use, so no migration step is needed.
+// John (ads) and Maria (support) data. Tables are created on first use, so no migration step is needed.
 
 let tablesReady = false;
 
@@ -28,7 +28,7 @@ async function ensureTables(env: Env): Promise<void> {
 
 /* ===================== access and limits ===================== */
 
-// Maria and Jack are open to everyone while testing. Set TROOP_REQUIRE_PLAN=true to require that agent's plan (or Pro).
+// John and Maria are open to everyone while testing. Set TROOP_REQUIRE_PLAN=true to require that agent's plan (or Pro).
 export async function canUseTroop(env: Env, userId: string, agent: 'louie' | 'jack'): Promise<boolean> {
 	const flag = (env as unknown as Record<string, string | undefined>).TROOP_REQUIRE_PLAN;
 	if (flag !== 'true') return true;
@@ -99,7 +99,7 @@ export async function getSiteById(env: Env, appId: string): Promise<SiteInfo | n
 	return row ? toSite(row) : null;
 }
 
-/* ===================== Maria: saved ad packs ===================== */
+/* ===================== John: saved ad packs ===================== */
 
 export interface SavedAdPack {
 	id: string;
@@ -140,7 +140,7 @@ export async function listAdPacks(env: Env, userId: string, appId: string): Prom
 	}));
 }
 
-/* ===================== Jack: bot, chats, leads ===================== */
+/* ===================== Maria: bot, chats, leads ===================== */
 
 export interface JackBot {
 	appId: string;

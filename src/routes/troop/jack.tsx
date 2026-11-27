@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { apiClient, type JackSetupData } from '@/lib/api-client';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
-const LIME = '#84cc16';
+const LIME = '#14b8a6';
 const TONES = [
 	{ id: 'friendly', label: 'Friendly' },
 	{ id: 'formal', label: 'Formal' },
@@ -52,9 +52,9 @@ function TestChat({ appId, enabled }: { appId: string; enabled: boolean }) {
 	return (
 		<div className={PANEL}>
 			<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: LIME }}>
-				Try Jack
+				Try Maria
 			</div>
-			{!enabled && <div className="mb-3 text-sm text-white/60">Switch Jack on and press Save to try him here.</div>}
+			{!enabled && <div className="mb-3 text-sm text-white/60">Switch Maria on and press Save to try him here.</div>}
 			<div className="mb-3 flex h-56 flex-col gap-2 overflow-y-auto rounded-xl bg-black/30 p-3">
 				{bubbles.map((b, i) => (
 					<div
@@ -116,7 +116,7 @@ export default function JackPage() {
 				greeting: setup.greeting,
 				enabled: setup.enabled,
 			});
-			toast.success('Jack is updated');
+			toast.success('Maria is updated');
 		} catch {
 			// the API client already shows the reason
 		}
@@ -125,10 +125,10 @@ export default function JackPage() {
 
 	return (
 		<div className="mx-auto max-w-3xl px-5 py-8 text-white">
-			<title>Jack - AlwaysBro</title>
-			<TroopHeader face="/troop/jack-face.svg" name="Jack" color={LIME} role="Customer support" line="Teach me your business and I will answer your customers." />
+			<title>Maria - AlwaysBro</title>
+			<TroopHeader face="/troop/maria-face.webp" name="Maria" color={LIME} role="Customer support" line="Teach me your business and I will answer your customers." />
 			{error && <div className={PANEL}>{error}</div>}
-			{data && !data.access.jack && <LockedNotice agent="Jack" />}
+			{data && !data.access.jack && <LockedNotice agent="Maria" />}
 			{data && data.access.jack && (
 				<>
 					<SitePicker sites={sites} selectedId={selectedId} onSelect={select} />
@@ -137,11 +137,11 @@ export default function JackPage() {
 							<div className={PANEL}>
 								<div className="mb-3 flex items-center justify-between">
 									<div className="font-sans text-xs tracking-wide" style={{ color: LIME }}>
-										What Jack knows
+										What Maria knows
 									</div>
 									<label className="flex cursor-pointer items-center gap-2 text-sm text-white/85">
 										<input type="checkbox" checked={setup.enabled} onChange={(e) => patch({ enabled: e.target.checked })} className="size-4 accent-lime-500" />
-										Jack is on
+										Maria is on
 									</label>
 								</div>
 								<label className="mb-3 block">
@@ -158,7 +158,7 @@ export default function JackPage() {
 									/>
 								</label>
 								<div className="mb-3">
-									<span className="mb-1 block text-xs text-white/50">How Jack talks</span>
+									<span className="mb-1 block text-xs text-white/50">How Maria talks</span>
 									<div className="flex gap-2">
 										{TONES.map((t) => (
 											<button
@@ -189,7 +189,7 @@ export default function JackPage() {
 
 							<div className={PANEL}>
 								<div className="mb-2 font-sans text-xs tracking-wide" style={{ color: LIME }}>
-									Put Jack on your website
+									Put Maria on your website
 								</div>
 								<p className="mb-3 text-sm text-white/65">Paste this line just before the closing body tag of your website.</p>
 								<div className="flex items-start gap-3 rounded-xl bg-black/30 p-3">
@@ -202,7 +202,7 @@ export default function JackPage() {
 								<div className="mb-3 font-sans text-xs tracking-wide" style={{ color: LIME }}>
 									Customers who left their details
 								</div>
-								{setup.leads.length === 0 && <div className="text-sm text-white/55">Nobody yet. When Jack cannot answer, he asks for a phone number or email and it shows here.</div>}
+								{setup.leads.length === 0 && <div className="text-sm text-white/55">Nobody yet. When Maria cannot answer, he asks for a phone number or email and it shows here.</div>}
 								{setup.leads.map((l, i) => (
 									<div key={i} className="border-b border-white/5 py-2 text-sm last:border-0">
 										<div className="text-white">{l.contact}</div>
@@ -227,7 +227,7 @@ export default function JackPage() {
 										<div className="mt-2 space-y-1 text-sm">
 											{c.turns.map((t, i) => (
 												<div key={i} className={t.role === 'user' ? 'text-white' : 'text-white/60'}>
-													{t.role === 'user' ? 'Customer: ' : 'Jack: '}
+													{t.role === 'user' ? 'Customer: ' : 'Maria: '}
 													{t.content}
 												</div>
 											))}

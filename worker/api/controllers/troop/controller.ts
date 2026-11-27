@@ -40,8 +40,8 @@ interface JackSetupData {
 }
 
 const LOUIE_DAILY_LIMIT = 20;
-const NOT_ALLOWED_LOUIE = 'Subscribe to Maria, or to Pro, to use this';
-const NOT_ALLOWED_JACK = 'Subscribe to Jack, or to Pro, to use this';
+const NOT_ALLOWED_LOUIE = 'Subscribe to John, or to Pro, to use this';
+const NOT_ALLOWED_JACK = 'Subscribe to Maria, or to Pro, to use this';
 const TONES = ['friendly', 'formal', 'short'];
 
 function appIdFrom(request: Request): string {
@@ -80,7 +80,7 @@ export class TroopController extends BaseController {
 			const budgetInr = Math.max(500, Math.min(10_000_000, Math.round(Number(body.budgetInr) || 10_000)));
 
 			if (!(await takeUsage(env, `louie-user:${user.id}`, LOUIE_DAILY_LIMIT))) {
-				return TroopController.createErrorResponse<SavedAdPack>('Maria has reached today\'s limit. Please try again tomorrow.', 429);
+				return TroopController.createErrorResponse<SavedAdPack>('John has reached today\'s limit. Please try again tomorrow.', 429);
 			}
 
 			const pack: AdPack = await generateAdPack(env, site, {
@@ -96,7 +96,7 @@ export class TroopController extends BaseController {
 			return TroopController.createSuccessResponse(saved);
 		} catch (error) {
 			this.logger.error('Error generating ads:', error);
-			const message = error instanceof Error && error.message.startsWith('Maria') ? error.message : 'Maria could not write the ads. Please try again.';
+			const message = error instanceof Error && error.message.startsWith('John') ? error.message : 'John could not write the ads. Please try again.';
 			return TroopController.createErrorResponse<SavedAdPack>(message, 500);
 		}
 	}
@@ -133,8 +133,8 @@ export class TroopController extends BaseController {
 				leads: inbox.leads,
 			});
 		} catch (error) {
-			this.logger.error('Error loading Jack:', error);
-			return TroopController.createErrorResponse<JackSetupData>('Failed to load Jack', 500);
+			this.logger.error('Error loading Maria:', error);
+			return TroopController.createErrorResponse<JackSetupData>('Failed to load Maria', 500);
 		}
 	}
 
@@ -159,8 +159,8 @@ export class TroopController extends BaseController {
 			});
 			return TroopController.createSuccessResponse({ saved: true });
 		} catch (error) {
-			this.logger.error('Error saving Jack:', error);
-			return TroopController.createErrorResponse<{ saved: boolean }>('Failed to save Jack', 500);
+			this.logger.error('Error saving Maria:', error);
+			return TroopController.createErrorResponse<{ saved: boolean }>('Failed to save Maria', 500);
 		}
 	}
 }

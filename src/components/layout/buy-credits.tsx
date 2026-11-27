@@ -21,13 +21,13 @@ declare global {
 type PaidPlan = PaidPlanId;
 
 const PLAN_LINES: Record<PaidPlan, string[]> = {
-	basic: ['John, the AI website builder', 'Websites live (see your limit below)', 'Monthly credits for building and editing'],
-	louie: ['Maria writes your ads', 'Google, Facebook and Instagram ads, posts and a budget plan', 'Works on any website you built'],
-	jack: ['Jack answers your customers on your website', 'Saves the customers who leave their details', 'You teach him your prices, timings and offers'],
-	pro: ['John, Maria and Jack together', 'Cheaper than taking all three one by one', 'More monthly credits'],
+	basic: ['Jack, the AI website builder', 'Websites live (see your limit below)', 'Monthly credits for building and editing'],
+	louie: ['John writes your ads', 'Google, Facebook and Instagram ads, posts and a budget plan', 'Works on any website you built'],
+	jack: ['Maria answers your customers on your website', 'Saves the customers who leave their details', 'You teach him your prices, timings and offers'],
+	pro: ['Jack, John and Maria together', 'Cheaper than taking all three one by one', 'More monthly credits'],
 };
 
-const PLAN_NAMES: Record<PaidPlan, string> = { basic: 'John', louie: 'Maria', jack: 'Jack', pro: 'Pro' };
+const PLAN_NAMES: Record<PaidPlan, string> = { basic: 'Jack', louie: 'John', jack: 'Maria', pro: 'Pro' };
 const PLAN_ORDER: PaidPlan[] = ['basic', 'louie', 'jack', 'pro'];
 
 function loadRazorpay(): Promise<boolean> {

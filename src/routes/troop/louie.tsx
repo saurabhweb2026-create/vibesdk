@@ -151,7 +151,7 @@ export default function LouiePage() {
 				const pack = res.data;
 				setPacks((p) => [pack, ...p]);
 				setShown(0);
-				toast.success('Maria finished your ads');
+				toast.success('John finished your ads');
 			}
 		} catch {
 			// the API client already shows the reason
@@ -163,10 +163,10 @@ export default function LouiePage() {
 
 	return (
 		<div className="mx-auto max-w-3xl px-5 py-8 text-white">
-			<title>Maria - AlwaysBro</title>
-			<TroopHeader face="/troop/maria-face.svg" name="Maria" color={PINK} role="Ads" line="Tell me your goal and I will write your ads." />
+			<title>John - AlwaysBro</title>
+			<TroopHeader face="/troop/john-face.webp" name="John" color={PINK} role="Ads" line="Tell me your goal and I will write your ads." />
 			{error && <div className={PANEL}>{error}</div>}
-			{data && !data.access.louie && <LockedNotice agent="Maria" />}
+			{data && !data.access.louie && <LockedNotice agent="John" />}
 			{data && data.access.louie && (
 				<>
 					<SitePicker sites={sites} selectedId={selectedId} onSelect={select} />
@@ -254,7 +254,7 @@ export default function LouiePage() {
 								className="mt-5 rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
 								style={{ background: PINK, boxShadow: `0 0 24px ${PINK}55` }}
 							>
-								{busy ? 'Maria is creating...' : 'Create my content'}
+								{busy ? 'John is creating...' : 'Create my content'}
 							</button>
 						</div>
 					)}

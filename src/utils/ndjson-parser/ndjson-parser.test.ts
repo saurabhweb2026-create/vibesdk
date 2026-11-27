@@ -101,7 +101,7 @@ describe('NDJSONStreamParser', () => {
     });
 
     it('should handle nested objects', () => {
-      const chunk = '{"user":{"id":1,"name":"John","address":{"city":"NYC","zip":"10001"}},"active":true}\n';
+      const chunk = '{"user":{"id":1,"name":"Jack","address":{"city":"NYC","zip":"10001"}},"active":true}\n';
       
       parser.processChunk(chunk);
       
@@ -109,7 +109,7 @@ describe('NDJSONStreamParser', () => {
       expect(receivedMessages[0]).toEqual({
         user: {
           id: 1,
-          name: 'John',
+          name: 'Jack',
           address: {
             city: 'NYC',
             zip: '10001'

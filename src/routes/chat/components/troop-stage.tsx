@@ -20,9 +20,9 @@ interface TroopStageProps {
 }
 
 const TROOP = [
-	{ id: 'caesar', name: 'John', role: 'Builds your site', color: '#3b82f6', src: '/troop/john.svg' },
-	{ id: 'louie', name: 'Maria', role: 'Ads', color: '#ec4899', src: '/troop/maria.svg' },
-	{ id: 'jack', name: 'Jack', role: 'Customer support', color: '#84cc16', src: '/troop/jack.svg' },
+	{ id: 'caesar', name: 'Jack', role: 'Builds your site', color: '#3b82f6', src: '/troop/jack-face.webp' },
+	{ id: 'louie', name: 'John', role: 'Ads', color: '#ec4899', src: '/troop/john-face.webp' },
+	{ id: 'jack', name: 'Maria', role: 'Customer support', color: '#14b8a6', src: '/troop/maria-face.webp' },
 ] as const;
 
 const STEPS = ['Plan', 'Build', 'Preview', 'Ready'];
@@ -66,7 +66,7 @@ function caesarLine(status: TroopStatus, fileName?: string): string {
 }
 
 function louieLine(status: TroopStatus): string {
-	if (status === 'done') return 'Nice work, John! Want ads for this site?';
+	if (status === 'done') return 'Nice work, Jack! Want ads for this site?';
 	if (status === 'idle') return 'I write your ads once the site is ready.';
 	return 'Taking notes for your ads.';
 }
@@ -113,7 +113,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 				<div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c0c] text-white shadow-lg">
 					{header}
 					<div className="flex items-center gap-3 px-3 pb-2 pt-1">
-						<img src={TROOP[0].src} alt="John" className="h-9 w-auto shrink-0" />
+						<img src={TROOP[0].src} alt="Jack" className="size-9 shrink-0 rounded-lg object-cover" />
 						<div className="min-w-0 flex-1 truncate text-xs text-white/90">{lines[0]}</div>
 					</div>
 				</div>
@@ -171,7 +171,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 									<img
 										src={c.src}
 										alt={c.name}
-										className="h-full w-auto select-none object-contain"
+										className="h-full w-auto select-none rounded-2xl object-cover"
 										draggable={false}
 										style={{
 											opacity: waiting ? 0.72 : 1,
@@ -197,7 +197,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 										className="mt-1 rounded-full px-2.5 py-0.5 text-xs font-semibold text-black"
 										style={{ background: c.color }}
 									>
-										{c.id === 'louie' ? 'Write my ads' : 'Set up Jack'}
+										{c.id === 'louie' ? 'Write my ads' : 'Set up Maria'}
 									</button>
 								)}
 							</div>

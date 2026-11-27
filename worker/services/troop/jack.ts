@@ -14,7 +14,7 @@ const TONES: Record<string, string> = {
 };
 
 export function defaultGreeting(businessName: string): string {
-	return `Hi! I am Jack from ${businessName || 'our team'}. How can I help you today?`;
+	return `Hi! I am Maria from ${businessName || 'our team'}. How can I help you today?`;
 }
 
 function buildSystem(bot: JackBot, site: SiteInfo | null): string {
@@ -27,7 +27,7 @@ function buildSystem(bot: JackBot, site: SiteInfo | null): string {
 		.filter(Boolean)
 		.join('\n\n');
 
-	return `You are Jack, the customer support assistant of ${name}. You chat with the visitors of its website.
+	return `You are Maria, the customer support assistant of ${name}. You chat with the visitors of its website.
 Tone: ${TONES[bot.tone] ?? TONES.friendly}. Reply in the language the customer writes in. Keep answers under 80 words.
 Use ONLY the facts in KNOWLEDGE below. Never invent prices, timings, offers, addresses or policies.
 If the answer is not in KNOWLEDGE, say you will pass the question to the team and ask for the customer's name and a phone number or email, and set needs_human to true.

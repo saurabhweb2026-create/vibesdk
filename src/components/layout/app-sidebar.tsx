@@ -326,8 +326,8 @@ export function AppSidebar() {
 							shape="square"
 							size="base"
 							variant="ghost"
-							aria-label="Maria, ads"
-							title="Maria, ads"
+							aria-label="John, ads"
+							title="John, ads"
 							onClick={() => navigate('/louie')}
 							className={cn(pathname === '/louie' && 'bg-(--sidebar-active-bg)')}
 							icon={<BrandFace face="louie" className="size-5" />}
@@ -336,8 +336,8 @@ export function AppSidebar() {
 							shape="square"
 							size="base"
 							variant="ghost"
-							aria-label="Jack, support"
-							title="Jack, support"
+							aria-label="Maria, support"
+							title="Maria, support"
 							onClick={() => navigate('/jack')}
 							className={cn(pathname === '/jack' && 'bg-(--sidebar-active-bg)')}
 							icon={<BrandFace face="jack" className="size-5" />}
@@ -382,19 +382,19 @@ export function AppSidebar() {
 								active={pathname === '/louie'}
 								icon={<BrandFace face="louie" className="size-5 -mr-1" />}
 								id="louie-link"
-								tooltip="Maria, ads"
+								tooltip="John, ads"
 								onClick={() => navigate('/louie')}
 							>
-								Maria · Ads
+								John · Ads
 							</Sidebar.MenuButton>
 							<Sidebar.MenuButton
 								active={pathname === '/jack'}
 								icon={<BrandFace face="jack" className="size-5 -mr-1" />}
 								id="jack-link"
-								tooltip="Jack, support"
+								tooltip="Maria, support"
 								onClick={() => navigate('/jack')}
 							>
-								Jack · Support
+								Maria · Support
 							</Sidebar.MenuButton>
 						</Sidebar.Menu>
 

@@ -92,7 +92,7 @@ export function SitePicker({
 			<div className={PANEL}>
 				<div className="text-white">You have no websites yet.</div>
 				<a href="/" className="mt-2 inline-block text-sm text-[#a5b4fc] underline">
-					Ask John to build your first website
+					Ask Jack to build your first website
 				</a>
 			</div>
 		);
@@ -111,7 +111,7 @@ export function SitePicker({
 	);
 }
 
-export function LockedNotice({ agent }: { agent: 'Maria' | 'Jack' }) {
+export function LockedNotice({ agent }: { agent: 'John' | 'Maria' }) {
 	return (
 		<div className={PANEL}>
 			<div className="font-semibold text-white">{agent} is a paid helper</div>

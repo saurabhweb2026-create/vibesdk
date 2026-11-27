@@ -3,37 +3,37 @@ import { BrandFace, BrandName } from '@/components/brand/brand-mark';
 
 const TROOP = [
 	{
-		name: 'John',
+		name: 'Jack',
 		role: 'Builds your website',
-		text: 'Tell John your idea. He plans, designs and writes your site, then hands it over.',
+		text: 'Tell Jack your idea. He plans, designs and writes your site, then hands it over.',
 		color: '#3b82f6',
-		src: '/troop/john.svg',
+		src: '/troop/jack.webp',
+		live: true,
+	},
+	{
+		name: 'John',
+		role: 'Ads and social media',
+		text: 'John reads your finished site and writes your Google, Facebook and Instagram ads, posts and budget plan.',
+		color: '#ec4899',
+		src: '/troop/john.webp',
 		live: true,
 	},
 	{
 		name: 'Maria',
-		role: 'Runs your ads',
-		text: 'Maria reads your finished site and writes your Google, Facebook and Instagram ads, posts and budget plan.',
-		color: '#ec4899',
-		src: '/troop/maria.svg',
-		live: true,
-	},
-	{
-		name: 'Jack',
 		role: 'Answers your customers',
-		text: 'Jack learns your business and answers your customers on your website, day and night, and saves the leads.',
-		color: '#84cc16',
-		src: '/troop/jack.svg',
+		text: 'Maria learns your business and answers your customers on your website, day and night, and saves the leads.',
+		color: '#14b8a6',
+		src: '/troop/maria.webp',
 		live: true,
 	},
 ];
 
 const PLANS = [
-	{ name: 'Free', price: '₹0', line: '20 free credits every day', points: ['Try John', 'No card needed'] },
-	{ name: 'John', price: '₹1,999', line: 'per month', points: ['The website builder', '3 live websites'] },
-	{ name: 'Maria', price: '₹2,999', line: 'per month', points: ['Ads for your website', 'Google, Facebook, Instagram'] },
-	{ name: 'Jack', price: '₹2,499', line: 'per month', points: ['Answers your customers', 'Saves your leads'] },
-	{ name: 'Pro', price: '₹6,999', line: 'per month', points: ['John, Maria and Jack', 'Best value'] },
+	{ name: 'Free', price: '₹0', line: '20 free credits every day', points: ['Try Jack', 'No card needed'] },
+	{ name: 'Jack', price: '₹1,999', line: 'per month', points: ['The website builder', '3 live websites'] },
+	{ name: 'John', price: '₹2,999', line: 'per month', points: ['Ads for your website', 'Google, Facebook, Instagram'] },
+	{ name: 'Maria', price: '₹2,499', line: 'per month', points: ['Answers your customers', 'Saves your leads'] },
+	{ name: 'Pro', price: '₹6,999', line: 'per month', points: ['Jack, John and Maria', 'Best value'] },
 ];
 
 export default function Landing({ onEnter }: { onEnter: () => void }) {
@@ -82,7 +82,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 					<span className="text-[#4f46e5]">One business.</span>
 				</h1>
 				<p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:text-lg">
-					John builds your website. Maria runs your ads. Jack answers
+					Jack builds your website. John runs your ads. Maria answers
 					your customers. They pass the work to each other, so you do
 					not have to.
 				</p>
@@ -121,7 +121,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 							src={c.src}
 							alt={c.name}
 							draggable={false}
-							className="h-44 w-auto object-contain"
+							className="h-72 w-auto rounded-2xl object-cover"
 							style={{
 								filter: `drop-shadow(0 0 18px ${c.color}88)`,
 								opacity: 1,
@@ -184,7 +184,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 						onClick={onEnter}
 						className="rounded-full bg-[#4f46e5] px-7 py-3 text-base font-semibold text-white hover:bg-[#6366f1]"
 					>
-						Meet John
+						Meet Jack
 					</button>
 				</div>
 			</section>

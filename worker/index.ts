@@ -302,7 +302,7 @@ const worker = {
 				return handleRazorpayWebhook(env, request);
 			}
 
-			// Jack chat bubble on customers' own websites: public, no cookies
+			// Maria chat bubble on customers' own websites: public, no cookies
 			if (isJackPublicPath(pathname)) {
 				return handleJackPublic(env, request);
 			}
