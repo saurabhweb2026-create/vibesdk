@@ -1,14 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { apiClient, type LouieAdContent, type LouiePack } from '@/lib/api-client';
+import { apiClient, type LouieAdContent, type LouiePack, type MetaStatus } from '@/lib/api-client';
 import { composeCreative, loadImage } from '@/lib/creative-image';
 import { renderShortVideo, type VideoShot } from '@/lib/short-video';
+import { MetaPostDialog, useMetaStatus } from '@/components/meta-post-dialog';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
 const GOALS = ['Get more bookings', 'Sell more products', 'Bring more visitors', 'Launch something new'];
 const FORMATS = ['Ads', 'Social posts', 'Video scripts', 'Creatives'] as const;
 const TONES = ['Friendly', 'Premium', 'Fun', 'Urgent'];
 const PINK = '#ec4899';
+
+type OnPost = (text: string, image?: string | null) => void;
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
 	return (
@@ -97,7 +100,7 @@ function MakeVideoButton({ script, appId }: { script: NonNullable<LouieAdContent
 	);
 }
 
-function CreativeCard({ creative, appId, brand }: { creative: NonNullable<LouieAdContent['creatives']>[number]; appId: string; brand: string }) {
+function CreativeCard({ creative, appId, brand, onPost }: { creative: NonNullable<LouieAdContent['creatives']>[number]; appId: string; brand: string; onPost: OnPost }) {
 	const [busy, setBusy] = useState(false);
 	const [picture, setPicture] = useState<string | null>(null);
 
@@ -131,13 +134,16 @@ function CreativeCard({ creative, appId, brand }: { creative: NonNullable<LouieA
 						Download picture
 					</a>
 				)}
+				<button type="button" onClick={() => onPost(creative.caption, picture)} className="rounded-full border border-white/20 px-4 py-1.5 text-sm text-white hover:bg-white/10">
+					Post on Meta
+				</button>
 			</div>
 			{picture && <img src={picture} alt={creative.overlayText} className="mt-3 h-96 rounded-xl border border-white/10" />}
 		</div>
 	);
 }
 
-function AdPackView({ c, appId, brand }: { c: LouieAdContent; appId: string; brand: string }) {
+function AdPackView({ c, appId, brand, onPost }: { c: LouieAdContent; appId: string; brand: string; onPost: OnPost }) {
 	return (
 		<div className="mt-6 grid gap-4">
 			<Section title="The idea">
@@ -164,12 +170,18 @@ function AdPackView({ c, appId, brand }: { c: LouieAdContent; appId: string; bra
 			</Section>
 			<Section title="Facebook and Instagram ads">
 				{c.metaAds.map((a, i) => (
-					<Row key={i} text={`${a.headline}\n${a.primaryText}\nButton: ${a.cta}`} />
+					<div key={i}>
+						<Row text={`${a.headline}\n${a.primaryText}\nButton: ${a.cta}`} />
+						<button type="button" onClick={() => onPost(`${a.headline}\n\n${a.primaryText}`)} className="mt-1 text-sm text-[#f9a8d4] underline">Post on Meta</button>
+					</div>
 				))}
 			</Section>
 			<Section title="Social posts">
 				{c.socialPosts.map((p, i) => (
-					<Row key={i} text={`${p.caption}\n${p.hashtags.join(' ')}`} />
+					<div key={i}>
+						<Row text={`${p.caption}\n${p.hashtags.join(' ')}`} />
+						<button type="button" onClick={() => onPost(`${p.caption}\n\n${p.hashtags.join(' ')}`)} className="mt-1 text-sm text-[#f9a8d4] underline">Post on Meta</button>
+					</div>
 				))}
 			</Section>
 			{!!c.hashtags && (c.hashtags.broad.length + c.hashtags.niche.length + c.hashtags.local.length > 0) && (
@@ -193,7 +205,7 @@ function AdPackView({ c, appId, brand }: { c: LouieAdContent; appId: string; bra
 			{!!c.creatives?.length && (
 				<Section title="Creatives">
 					{c.creatives.map((cr, i) => (
-						<CreativeCard key={i} creative={cr} appId={appId} brand={brand} />
+						<CreativeCard key={i} creative={cr} appId={appId} brand={brand} onPost={onPost} />
 					))}
 				</Section>
 			)}
@@ -222,6 +234,96 @@ function AdPackView({ c, appId, brand }: { c: LouieAdContent; appId: string; bra
 	);
 }
 
+function MetaPanel({ status, refresh }: { status: MetaStatus | null; refresh: () => Promise<void> }) {
+	const [busy, setBusy] = useState(false);
+
+	useEffect(() => {
+		const url = new URL(window.location.href);
+		const result = url.searchParams.get('meta');
+		if (!result) return;
+		if (result === 'connected') toast.success('Meta connected. John can post for you now.');
+		else toast.error('Could not connect Meta. Please try again.');
+		url.searchParams.delete('meta');
+		window.history.replaceState(null, '', url.toString());
+		void refresh();
+	}, [refresh]);
+
+	const connect = async () => {
+		setBusy(true);
+		try {
+			const res = await apiClient.getMetaConnectUrl();
+			if (res.data?.url) {
+				window.location.href = res.data.url;
+				return;
+			}
+		} catch {
+			// the API client already shows the reason
+		}
+		setBusy(false);
+	};
+
+	const unlink = async () => {
+		setBusy(true);
+		try {
+			await apiClient.disconnectMeta();
+			await refresh();
+		} catch {
+			// the API client already shows the reason
+		}
+		setBusy(false);
+	};
+
+	const cancel = async (id: string) => {
+		try {
+			await apiClient.cancelMetaPost(id);
+			await refresh();
+		} catch {
+			// the API client already shows the reason
+		}
+	};
+
+	if (!status) return null;
+	const queue = status.posts.filter((p) => p.status === 'scheduled' || p.status === 'failed' || p.status === 'posted').slice(0, 6);
+
+	return (
+		<div className={PANEL}>
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<div>
+					<div className="text-sm font-medium text-white">Facebook and Instagram</div>
+					<div className="text-xs text-white/55">
+						{!status.configured
+							? 'Meta posting is being set up on this platform.'
+							: status.connected
+								? `Connected to ${status.pageName}${status.instagramName ? ` and @${status.instagramName}` : ' (no Instagram linked)'}`
+								: 'Connect once and John can post and schedule for you.'}
+					</div>
+				</div>
+				{status.configured &&
+					(status.connected ? (
+						<button type="button" disabled={busy} onClick={() => void unlink()} className="text-sm text-white/60 underline">Disconnect</button>
+					) : (
+						<button type="button" disabled={busy} onClick={() => void connect()} className="rounded-full px-4 py-1.5 text-sm font-semibold text-black disabled:opacity-50" style={{ background: PINK }}>
+							{busy ? 'Opening Meta…' : 'Connect Meta'}
+						</button>
+					))}
+			</div>
+			{status.connected && queue.length > 0 && (
+				<div className="mt-4 space-y-2 border-t border-white/10 pt-3">
+					{queue.map((p) => (
+						<div key={p.id} className="flex items-center justify-between gap-3 text-sm">
+							<span className="line-clamp-1 text-white/80">{p.message}</span>
+							<span className="flex shrink-0 items-center gap-2 text-xs text-white/55">
+								{p.status === 'scheduled' && p.scheduledAt ? `Scheduled ${new Date(p.scheduledAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : p.status === 'failed' ? `Failed: ${p.error ?? 'unknown'}` : 'Posted'}
+								{p.status === 'scheduled' && <button type="button" onClick={() => void cancel(p.id)} className="underline">Cancel</button>}
+							</span>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
 export default function LouiePage() {
 	const { data, error, sites, selectedId, select } = useTroopSites();
 	const [goal, setGoal] = useState(GOALS[0]);
@@ -234,6 +336,8 @@ export default function LouiePage() {
 	const [busy, setBusy] = useState(false);
 	const [packs, setPacks] = useState<LouiePack[]>([]);
 	const [shown, setShown] = useState(0);
+	const { status: meta, refresh: refreshMeta } = useMetaStatus();
+	const [postDraft, setPostDraft] = useState<{ text: string; image: string | null } | null>(null);
 
 	useEffect(() => {
 		if (!selectedId) return;
@@ -287,6 +391,7 @@ export default function LouiePage() {
 			{data && data.access.louie && (
 				<>
 					<SitePicker sites={sites} selectedId={selectedId} onSelect={select} />
+					<MetaPanel status={meta} refresh={refreshMeta} />
 					{selectedId && (
 						<div className={PANEL}>
 							<div className="mb-2 text-xs tracking-wide text-white/50">Your goal</div>
@@ -390,7 +495,8 @@ export default function LouiePage() {
 							))}
 						</div>
 					)}
-					{current && <AdPackView c={current.content} appId={current.appId} brand={sites.find((x) => x.id === current.appId)?.title ?? 'AlwaysBro'} />}
+					{current && <AdPackView c={current.content} appId={current.appId} brand={sites.find((x) => x.id === current.appId)?.title ?? 'AlwaysBro'} onPost={(text, image) => setPostDraft({ text, image: image ?? null })} />}
+					{postDraft && selectedId && <MetaPostDialog appId={selectedId} initialText={postDraft.text} image={postDraft.image} status={meta} onClose={() => setPostDraft(null)} onDone={() => void refreshMeta()} />}
 				</>
 			)}
 		</div>

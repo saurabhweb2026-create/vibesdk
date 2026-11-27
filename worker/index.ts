@@ -9,6 +9,7 @@ import { isOriginAllowed } from './config/security';
 import { isDev } from './utils/envs';
 import { proxyToSandbox } from './services/sandbox/request-handler';
 import { handleGitProtocolRequest, isGitProtocolRequest } from './api/handlers/git-protocol';
+import { sendDuePosts } from './services/meta/metaService';
 import { appForHostname } from './services/domains/customDomains';
 import { handleJackPublic, isJackPublicPath } from './api/handlers/jack-public';
 import { handleRazorpayWebhook } from './services/credits/purchasedCredits';
@@ -349,6 +350,9 @@ const worker = {
 		}
 
 		return new Response('Not Found', { status: 404 });
+	},
+	async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+		ctx.waitUntil(sendDuePosts(env));
 	},
 } satisfies ExportedHandler<Env>;
 

@@ -103,6 +103,9 @@
 			"bucket_name": "0code-templates"
 		}
 	],
+	"triggers": {
+		"crons": ["*/5 * * * *"]
+	},
 	"kv_namespaces": [
 		{
 			"binding": "VibecoderStore",

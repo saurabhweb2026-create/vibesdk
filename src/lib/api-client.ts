@@ -1366,6 +1366,26 @@ class ApiClient {
 		return this.request<TroopSitesData>('/api/troop/sites');
 	}
 
+	async getMetaStatus(): Promise<ApiResponse<MetaStatus>> {
+		return this.request<MetaStatus>('/api/meta/status');
+	}
+
+	async getMetaConnectUrl(): Promise<ApiResponse<{ url: string }>> {
+		return this.request<{ url: string }>('/api/meta/connect');
+	}
+
+	async disconnectMeta(): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>('/api/meta/connection', { method: 'DELETE' });
+	}
+
+	async postToMeta(body: MetaPostRequest): Promise<ApiResponse<{ post: MetaPostRow }>> {
+		return this.request<{ post: MetaPostRow }>('/api/meta/post', { method: 'POST', body });
+	}
+
+	async cancelMetaPost(id: string): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>(`/api/meta/post/${encodeURIComponent(id)}`, { method: 'DELETE' });
+	}
+
 	async getDomain(appId: string): Promise<ApiResponse<{ domain: DomainState | null }>> {
 		return this.request<{ domain: DomainState | null }>(`/api/domains/${encodeURIComponent(appId)}`);
 	}
@@ -1519,6 +1539,10 @@ export type LouieAdContent = {
 	creatives?: Array<{ format: string; visual: string; imagePrompt?: string; overlayText: string; caption: string }>;
 };
 export type LouiePack = { id: string; appId: string; goal: string | null; budgetInr: number | null; createdAt: number; content: LouieAdContent };
+export type MetaTarget = 'facebook' | 'instagram' | 'both';
+export type MetaPostRow = { id: string; appId: string; target: MetaTarget; message: string; hasImage: boolean; status: 'scheduled' | 'publishing' | 'posted' | 'failed' | 'cancelled'; scheduledAt: number | null; publishedAt: number | null; error: string | null };
+export type MetaStatus = { configured: boolean; connected: boolean; pageName: string | null; instagramName: string | null; posts: MetaPostRow[] };
+export type MetaPostRequest = { appId: string; message: string; target: MetaTarget; image?: string; scheduleAt?: number };
 export type DomainState = { hostname: string; status: 'pending' | 'active' | 'failed'; records: Array<{ type: 'CNAME' | 'TXT'; name: string; value: string }>; note: string };
 export type SkinData = { balance: number; skins: Array<{ id: string; name: string; price: number }>; owned: string[]; active: string };
 export type TeamOutfit = { id: string; name: string; price: number; color: string; perk: string };
