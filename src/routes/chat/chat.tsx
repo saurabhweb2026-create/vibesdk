@@ -38,7 +38,6 @@ import {
 } from '@cloudflare/kumo';
 import { UserMessage, AIMessage } from './components/messages';
 import { PhaseTimeline } from './components/phase-timeline';
-import { type DebugMessage } from './components/debug-panel';
 import { DeploymentControls } from './components/deployment-controls';
 import { useChat } from './hooks/use-chat';
 import {
@@ -93,7 +92,6 @@ import { queryKeys } from '@/lib/query-keys';
 import { ApiError } from '@/lib/api-client';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { usePageHeader } from '@/components/layout/header-context';
-import { CloudflareLogo } from '@/components/icons/logos';
 import { TroopStage, type TroopStatus } from './components/troop-stage';
 
 const isPhasicBlueprint = (
@@ -167,36 +165,6 @@ function ChatSession() {
 	// Manual refresh trigger for preview
 	const [manualRefreshTrigger, setManualRefreshTrigger] = useState(0);
 
-	// Debug message utilities
-	const addDebugMessage = useCallback(
-		(
-			type: DebugMessage['type'],
-			message: string,
-			details?: string,
-			source?: string,
-			messageType?: string,
-			rawMessage?: unknown,
-		) => {
-			const debugMessage: DebugMessage = {
-				id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-				timestamp: Date.now(),
-				type,
-				message,
-				details,
-				source,
-				messageType,
-				rawMessage,
-			};
-
-			setDebugMessages((prev) => [...prev, debugMessage]);
-		},
-		[],
-	);
-
-	const clearDebugMessages = useCallback(() => {
-		setDebugMessages([]);
-	}, []);
-
 	// Deploy gate popup (backend-reported Cloudflare connection failures)
 	const [showDeployGateDialog, setShowDeployGateDialog] = useState<React.ReactElement | null>(null);
 	const handleCloudflareDeployGate = useCallback((code: CloudflareDeploymentErrorCode) => {
@@ -266,7 +234,6 @@ function ChatSession() {
 		projectType: urlProjectType as ProjectType,
 		behaviorType: urlBehaviorType ?? undefined,
 		autoStart,
-		onDebugMessage: addDebugMessage,
 		onCloudflareDeployGate: handleCloudflareDeployGate,
 	});
 
@@ -347,17 +314,12 @@ function ChatSession() {
 	// Terminal state
 	// const [terminalLogs, setTerminalLogs] = useState<TerminalLog[]>([]);
 
-	// Debug panel state
-	const [debugMessages, setDebugMessages] = useState<DebugMessage[]>([]);
 	const deploymentControlsRef = useRef<HTMLDivElement>(null);
 
 	const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 	const [isGitCloneModalOpen, setIsGitCloneModalOpen] = useState(false);
 
-	// Deploy target for think apps: user-account deploys are gated behind the
-	// platform's ENABLE_USER_ACCOUNT_DEPLOY flag (surfaced via capabilities).
 	const { capabilities } = useFeature();
-	const userAccountDeployEnabled = capabilities?.userAccountDeploy ?? false;
 
 	const headerTitle = blueprint?.title || appTitle;
 	const showHeader = Boolean(
@@ -418,25 +380,6 @@ function ChatSession() {
 									View Live
 								</Button>
 							)}
-							<Button
-								variant="secondary"
-								size="sm"
-								disabled={isDeploying || files.length === 0}
-								onClick={() => handleDeployToCloudflare(chatId || '', userAccountDeployEnabled ? 'user' : 'platform')}
-							>
-								{isDeploying ? (
-									<LoaderCircle className="size-3.5 animate-spin" />
-								) : (
-									<CloudflareLogo className="size-3.5" />
-								)}
-								{isDeploying
-									? 'Deploying...'
-									: cloudflareDeploymentUrl
-										? 'Redeploy'
-										: userAccountDeployEnabled
-											? 'Deploy to My Account'
-											: 'Deploy'}
-							</Button>
 						</>
 					)}
 					{isOwner && app && <DomainButton appId={app.id} />}
@@ -523,10 +466,6 @@ function ChatSession() {
 		behaviorType,
 		chatId,
 		cloudflareDeploymentUrl,
-		isDeploying,
-		files,
-		handleDeployToCloudflare,
-		userAccountDeployEnabled,
 	]);
 
 	usePageHeader(headerContent);
@@ -1481,9 +1420,6 @@ function ChatSession() {
 				</div>
 
 				<ChatModals
-					debugMessages={debugMessages}
-					chatId={chatId}
-					onClearDebugMessages={clearDebugMessages}
 					isResetDialogOpen={isResetDialogOpen}
 					onResetDialogChange={setIsResetDialogOpen}
 					onResetConversation={handleResetConversation}

@@ -1,4 +1,3 @@
-import { DebugPanel, type DebugMessage } from './debug-panel';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -15,11 +14,6 @@ import type { AuthUser, AppDetailsData } from '@/api-types';
 import type { GitHubExportHook } from '@/hooks/use-github-export';
 
 interface ChatModalsProps {
-	// Debug panel
-	debugMessages: DebugMessage[];
-	chatId?: string;
-	onClearDebugMessages: () => void;
-
 	// Reset dialog
 	isResetDialogOpen: boolean;
 	onResetDialogChange: (open: boolean) => void;
@@ -37,9 +31,6 @@ interface ChatModalsProps {
 }
 
 export function ChatModals({
-	debugMessages,
-	chatId,
-	onClearDebugMessages,
 	isResetDialogOpen,
 	onResetDialogChange,
 	onResetConversation,
@@ -52,13 +43,6 @@ export function ChatModals({
 }: ChatModalsProps) {
 	return (
 		<>
-			{/* Debug Panel */}
-			<DebugPanel
-				messages={debugMessages}
-				onClear={onClearDebugMessages}
-				chatSessionId={chatId}
-			/>
-
 			<AlertDialog open={isResetDialogOpen} onOpenChange={onResetDialogChange}>
 				<AlertDialogContent className="sm:max-w-[425px]">
 					<AlertDialogHeader>

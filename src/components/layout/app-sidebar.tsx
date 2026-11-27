@@ -379,13 +379,13 @@ export function AppSidebar() {
 							>
 								Discover
 							</Sidebar.MenuButton>
-							<div className="mt-2 px-2 font-display text-[11px] font-semibold uppercase tracking-widest text-kumo-subtle">
+							<div className="font-label mt-3 px-2 text-[11px] text-kumo-subtle">
 								Your crew
 							</div>
 							<Sidebar.MenuButton
-								className="font-display text-[15px] hover:bg-[#ec4899]/10"
+								className="text-sm"
 								active={pathname === '/louie'}
-								icon={<BrandFace face="louie" className="size-7 -mr-1 ring-2 ring-[#ec4899]/60" />}
+								icon={<BrandFace face="louie" className="size-7 -mr-1 ring-1 ring-white/15" />}
 								id="louie-link"
 								tooltip="John, ads"
 								onClick={() => navigate('/louie')}
@@ -393,9 +393,9 @@ export function AppSidebar() {
 								John · Ads and posts
 							</Sidebar.MenuButton>
 							<Sidebar.MenuButton
-								className="font-display text-[15px] hover:bg-[#14b8a6]/10"
+								className="text-sm"
 								active={pathname === '/jack'}
-								icon={<BrandFace face="jack" className="size-7 -mr-1 ring-2 ring-[#14b8a6]/60" />}
+								icon={<BrandFace face="jack" className="size-7 -mr-1 ring-1 ring-white/15" />}
 								id="jack-link"
 								tooltip="Maria, support"
 								onClick={() => navigate('/jack')}
@@ -403,9 +403,9 @@ export function AppSidebar() {
 								Maria · Customer chat
 							</Sidebar.MenuButton>
 							<Sidebar.MenuButton
-								className="font-display text-[15px] hover:bg-[#3b82f6]/10"
+								className="text-sm"
 								active={pathname === '/team'}
-								icon={<BrandFace face="caesar" className="size-7 -mr-1 ring-2 ring-[#3b82f6]/60" />}
+								icon={<BrandFace face="caesar" className="size-7 -mr-1 ring-1 ring-white/15" />}
 								id="team-link"
 								tooltip="Your team"
 								onClick={() => navigate('/team')}
@@ -439,7 +439,7 @@ export function AppSidebar() {
 				{!isCollapsed && showBookmarksSection && (
 					<Sidebar.Group>
 						<Sidebar.GroupLabel>
-							<span className="text-xs font-funky-mono">
+							<span className="font-label text-[11px]">
 								Bookmarked
 							</span>
 						</Sidebar.GroupLabel>
@@ -500,7 +500,7 @@ export function AppSidebar() {
 				{!isCollapsed && showAppsSection && (
 					<Sidebar.Group>
 						<Sidebar.GroupLabel>
-							<span className="text-xs font-funky-mono">
+							<span className="font-label text-[11px]">
 								Apps
 							</span>
 						</Sidebar.GroupLabel>

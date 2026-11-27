@@ -48,11 +48,11 @@ export function BrandName({ className }: { className?: string }) {
 	return (
 		<span
 			className={cn(
-				'font-display font-bold tracking-tight',
+				'font-semibold tracking-tight',
 				className,
 			)}
 		>
-			Always<span className="text-[#4f46e5]">Bro</span>
+			Always<span className="text-[#8bf0c4]">Bro</span>
 		</span>
 	);
 }

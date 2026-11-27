@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { MysteryCanvas } from './mystery-canvas';
+import { GlyphMatrix } from './glyph-matrix';
 import { BrandLogo } from './brand-mark';
 import { WavingCharacter } from './waving-character';
 
@@ -64,18 +64,13 @@ export function SplashScreen() {
 					role="dialog"
 					aria-label="AlwaysBro"
 					onClick={showBrand ? finish : undefined}
-					className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0a0a0f] text-white"
+					className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0b0b0d] text-white"
 					initial={{ opacity: 1 }}
 					exit={{ opacity: 0 }}
 					transition={{ duration: 0.5 }}
 				>
-					<MysteryCanvas />
-					<motion.div
-						aria-hidden
-						className="pointer-events-none absolute h-80 w-80 rounded-full bg-[#4f46e5]/30 blur-3xl"
-						animate={reduceMotion ? undefined : { scale: [1, 1.15, 1], opacity: [0.5, 0.9, 0.5] }}
-						transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-					/>
+					<GlyphMatrix />
+					<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,#0b0b0d_25%,transparent_75%)]" />
 					<AnimatePresence mode="wait">
 						{!showBrand ? (
 							<motion.div
@@ -84,10 +79,10 @@ export function SplashScreen() {
 								exit={{ opacity: 0, y: -10 }}
 								transition={{ duration: 0.3 }}
 							>
-								<p className="min-h-[1.5em] text-center font-display text-3xl font-medium tracking-tight sm:text-4xl">
-									<span className="block min-h-[1.2em] text-xl font-normal text-indigo-200/80 sm:text-2xl">{FULL_TEXT.slice(0, Math.min(typed, LEAD.length))}</span>
+								<p className="min-h-[1.5em] text-center text-3xl font-medium tracking-[-0.02em] sm:text-5xl">
+									<span className="font-label mb-3 block min-h-[1.2em] text-xs font-normal text-white/50 sm:text-sm">{FULL_TEXT.slice(0, Math.min(typed, LEAD.length))}</span>
 									{typed > LEAD.length + 1 && FULL_TEXT.slice(LEAD.length + 1, typed)}
-									<span className="ml-0.5 inline-block w-[2px] animate-pulse bg-white align-middle">&nbsp;</span>
+									<span className="ml-0.5 inline-block w-[2px] animate-pulse bg-[#8bf0c4] align-middle">&nbsp;</span>
 								</p>
 								<motion.button
 									type="button"
@@ -95,9 +90,8 @@ export function SplashScreen() {
 									disabled={!typingDone}
 									initial={{ opacity: 0, y: 8 }}
 									animate={typingDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-									whileHover={{ scale: 1.05 }}
-									whileTap={{ scale: 0.97 }}
-									className="rounded-full bg-[#4f46e5] px-8 py-3 text-base font-semibold text-white shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-colors hover:bg-[#6366f1] disabled:pointer-events-none"
+									whileTap={{ scale: 0.98 }}
+									className="rounded-full bg-white px-8 py-3 text-sm font-medium text-black transition-colors hover:bg-white/85 disabled:pointer-events-none"
 								>
 									Click here
 								</motion.button>
@@ -114,12 +108,12 @@ export function SplashScreen() {
 									initial={{ opacity: 0, scale: 0, rotate: -25 }}
 									animate={{ opacity: 1, scale: [0, 1.25, 1], rotate: [-25, 10, 0] }}
 									transition={{ duration: 0.7 }}
-									className="flex size-32 items-center justify-center drop-shadow-[0_0_40px_rgba(59,130,246,0.6)]"
+									className="flex size-32 items-center justify-center "
 								>
 									<BrandLogo className="size-32" />
 								</motion.span>
-								<span className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
-									Always<span className="text-[#818cf8]">Bro</span>
+								<span className="text-4xl font-medium tracking-[-0.03em] sm:text-6xl">
+									Always<span className="text-[#8bf0c4]">Bro</span>
 								</span>
 								<div className="mt-2 flex items-end gap-4 sm:gap-8">
 									<WavingCharacter person="jack" color="#3b82f6" className="h-40 sm:h-56" />
