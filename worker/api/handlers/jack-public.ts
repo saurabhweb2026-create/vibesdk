@@ -1,4 +1,3 @@
-import { troopComplete } from '../../services/troop/troopLlm';
 import { askJack, defaultGreeting } from '../../services/troop/jack';
 import {
 	canUseTroop,
@@ -25,7 +24,7 @@ const VISITOR_DAILY_LIMIT = 60;
 const MAX_MESSAGE_LENGTH = 500;
 
 export function isJackPublicPath(pathname: string): boolean {
-	return pathname === '/api/jack/widget.js' || pathname === '/api/jack/public/chat' || pathname === '/api/jack/diag';
+	return pathname === '/api/jack/widget.js' || pathname === '/api/jack/public/chat';
 }
 
 function json(body: unknown, status = 200): Response {
@@ -125,26 +124,6 @@ export async function handleJackPublic(env: Env, request: Request): Promise<Resp
 	const { pathname } = new URL(request.url);
 	if (pathname === '/api/jack/widget.js' && request.method === 'GET') return handleWidget(env, request);
 	if (pathname === '/api/jack/public/chat' && request.method === 'POST') return handleChat(env, request);
-	if (pathname === '/api/jack/diag') return handleDiag(env);
 	return json({ error: 'Not found' }, 404);
 }
 
-// Temporary health probe for the AI route used by John and Maria. Returns no secrets.
-async function handleDiag(env: Env): Promise<Response> {
-	const out: Record<string, string> = {};
-	const probe = [{ role: 'user' as const, content: 'Reply with only this JSON: {"ok":true}' }];
-	for (const model of ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/google/gemma-4-26b-a4b-it']) {
-		try {
-			const res = await (env.AI as unknown as { run(m: string, i: unknown): Promise<unknown> }).run(model, { messages: probe, max_tokens: 100 });
-			out[model] = JSON.stringify(res).slice(0, 300);
-		} catch (error) {
-			out[model] = `ERROR ${error instanceof Error ? error.message : String(error)}`.slice(0, 300);
-		}
-	}
-	try {
-		out.troopComplete = (await troopComplete(env, probe, { maxTokens: 100 })).slice(0, 200);
-	} catch (error) {
-		out.troopComplete = `ERROR ${error instanceof Error ? error.message : String(error)}`.slice(0, 300);
-	}
-	return json(out);
-}
