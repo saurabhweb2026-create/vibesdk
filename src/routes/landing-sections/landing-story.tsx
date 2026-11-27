@@ -50,10 +50,10 @@ function useBand(index: number, progress: MotionValue<number>) {
 	const last = index === count - 1;
 	// Scroll-linked values must stay inside [0, 1] and never decrease.
 	const input = [
-		first ? 0 : center - half * 1.15,
-		first ? 0 : center - half * 0.55,
-		last ? 1 : center + half * 0.55,
-		last ? 1 : center + half * 1.15,
+		first ? 0 : center - half,
+		first ? 0 : center - half * 0.6,
+		last ? 1 : center + half * 0.6,
+		last ? 1 : center + half,
 	];
 	const turn = [first ? 0 : -80, 0, 0, last ? 0 : 80];
 	const fade = [first ? 1 : 0, 1, 1, last ? 1 : 0];
@@ -132,7 +132,7 @@ export function LandingStory() {
 					aria-hidden
 					className="pointer-events-none absolute left-1/4 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#4f46e5]/20 blur-3xl"
 				/>
-				<div className="mx-auto grid w-full max-w-6xl grid-rows-[1fr_1fr] items-center gap-2 px-6 md:grid-cols-2 md:grid-rows-1 md:gap-12">
+				<div className="mx-auto grid h-[88vh] w-full max-w-6xl grid-rows-[1fr_1fr] items-center gap-2 px-6 md:grid-cols-2 md:grid-rows-1 md:gap-12">
 					<div className="relative h-full w-full [perspective:1200px] md:h-[72vh]">
 						{STEPS.map((s, i) => (
 							<CharacterOnly key={s.name} step={s} index={i} progress={scrollYProgress} />
