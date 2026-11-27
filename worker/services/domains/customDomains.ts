@@ -44,7 +44,7 @@ async function ensureTables(env: Env): Promise<void> {
 const HOSTNAME_PATTERN = /^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/;
 
 export function normalizeHostname(input: string): string {
-	return input.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, (m) => m);
+	return input.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 }
 
 async function cf<T>(env: Env, path: string, init: RequestInit = {}): Promise<T> {

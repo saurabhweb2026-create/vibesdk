@@ -27,6 +27,15 @@ const PLAN_LINES: Record<PaidPlan, string[]> = {
 	pro: ['Jack, John and Maria together', 'Cheaper than taking all three one by one', 'More monthly credits'],
 };
 
+const EVERY_PLAN_EXTRAS = ['Unlock looks and moods for the whole app with credits', 'Connect your own domain to your website'];
+
+const PLAN_STYLE: Record<PaidPlan, { color: string; glow: string; tag: string }> = {
+	basic: { color: '#3b82f6', glow: 'rgba(59,130,246,0.35)', tag: 'Builds websites' },
+	louie: { color: '#ec4899', glow: 'rgba(236,72,153,0.35)', tag: 'Ads and posts' },
+	jack: { color: '#14b8a6', glow: 'rgba(20,184,166,0.35)', tag: 'Customer chat' },
+	pro: { color: '#f59e0b', glow: 'rgba(245,158,11,0.4)', tag: 'The whole crew' },
+};
+
 const PLAN_NAMES: Record<PaidPlan, string> = { basic: 'Jack', louie: 'John', jack: 'Maria', pro: 'Pro' };
 const PLAN_ORDER: PaidPlan[] = ['basic', 'louie', 'jack', 'pro'];
 
@@ -213,44 +222,56 @@ export function BuyCredits() {
 			</OrangeButton>
 
 			<Dialog open={open} onOpenChange={setOpen}>
-				<DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+				<DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-[#0b0b14]/95 p-6 text-white">
 					<DialogHeader>
-						<DialogTitle>Plans and credits</DialogTitle>
-						<DialogDescription>
+						<DialogTitle className="font-display text-3xl font-bold">Pick your crew</DialogTitle>
+						<DialogDescription className="text-white/60">
 							{ownedNames.length === 0 ? 'You are on the Free plan' : `You have: ${ownedNames.join(', ')}`}
 							{status?.status === 'cancelling' && endDate ? `, active until ${endDate}` : ''}. Your extra credits ({(status?.balance ?? 0).toLocaleString('en-IN')}) are used after your free daily credits run out.
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className="flex flex-col gap-3">
+					<div className="grid gap-3 sm:grid-cols-2">
 						{[...(status?.plans ?? [])].sort((x, y) => PLAN_ORDER.indexOf(x.id) - PLAN_ORDER.indexOf(y.id)).map((p) => {
 							const mine = subs.find((x) => x.plan === p.id);
 							const current = !!mine;
 							const inPro = !current && subs.some((x) => x.plan === 'pro') && p.id !== 'pro';
+							const look = PLAN_STYLE[p.id];
 							return (
 								<div
 									key={p.id}
-									className={'rounded-lg border p-4 ' + (highlight === p.id ? 'border-orange-500' : '')}
+									className="relative flex flex-col rounded-2xl border bg-white/[0.04] p-4 transition-transform hover:-translate-y-0.5"
+									style={{
+										borderColor: highlight === p.id || current ? look.color : 'rgba(255,255,255,0.1)',
+										boxShadow: highlight === p.id || current || p.id === 'pro' ? `0 0 28px ${look.glow}` : undefined,
+									}}
 								>
-									<div className="flex items-baseline justify-between">
-										<div className="text-base font-semibold">{p.name}</div>
+									<div className="text-xs font-semibold uppercase tracking-wide" style={{ color: look.color }}>{look.tag}</div>
+									<div className="mt-1 flex items-baseline justify-between">
+										<div className="font-display text-xl font-bold">{p.name}</div>
 										<div className="text-sm">
 											<span className="text-lg font-semibold">{rupees(p.priceInr)}</span>
-											<span className="text-muted-foreground"> / month</span>
+											<span className="text-white/50"> / month</span>
 										</div>
 									</div>
-									<ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
-										{PLAN_LINES[p.id].map((line) => (
-											<li key={line}>{line}</li>
+									<ul className="mt-3 flex-1 space-y-1.5 text-sm text-white/70">
+										{[...PLAN_LINES[p.id], ...(p.id === 'basic' || p.id === 'pro' ? EVERY_PLAN_EXTRAS : [])].map((line) => (
+											<li key={line} className="flex gap-2">
+												<span className="mt-1.5 size-1.5 shrink-0 rounded-full" style={{ background: look.color }} />
+												<span>{line}</span>
+											</li>
 										))}
 										{p.agents.includes('caesar') && (
-											<li>{p.monthlyCredits.toLocaleString('en-IN')} credits every month, up to {p.maxLiveSites} live websites</li>
+											<li className="flex gap-2">
+												<span className="mt-1.5 size-1.5 shrink-0 rounded-full" style={{ background: look.color }} />
+												<span>{p.monthlyCredits.toLocaleString('en-IN')} credits every month, up to {p.maxLiveSites} live websites</span>
+											</li>
 										)}
 									</ul>
 									<div className="mt-3">
 										{current ? (
 											<div className="flex items-center gap-3">
-												<span className="text-sm text-muted-foreground">
+												<span className="text-sm text-white/60">
 													{mine?.status === 'cancelling' ? 'Active (renewal stopped)' : 'Your plan'}
 												</span>
 												{mine?.status === 'active' && (
@@ -258,20 +279,21 @@ export function BuyCredits() {
 														type="button"
 														disabled={busy !== null}
 														onClick={() => void cancel(p.id)}
-														className="text-sm text-muted-foreground underline"
+														className="text-sm text-white/60 underline"
 													>
 														Stop renewals
 													</button>
 												)}
 											</div>
 										) : inPro ? (
-											<span className="text-sm text-muted-foreground">Included in your Pro plan</span>
+											<span className="text-sm text-white/60">Included in your Pro plan</span>
 										) : (
 											<button
 												type="button"
 												disabled={busy !== null || !p.available}
 												onClick={() => void subscribe(p.id)}
-												className="rounded-md bg-orange-500 px-3 py-1.5 text-sm text-white hover:bg-orange-600 disabled:opacity-50"
+												className="w-full rounded-xl px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
+												style={{ background: `linear-gradient(135deg, ${look.color}, ${p.id === 'pro' ? '#ec4899' : look.color}cc)` }}
 											>
 												{!p.available ? 'Coming soon' : busy === p.id ? 'Please wait...' : `Choose ${p.name}`}
 											</button>
@@ -282,19 +304,19 @@ export function BuyCredits() {
 						})}
 
 						{(status?.packs ?? []).length > 0 && (
-							<div className="mt-1">
-								<div className="mb-2 text-sm font-medium">Need more credits? Top up once</div>
+							<div className="mt-1 sm:col-span-2">
+								<div className="mb-2 font-display text-lg font-semibold">Need more credits? Top up once</div>
 								{(status?.packs ?? []).map((pack) => (
-									<div key={pack.id} className="mb-2 flex items-center justify-between rounded-lg border p-3">
+									<div key={pack.id} className="mb-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-3">
 										<div>
 											<div className="text-sm font-medium">{pack.label}</div>
-											<div className="text-xs text-muted-foreground">{pack.credits.toLocaleString('en-IN')} credits</div>
+											<div className="text-xs text-white/55">{pack.credits.toLocaleString('en-IN')} credits</div>
 										</div>
 										<button
 											type="button"
 											disabled={busy !== null}
 											onClick={() => void buyPack(pack.id, pack.label, pack.credits)}
-											className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-50"
+											className="rounded-xl bg-white/10 px-3 py-1.5 text-sm font-medium hover:bg-white/20 disabled:opacity-50"
 										>
 											{busy === pack.id ? 'Please wait...' : `Pay ${rupees(pack.priceInr)}`}
 										</button>
@@ -303,7 +325,7 @@ export function BuyCredits() {
 							</div>
 						)}
 
-						{message && <p className="text-sm">{message}</p>}
+						{message && <p className="text-sm sm:col-span-2">{message}</p>}
 					</div>
 				</DialogContent>
 			</Dialog>
