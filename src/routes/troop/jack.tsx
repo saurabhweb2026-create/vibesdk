@@ -104,6 +104,26 @@ export default function JackPage() {
 
 	const patch = (p: Partial<JackSetupData>) => setSetup((s) => (s ? { ...s, ...p } : s));
 
+	const connect = async () => {
+		if (!setup) return;
+		setSaving(true);
+		try {
+			await apiClient.saveJackSetup({
+				appId: setup.appId,
+				businessName: setup.businessName,
+				knowledge: setup.knowledge,
+				tone: setup.tone,
+				greeting: setup.greeting,
+				enabled: true,
+			});
+			patch({ enabled: true });
+			toast.success('Maria is connected to your website');
+		} catch {
+			// the API client already shows the reason
+		}
+		setSaving(false);
+	};
+
 	const save = async () => {
 		if (!setup) return;
 		setSaving(true);
@@ -189,13 +209,36 @@ export default function JackPage() {
 
 							<div className={PANEL}>
 								<div className="mb-2 font-sans text-xs tracking-wide" style={{ color: LIME }}>
-									Put Maria on your website
+									Your website
 								</div>
-								<p className="mb-3 text-sm text-white/65">Paste this line just before the closing body tag of your website.</p>
-								<div className="flex items-start gap-3 rounded-xl bg-black/30 p-3">
-									<code className="min-w-0 flex-1 break-all text-xs text-white/85">{setup.embedSnippet}</code>
-									<CopyButton text={setup.embedSnippet} label="Code copied" />
-								</div>
+								{setup.enabled ? (
+									<p className="text-sm text-white/85">I am connected. Visitors now see my chat bubble on your website.</p>
+								) : (
+									<>
+										<p className="mb-3 text-sm text-white/85">Should I connect to your website?</p>
+										<div className="flex gap-2">
+											<button
+												type="button"
+												disabled={saving}
+												onClick={connect}
+												className="rounded-full px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-60"
+												style={{ background: LIME }}
+											>
+												Yes, connect
+											</button>
+											<button type="button" onClick={() => toast('No problem. I will wait until you are ready.')} className="rounded-full border border-white/15 px-6 py-2.5 text-sm text-white hover:bg-white/10">
+												No, not now
+											</button>
+										</div>
+									</>
+								)}
+								<details className="mt-4 text-xs text-white/50">
+									<summary className="cursor-pointer">Website not built here? Show the code line</summary>
+									<div className="mt-2 flex items-start gap-3 rounded-xl bg-black/30 p-3">
+										<code className="min-w-0 flex-1 break-all text-white/85">{setup.embedSnippet}</code>
+										<CopyButton text={setup.embedSnippet} label="Code copied" />
+									</div>
+								</details>
 							</div>
 
 							<div className={PANEL}>

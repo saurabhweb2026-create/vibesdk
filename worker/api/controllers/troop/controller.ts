@@ -94,7 +94,12 @@ export class TroopController extends BaseController {
 				formats: Array.isArray(body.formats) ? body.formats.map((f) => String(f).slice(0, 40)).slice(0, 6) : [],
 			});
 			const saved = await saveAdPack(env, { userId: user.id, appId: site.id, goal, budgetInr, content: pack });
-			await addXp(env, user.id, 'louie', 25);
+			try {
+				await addXp(env, user.id, 'louie', 25);
+			} catch (xpError) {
+				// Team progress is a bonus; it must never block the ads the user asked for.
+				this.logger.error('Could not add John XP:', xpError);
+			}
 			return TroopController.createSuccessResponse(saved);
 		} catch (error) {
 			this.logger.error('Error generating ads:', error);
