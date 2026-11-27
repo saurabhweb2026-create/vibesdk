@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { motion, useMotionValueEvent, useMotionValue, useReducedMotion, useTransform, type MotionValue } from 'framer-motion';
 import { WavingCharacter, type TroopPerson } from '@/components/brand/waving-character';
 
 interface Step {
@@ -96,11 +96,46 @@ function StaticStory() {
 	);
 }
 
+function nearestScroller(node: HTMLElement | null): HTMLElement | Window {
+	let el = node?.parentElement ?? null;
+	while (el) {
+		const overflow = getComputedStyle(el).overflowY;
+		if ((overflow === 'auto' || overflow === 'scroll') && el.scrollHeight > el.clientHeight) return el;
+		el = el.parentElement;
+	}
+	return window;
+}
+
+/** Scroll progress (0 to 1) of the tall story block, measured against whichever element actually scrolls. */
+function useStoryProgress(ref: React.RefObject<HTMLDivElement | null>) {
+	const progress = useMotionValue(0);
+	useEffect(() => {
+		const node = ref.current;
+		if (!node) return;
+		const scroller = nearestScroller(node);
+		const update = () => {
+			const rect = node.getBoundingClientRect();
+			const viewport = scroller instanceof Window ? window.innerHeight : scroller.clientHeight;
+			const top = scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top;
+			const travel = rect.height - viewport;
+			progress.set(travel <= 0 ? 0 : Math.min(1, Math.max(0, (top - rect.top) / travel)));
+		};
+		update();
+		scroller.addEventListener('scroll', update, { passive: true });
+		window.addEventListener('resize', update);
+		return () => {
+			scroller.removeEventListener('scroll', update);
+			window.removeEventListener('resize', update);
+		};
+	}, [ref, progress]);
+	return progress;
+}
+
 export function LandingStory() {
 	const reduce = useReducedMotion();
 	const ref = useRef<HTMLDivElement>(null);
 	const [active, setActive] = useState(0);
-	const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
+	const scrollYProgress = useStoryProgress(ref);
 
 	useMotionValueEvent(scrollYProgress, 'change', (v) => {
 		const next = Math.min(STEPS.length - 1, Math.max(0, Math.floor(v * STEPS.length)));
