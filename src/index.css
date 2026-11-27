@@ -659,3 +659,25 @@ html[data-mode='dark'] .vibesdk-sidebar-wrapper {
 		animation: none;
 	}
 }
+
+/* Slow sweeping light for the splash: a faint searchlight turning in the dark. */
+.mystery-beam {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 160vmax;
+	height: 160vmax;
+	margin: -80vmax 0 0 -80vmax;
+	background: conic-gradient(from 0deg, transparent 0deg, rgba(129, 140, 248, 0.12) 18deg, transparent 38deg, transparent 180deg, rgba(236, 72, 153, 0.09) 198deg, transparent 218deg);
+	animation: mystery-sweep 28s linear infinite;
+}
+
+@keyframes mystery-sweep {
+	to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mystery-beam {
+		animation: none;
+	}
+}

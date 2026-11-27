@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { MysteryCanvas } from './mystery-canvas';
 import { BrandLogo } from './brand-mark';
 import { WavingCharacter } from './waving-character';
 
+const LEAD = 'When you ask your team,';
 const QUESTION = 'Are you available?...';
+const FULL_TEXT = `${LEAD}\n${QUESTION}`;
 const STORAGE_KEY = 'alwaysbro-splash-seen';
 const TYPE_MS = 70;
 const BRAND_HOLD_MS = 3600;
@@ -29,12 +32,12 @@ export function SplashScreen() {
 	const [visible, setVisible] = useState(() => !alreadySeen());
 	const [typed, setTyped] = useState(0);
 	const [showBrand, setShowBrand] = useState(false);
-	const typingDone = typed >= QUESTION.length;
+	const typingDone = typed >= FULL_TEXT.length;
 
 	useEffect(() => {
 		if (!visible || typingDone) return;
 		const typer = window.setInterval(() => {
-			setTyped((n) => Math.min(n + 1, QUESTION.length));
+			setTyped((n) => Math.min(n + 1, FULL_TEXT.length));
 		}, reduceMotion ? 10 : TYPE_MS);
 		return () => window.clearInterval(typer);
 	}, [visible, typingDone, reduceMotion]);
@@ -66,6 +69,7 @@ export function SplashScreen() {
 					exit={{ opacity: 0 }}
 					transition={{ duration: 0.5 }}
 				>
+					<MysteryCanvas />
 					<motion.div
 						aria-hidden
 						className="pointer-events-none absolute h-80 w-80 rounded-full bg-[#4f46e5]/30 blur-3xl"
@@ -81,7 +85,8 @@ export function SplashScreen() {
 								transition={{ duration: 0.3 }}
 							>
 								<p className="min-h-[1.5em] text-center font-display text-3xl font-medium tracking-tight sm:text-4xl">
-									{QUESTION.slice(0, typed)}
+									<span className="block min-h-[1.2em] text-xl font-normal text-indigo-200/80 sm:text-2xl">{FULL_TEXT.slice(0, Math.min(typed, LEAD.length))}</span>
+									{typed > LEAD.length + 1 && FULL_TEXT.slice(LEAD.length + 1, typed)}
 									<span className="ml-0.5 inline-block w-[2px] animate-pulse bg-white align-middle">&nbsp;</span>
 								</p>
 								<motion.button
