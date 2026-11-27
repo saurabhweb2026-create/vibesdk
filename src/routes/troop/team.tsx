@@ -1,9 +1,10 @@
+import { WavingCharacter, type TroopPerson } from '@/components/brand/waving-character';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { apiClient, type AgentId, type TeamData, type TeamMember } from '@/lib/api-client';
 import { INPUT, PANEL } from './troop-shared';
 
-const FACE: Record<AgentId, string> = { caesar: 'jack', louie: 'john', jack: 'maria' };
+const FACE: Record<AgentId, TroopPerson> = { caesar: 'jack', louie: 'john', jack: 'maria' };
 const COLOR: Record<AgentId, string> = { caesar: '#3b82f6', louie: '#ec4899', jack: '#14b8a6' };
 
 function Bar({ value, color }: { value: number; color: string }) {
@@ -40,10 +41,10 @@ function MemberCard({ m, data, reload }: { m: TeamMember; data: TeamData; reload
 		<div className={PANEL}>
 			<div className="flex items-start gap-4">
 				<div
-					className="relative shrink-0 overflow-hidden rounded-2xl"
+					className="relative shrink-0 overflow-hidden rounded-2xl bg-white/[0.04] px-2"
 					style={{ boxShadow: `0 0 0 3px ${ringColor}, 0 0 24px ${ringColor}66` }}
 				>
-					<img src={`/troop/${FACE[m.id]}.webp`} alt={m.name} className="h-40 w-24 object-cover object-top" draggable={false} />
+					<WavingCharacter person={FACE[m.id]} color={ringColor} className="h-40" />
 					{outfit && (
 						<span className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-center text-[11px] text-white">{outfit.name}</span>
 					)}

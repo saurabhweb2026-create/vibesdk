@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { BrandFace, BrandName } from '@/components/brand/brand-mark';
+import { WavingCharacter, type TroopPerson } from '@/components/brand/waving-character';
 
 const TROOP = [
 	{
@@ -7,7 +8,7 @@ const TROOP = [
 		role: 'Builds your website',
 		text: 'Tell Jack your idea. He plans, designs and writes your site, then hands it over.',
 		color: '#3b82f6',
-		src: '/troop/jack.webp',
+		person: 'jack' as TroopPerson,
 		live: true,
 	},
 	{
@@ -15,7 +16,7 @@ const TROOP = [
 		role: 'Ads and social media',
 		text: 'John reads your finished site and writes your Google, Facebook and Instagram ads, posts and budget plan.',
 		color: '#ec4899',
-		src: '/troop/john.webp',
+		person: 'john' as TroopPerson,
 		live: true,
 	},
 	{
@@ -23,7 +24,7 @@ const TROOP = [
 		role: 'Answers your customers',
 		text: 'Maria learns your business and answers your customers on your website, day and night, and saves the leads.',
 		color: '#14b8a6',
-		src: '/troop/maria.webp',
+		person: 'maria' as TroopPerson,
 		live: true,
 	},
 ];
@@ -117,24 +118,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 						className="flex flex-col items-center rounded-2xl border border-white/10 bg-white/[0.03] px-5 pb-6 pt-5 text-center"
 						style={{ boxShadow: `0 0 40px ${c.color}14` }}
 					>
-						<motion.img
-							src={c.src}
-							alt={c.name}
-							draggable={false}
-							className="h-72 w-auto rounded-2xl object-cover"
-							style={{
-								filter: `drop-shadow(0 0 18px ${c.color}88)`,
-								opacity: 1,
-							}}
-							animate={reduce ? undefined : { y: [0, -8, 0], rotate: [-1.5, 1.5, -1.5] }}
-							whileHover={reduce ? undefined : { scale: 1.08, rotate: [0, -6, 6, -4, 0], transition: { duration: 0.6 } }}
-							transition={{
-								duration: 3.2,
-								repeat: Infinity,
-								ease: 'easeInOut',
-								delay: i * 0.4,
-							}}
-						/>
+						<WavingCharacter person={c.person} color={c.color} delay={i * 0.4} />
 						<div className="mt-3 flex items-center gap-2 font-sans text-sm tracking-wide">
 							<span style={{ color: c.color }}>{c.name}</span>
 							<span

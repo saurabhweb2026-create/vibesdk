@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ThumbsUp } from 'lucide-react';
+import { WavingCharacter } from './waving-character';
 
 const QUESTION = 'Are you available?...';
 const STORAGE_KEY = 'alwaysbro-splash-seen';
 const TYPE_MS = 70;
-const BRAND_HOLD_MS = 2400;
+const BRAND_HOLD_MS = 3600;
 
 function alreadySeen(): boolean {
 	try {
@@ -115,6 +116,11 @@ export function SplashScreen() {
 								<span className="text-3xl font-bold tracking-tight sm:text-5xl">
 									Always<span className="text-[#818cf8]">Bro</span>
 								</span>
+								<div className="mt-2 flex items-end gap-4 sm:gap-8">
+									<WavingCharacter person="jack" color="#3b82f6" className="h-40 sm:h-56" />
+									<WavingCharacter person="john" color="#ec4899" className="h-40 sm:h-56" delay={0.3} />
+									<WavingCharacter person="maria" color="#14b8a6" className="h-40 sm:h-56" delay={0.6} />
+								</div>
 							</motion.div>
 						)}
 					</AnimatePresence>
