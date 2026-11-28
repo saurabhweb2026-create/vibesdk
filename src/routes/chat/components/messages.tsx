@@ -27,7 +27,6 @@ function sanitizeMessageForDisplay(message: string): string {
 }
 
 export function UserMessage({ message }: { message: string }) {
-	const { faceSrc } = useOutfit();
 	const sanitizedMessage = sanitizeMessageForDisplay(message);
 
 	return (
@@ -801,6 +800,7 @@ export function AIMessage({
 	/** @deprecated Input/Output is now shown for all behaviors; kept for call-site compat. */
 	richToolPreview?: boolean;
 }) {
+	const { faceSrc } = useOutfit();
 	const sanitizedMessage = sanitizeMessageForDisplay(message);
 
 	// Ordered parts are authoritative; fall back to a single text part for the
