@@ -1,6 +1,4 @@
 import { useCallback, useRef, useState } from 'react';
-import { apiClient } from './api-client';
-import type { TroopPerson } from './outfits';
 
 interface RecognitionEvent {
 	results: ArrayLike<ArrayLike<{ transcript: string }>>;
@@ -26,89 +24,87 @@ const recognitionCtor = (): RecognitionCtor | undefined => {
 export const canListen = () => typeof window !== 'undefined' && Boolean(recognitionCtor());
 export const canSpeak = () => typeof window !== 'undefined' && 'speechSynthesis' in window;
 
-/** Each teammate sounds a little different: the voice is picked by name, pitch and pace. */
-const PERSONA: Record<TroopPerson, { pitch: number; rate: number; female: boolean }> = {
-	jack: { pitch: 1, rate: 1, female: false },
-	john: { pitch: 0.85, rate: 1.04, female: false },
-	maria: { pitch: 1.12, rate: 1, female: true },
-};
+const FEMALE = /female|woman|zira|heera|veena|neerja|swara|kalpana|lekha|samantha|aria|jenny|susan|karen/i;
+const NEURAL = /natural|neural|online|google/i;
 
-const FEMALE_VOICE = /female|woman|zira|heera|veena|samantha|aria|jenny|susan|karen/i;
-const MALE_VOICE = /(?<!fe)male|\bman\b|ravi|rishi|david|mark|daniel|guy|alex/i;
-
-function pickVoice(female: boolean): SpeechSynthesisVoice | undefined {
-	const voices = window.speechSynthesis.getVoices();
-	const english = voices.filter((v) => v.lang.toLowerCase().startsWith('en'));
-	const indian = english.filter((v) => v.lang.toLowerCase().includes('in'));
-	const matches = (list: SpeechSynthesisVoice[]) => list.find((v) => (female ? FEMALE_VOICE : MALE_VOICE).test(v.name));
-	return matches(indian) ?? matches(english) ?? indian[0] ?? english[0];
+function loadVoices(): Promise<SpeechSynthesisVoice[]> {
+	const now = window.speechSynthesis.getVoices();
+	if (now.length) return Promise.resolve(now);
+	return new Promise((resolve) => {
+		const done = () => resolve(window.speechSynthesis.getVoices());
+		window.speechSynthesis.addEventListener('voiceschanged', done, { once: true });
+		setTimeout(done, 1000);
+	});
 }
 
-function speakWithBrowser(text: string, person: TroopPerson): void {
+/** The most human male voice the device has for a language: neural and Indian first, then any male voice. */
+function pickVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | undefined {
+	const base = lang.split('-')[0].toLowerCase();
+	const same = voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(base));
+	const exact = same.filter((v) => v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase());
+	const pool = exact.length ? exact : same;
+	const score = (v: SpeechSynthesisVoice) => (FEMALE.test(v.name) ? 0 : 2) + (NEURAL.test(v.name) ? 1 : 0);
+	return [...pool].sort((a, b) => score(b) - score(a))[0];
+}
+
+let speakToken = 0;
+
+/** Speaks in Vinod's voice in the given language and resolves when the sentence has finished. */
+export async function speak(text: string, lang = 'en-IN'): Promise<void> {
 	if (!canSpeak()) return;
-	const { pitch, rate, female } = PERSONA[person];
 	window.speechSynthesis.cancel();
-	const utterance = new SpeechSynthesisUtterance(text);
-	utterance.voice = pickVoice(female) ?? null;
-	utterance.lang = utterance.voice?.lang ?? 'en-IN';
-	utterance.pitch = pitch;
-	utterance.rate = rate;
-	window.speechSynthesis.speak(utterance);
-}
-
-let player: HTMLAudioElement | null = null;
-let speechToken = 0;
-
-/** Speaks in the teammate's own studio voice; falls back to the browser voice when that is unavailable. */
-export async function speak(text: string, person: TroopPerson): Promise<void> {
-	stopSpeaking();
-	const token = ++speechToken;
-	try {
-		const blob = await apiClient.voiceSpeak(person, text);
-		if (token !== speechToken) return;
-		const url = URL.createObjectURL(blob);
-		const audio = new Audio(url);
-		audio.onended = () => URL.revokeObjectURL(url);
-		player = audio;
-		await audio.play();
-	} catch {
-		if (token === speechToken) speakWithBrowser(text, person);
-	}
+	const token = ++speakToken;
+	const voice = pickVoice(await loadVoices(), lang);
+	if (token !== speakToken) return;
+	await new Promise<void>((resolve) => {
+		const utterance = new SpeechSynthesisUtterance(text);
+		utterance.voice = voice ?? null;
+		utterance.lang = voice?.lang ?? lang;
+		utterance.rate = 0.98;
+		utterance.pitch = 0.95;
+		utterance.onend = () => resolve();
+		utterance.onerror = () => resolve();
+		window.speechSynthesis.speak(utterance);
+	});
 }
 
 export function stopSpeaking(): void {
-	speechToken++;
-	player?.pause();
-	player = null;
+	speakToken++;
 	if (canSpeak()) window.speechSynthesis.cancel();
 }
 
-/** Listens once and resolves with what was said. */
+/** Listens once in the given language and resolves with what was said. */
 export function useListen() {
 	const [listening, setListening] = useState(false);
 	const active = useRef<Recognition | null>(null);
+	const cancelled = useRef(false);
 
-	const listen = useCallback((): Promise<string> => {
+	const listen = useCallback((lang = 'en-IN'): Promise<string> => {
 		const Ctor = recognitionCtor();
 		if (!Ctor) return Promise.reject(new Error('unsupported'));
 		active.current?.stop();
+		cancelled.current = false;
 		return new Promise((resolve, reject) => {
 			const recognition = new Ctor();
-			recognition.lang = 'en-IN';
+			recognition.lang = lang;
 			recognition.interimResults = false;
 			let heard = '';
+			let failure = '';
 			recognition.onresult = (event) => {
 				heard = Array.from(event.results)
 					.map((r) => r[0]?.transcript ?? '')
 					.join(' ')
 					.trim();
 			};
-			recognition.onerror = (event) => reject(new Error(event.error));
+			recognition.onerror = (event) => {
+				failure = event.error;
+			};
 			recognition.onend = () => {
 				setListening(false);
 				active.current = null;
-				if (heard) resolve(heard);
-				else reject(new Error('no-speech'));
+				if (cancelled.current) reject(new Error('aborted'));
+				else if (heard) resolve(heard);
+				else reject(new Error(failure || 'no-speech'));
 			};
 			active.current = recognition;
 			setListening(true);
@@ -116,7 +112,10 @@ export function useListen() {
 		});
 	}, []);
 
-	const cancel = useCallback(() => active.current?.stop(), []);
+	const cancel = useCallback(() => {
+		cancelled.current = true;
+		active.current?.stop();
+	}, []);
 
 	return { listening, listen, cancel };
 }

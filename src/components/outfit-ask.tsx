@@ -26,7 +26,7 @@ export function OutfitAsk() {
 			.then((res) => res.data && syncWorn(Object.fromEntries(res.data.members.map((m) => [m.id, m.outfit]))))
 			.catch(() => undefined);
 	}, [user]);
-	const occasion = answered && pendingOccasion();
+	const occasion = user && answered && pendingOccasion();
 	const asker = ASKERS[new Date().getDate() % ASKERS.length];
 
 	return (
@@ -43,7 +43,7 @@ export function OutfitAsk() {
 						<div className="font-label mb-1.5 flex items-center justify-between text-[11px] text-[#8bf0c4]">
 							{asker.name}
 							{canSpeak() && (
-								<button type="button" aria-label="Listen" onClick={() => void speak(occasion.ask, asker.person)} className="text-white/50 hover:text-white">
+								<button type="button" aria-label="Listen" onClick={() => void speak(occasion.ask)} className="text-white/50 hover:text-white">
 									<SpeakerHighIcon className="size-4" />
 								</button>
 							)}
@@ -54,7 +54,7 @@ export function OutfitAsk() {
 								type="button"
 								onClick={() => {
 									answerOccasion(occasion, false);
-									void speak('Let me show you our outfits. You pick what we wear!', asker.person);
+									void speak('Let me show you our outfits. You pick what we wear!');
 									navigate(`/wardrobe?outfit=${occasion.outfit}&who=${asker.person}`);
 								}}
 								className="rounded-full bg-white px-4 py-1.5 text-xs font-medium text-black hover:bg-white/85"

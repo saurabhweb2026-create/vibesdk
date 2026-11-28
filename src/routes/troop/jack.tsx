@@ -54,7 +54,7 @@ function TestChat({ appId, enabled, ask }: { appId: string; enabled: boolean; as
 			const data = (await res.json()) as { reply?: string; error?: string };
 			const answer = data.reply ?? data.error ?? 'Something went wrong';
 			setBubbles((b) => [...b, { mine: false, text: answer }]);
-			if (spoken) void speak(answer, 'maria');
+			if (spoken) void speak(answer);
 		} catch {
 			setBubbles((b) => [...b, { mine: false, text: 'Could not connect. Please try again.' }]);
 		}

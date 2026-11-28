@@ -53,6 +53,5 @@ export function setupTroopRoutes(app: Hono<AppEnv>): void {
 		return new Response(media.body, { headers: { 'content-type': media.type, 'cache-control': 'public, max-age=86400' } });
 	});
 	app.post('/api/voice/turn', setAuthLevel(AuthConfig.authenticated), adaptController(VoiceController, VoiceController.turn));
-	app.post('/api/voice/speak', setAuthLevel(AuthConfig.authenticated), adaptController(VoiceController, VoiceController.speak));
 	app.post('/api/team/bonus', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.bonus));
 }

@@ -108,6 +108,7 @@ export function syncWorn(outfits: Record<string, string | null>) {
 export function answerOccasion(occasion: Occasion, accepted: boolean) {
 	const key = `${occasion.id}-${new Date().getFullYear()}`;
 	write({
+		...state,
 		outfit: accepted ? occasion.outfit : state.outfit,
 		answered: state.answered.includes(key) ? state.answered : [...state.answered, key],
 	});

@@ -716,3 +716,22 @@ html[data-motion='hyper'] .aurora__grid {
 	animation-duration: 2.5s;
 	opacity: 0.3;
 }
+
+/* While Vinod is talking the app runs in the right half (bottom on phones). */
+body.voice-split #root {
+	position: fixed;
+	inset: 0 0 0 50%;
+	overflow: auto;
+	transform: translateZ(0);
+}
+
+@media (max-width: 767px) {
+	body.voice-split #root {
+		inset: 42% 0 0 0;
+	}
+}
+
+@keyframes voice-pulse {
+	0%, 100% { transform: scale(0.9); opacity: 0.5; }
+	50% { transform: scale(1.25); opacity: 0.95; }
+}
