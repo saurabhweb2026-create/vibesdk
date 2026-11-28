@@ -1,96 +1,42 @@
-import type { RouteObject } from 'react-router';
+import { Outlet, type RouteObject } from 'react-router';
+import type { ComponentType, ReactNode } from 'react';
 
 import App from './App';
 import HomeGate from './routes/home-gate';
-import Chat from './routes/chat/chat';
-import Profile from './routes/profile';
-import Settings from './routes/settings/index';
-import AppsPage from './routes/apps';
-import AppView from './routes/app';
-import DiscoverPage from './routes/discover';
-import LouiePage from './routes/troop/louie';
-import JackPage from './routes/troop/jack';
-import TeamPage from './routes/troop/team';
-import WardrobePage from './routes/troop/wardrobe';
+import { DarkSurface } from './components/dark-surface';
 import { ProtectedRoute } from './routes/protected-route';
+
+type Page = { default: ComponentType };
+
+/** Each page is its own chunk, so a visit only downloads the screen it opens. */
+const page = (load: () => Promise<Page>) => async () => ({ Component: (await load()).default });
+
+function guarded(path: string, load: () => Promise<Page>, wrap: (children: ReactNode) => ReactNode = (children) => children): RouteObject {
+	return {
+		path,
+		element: <ProtectedRoute>{wrap(<Outlet />)}</ProtectedRoute>,
+		children: [{ index: true, lazy: page(load) }],
+	};
+}
+
+const dark = (children: ReactNode) => <DarkSurface>{children}</DarkSurface>;
 
 const routes = [
 	{
 		path: '/',
 		Component: App,
 		children: [
-			{
-				index: true,
-				Component: HomeGate,
-			},
-			{
-				path: 'chat/:chatId',
-				Component: Chat,
-			},
-			{
-				path: 'profile',
-				element: (
-					<ProtectedRoute>
-						<Profile />
-					</ProtectedRoute>
-				),
-			},
-			{
-				path: 'settings',
-				element: (
-					<ProtectedRoute>
-						<Settings />
-					</ProtectedRoute>
-				),
-			},
-			{
-				path: 'apps',
-				element: (
-					<ProtectedRoute>
-						<AppsPage />
-					</ProtectedRoute>
-				),
-			},
-			{
-				path: 'app/:id',
-				Component: AppView,
-			},
-			{
-				path: 'discover',
-				Component: DiscoverPage,
-			},
-			{
-				path: 'louie',
-				element: (
-					<ProtectedRoute>
-						<LouiePage />
-					</ProtectedRoute>
-				),
-			},
-			{
-				path: 'team',
-				element: (
-					<ProtectedRoute>
-						<TeamPage />
-					</ProtectedRoute>
-				),
-			},
-			{
-				path: 'wardrobe',
-				element: (
-					<ProtectedRoute>
-						<WardrobePage />
-					</ProtectedRoute>
-				),
-			},
-			{
-				path: 'jack',
-				element: (
-					<ProtectedRoute>
-						<JackPage />
-					</ProtectedRoute>
-				),
-			},
+			{ index: true, Component: HomeGate },
+			{ path: 'chat/:chatId', lazy: page(() => import('./routes/chat/chat')) },
+			guarded('profile', () => import('./routes/profile')),
+			guarded('settings', () => import('./routes/settings/index')),
+			guarded('apps', () => import('./routes/apps')),
+			{ path: 'app/:id', lazy: page(() => import('./routes/app')) },
+			{ path: 'discover', lazy: page(() => import('./routes/discover')) },
+			guarded('louie', () => import('./routes/troop/louie'), dark),
+			guarded('team', () => import('./routes/troop/team'), dark),
+			guarded('wardrobe', () => import('./routes/troop/wardrobe'), dark),
+			guarded('jack', () => import('./routes/troop/jack'), dark),
 		],
 	},
 ] satisfies RouteObject[];

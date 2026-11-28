@@ -3,12 +3,13 @@ import { RouteContext } from '../../types/route-context';
 import { ApiResponse, ControllerResponse } from '../types';
 import { createLogger } from '../../../logger';
 import { SkinData, buySkin, equipSkin, loadSkins } from '../../../services/troop/skins';
-import { TeamData, buyOutfit, equipOutfit, giveBonus, loadTeam, renameMember } from '../../../services/troop/team';
+import { TeamData, buyItem, wearItem, giveBonus, loadTeam, renameMember } from '../../../services/troop/team';
 
 interface TeamBody {
 	agentId?: string;
 	name?: string;
-	outfitId?: string | null;
+	slot?: string;
+	itemId?: string | null;
 	amount?: number;
 }
 
@@ -37,17 +38,17 @@ export class TeamController extends BaseController {
 	static async buy(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<{ ok: boolean }>>> {
 		const body = (await request.json()) as TeamBody;
 		return this.handle(async () => {
-			await buyOutfit(env, context.user!.id, String(body.outfitId ?? ''));
+			await buyItem(env, context.user!.id, String(body.itemId ?? ''));
 			return { ok: true };
-		}, 'Could not buy the outfit');
+		}, 'Could not buy this');
 	}
 
-	static async equip(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<{ ok: boolean }>>> {
+	static async wear(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<{ ok: boolean }>>> {
 		const body = (await request.json()) as TeamBody;
 		return this.handle(async () => {
-			await equipOutfit(env, context.user!.id, String(body.agentId ?? ''), body.outfitId ? String(body.outfitId) : null);
+			await wearItem(env, context.user!.id, String(body.agentId ?? ''), String(body.slot ?? ''), body.itemId ? String(body.itemId) : null);
 			return { ok: true };
-		}, 'Could not change the outfit');
+		}, 'Could not change the look');
 	}
 
 	static async getSkins(_request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<SkinData>>> {

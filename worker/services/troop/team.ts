@@ -8,20 +8,43 @@ export const AGENTS: Array<{ id: AgentId; defaultName: string; role: string }> =
 	{ id: 'jack', defaultName: 'Maria', role: 'Customer support' },
 ];
 
-export interface Outfit {
+export const SLOTS = ['set', 'head', 'top', 'bottom', 'shoes'] as const;
+export type Slot = (typeof SLOTS)[number];
+
+/** Wardrobe items. `color` is the tint for top, bottom and shoes, and the accent for the rest. */
+export interface WardrobeItem {
 	id: string;
+	slot: Slot;
 	name: string;
 	price: number;
 	color: string;
 	perk: string;
 }
 
-export const OUTFITS: Outfit[] = [
-	{ id: 'festive', name: 'Festive wear', price: 40, color: '#f59e0b', perk: 'Kurta and saree for every Indian festival' },
-	{ id: 'christmas', name: 'Santa hat', price: 25, color: '#ef4444', perk: 'Ho ho ho, the whole team in red' },
-	{ id: 'party', name: 'Party hat', price: 20, color: '#a855f7', perk: 'Celebrates every launch' },
-	{ id: 'shades', name: 'Cool shades', price: 30, color: '#38bdf8', perk: 'Too bright a future to look at' },
-	{ id: 'crown', name: 'Hero crown', price: 100, color: '#eab308', perk: 'Employee of the month, every month' },
+const item = (id: string, slot: Slot, name: string, price: number, color: string, perk: string): WardrobeItem => ({ id, slot, name, price, color, perk });
+
+export const WARDROBE: WardrobeItem[] = [
+	item('festive', 'set', 'Festive wear', 40, '#f59e0b', 'Kurta and saree for every Indian festival'),
+	item('christmas', 'head', 'Santa hat', 25, '#ef4444', 'Ho ho ho, the whole team in red'),
+	item('party', 'head', 'Party hat', 20, '#a855f7', 'Celebrates every launch'),
+	item('shades', 'head', 'Cool shades', 30, '#38bdf8', 'Too bright a future to look at'),
+	item('crown', 'head', 'Hero crown', 100, '#eab308', 'Employee of the month, every month'),
+	item('top-crimson', 'top', 'Crimson top', 20, '#c8102e', 'Bold and confident'),
+	item('top-royal', 'top', 'Royal blue top', 20, '#2f55d4', 'Sharp for client meetings'),
+	item('top-emerald', 'top', 'Emerald top', 20, '#168a5b', 'Fresh and calm'),
+	item('top-sunset', 'top', 'Sunset top', 20, '#f59e0b', 'Warm like a festival evening'),
+	item('top-violet', 'top', 'Violet top', 20, '#7c3aed', 'Creative energy'),
+	item('top-black', 'top', 'Black top', 20, '#16161a', 'Always in style'),
+	item('jeans-indigo', 'bottom', 'Indigo jeans', 35, '#2b4c8c', 'Classic denim'),
+	item('jeans-black', 'bottom', 'Black jeans', 35, '#1a1a1d', 'Goes with everything'),
+	item('pants-olive', 'bottom', 'Olive cargos', 30, '#6b6b3a', 'Weekend ready'),
+	item('pants-maroon', 'bottom', 'Maroon trousers', 30, '#7a1f3d', 'Evening wear'),
+	item('pants-cream', 'bottom', 'Cream trousers', 30, '#e8e4da', 'Light for summer'),
+	item('shoes-red', 'shoes', 'Red shoes', 20, '#d41c1c', 'Run to the next launch'),
+	item('shoes-white', 'shoes', 'White shoes', 20, '#f2f2f2', 'Fresh out of the box'),
+	item('shoes-brown', 'shoes', 'Brown shoes', 30, '#6b3f21', 'Leather look'),
+	item('shoes-black', 'shoes', 'Black shoes', 30, '#141414', 'Formal and sharp'),
+	item('shoes-gold', 'shoes', 'Gold shoes', 40, '#d4a017', 'Walk like a star'),
 ];
 
 export const BONUS_AMOUNTS = [10, 25, 50];
@@ -67,6 +90,7 @@ async function ensureTables(env: Env): Promise<void> {
 			'CREATE TABLE IF NOT EXISTS troop_team (user_id TEXT NOT NULL, agent_id TEXT NOT NULL, name TEXT, outfit TEXT, xp INTEGER NOT NULL DEFAULT 0, morale INTEGER NOT NULL DEFAULT 60, PRIMARY KEY (user_id, agent_id))',
 		),
 		env.DB.prepare('CREATE TABLE IF NOT EXISTS troop_outfits (user_id TEXT NOT NULL, outfit_id TEXT NOT NULL, PRIMARY KEY (user_id, outfit_id))'),
+		env.DB.prepare('CREATE TABLE IF NOT EXISTS troop_wear (user_id TEXT NOT NULL, agent_id TEXT NOT NULL, slot TEXT NOT NULL, item_id TEXT NOT NULL, PRIMARY KEY (user_id, agent_id, slot))'),
 	]);
 	tablesReady = true;
 }
@@ -81,7 +105,8 @@ export interface TeamMember {
 	id: AgentId;
 	name: string;
 	role: string;
-	outfit: string | null;
+	/** Item worn in each slot. */
+	wearing: Partial<Record<Slot, string>>;
 	xp: number;
 	level: number;
 	nextLevelXp: number | null;
@@ -93,7 +118,7 @@ export interface TeamData {
 	canCustomize: boolean;
 	balance: number;
 	members: TeamMember[];
-	outfits: Outfit[];
+	items: WardrobeItem[];
 	owned: string[];
 	bonusAmounts: number[];
 }
@@ -107,11 +132,12 @@ export async function canCustomize(env: Env, userId: string): Promise<boolean> {
 
 export async function loadTeam(env: Env, userId: string): Promise<TeamData> {
 	await ensureTables(env);
-	const [rows, owned, balance, customize] = await Promise.all([
+	const [rows, wear, owned, balance, customize] = await Promise.all([
 		env.DB
-			.prepare('SELECT agent_id, name, outfit, xp, morale FROM troop_team WHERE user_id = ?1')
+			.prepare('SELECT agent_id, name, xp, morale FROM troop_team WHERE user_id = ?1')
 			.bind(userId)
-			.all<{ agent_id: string; name: string | null; outfit: string | null; xp: number; morale: number }>(),
+			.all<{ agent_id: string; name: string | null; xp: number; morale: number }>(),
+		env.DB.prepare('SELECT agent_id, slot, item_id FROM troop_wear WHERE user_id = ?1').bind(userId).all<{ agent_id: string; slot: Slot; item_id: string }>(),
 		env.DB.prepare('SELECT outfit_id FROM troop_outfits WHERE user_id = ?1').bind(userId).all<{ outfit_id: string }>(),
 		getPurchasedBalance(env, userId),
 		canCustomize(env, userId),
@@ -125,7 +151,7 @@ export async function loadTeam(env: Env, userId: string): Promise<TeamData> {
 			id: a.id,
 			name: row?.name || a.defaultName,
 			role: a.role,
-			outfit: row?.outfit ?? null,
+			wearing: Object.fromEntries(wear.results.filter((w) => w.agent_id === a.id).map((w) => [w.slot, w.item_id])),
 			xp,
 			level,
 			nextLevelXp: LEVEL_XP[level] ?? null,
@@ -137,7 +163,7 @@ export async function loadTeam(env: Env, userId: string): Promise<TeamData> {
 		canCustomize: customize,
 		balance,
 		members,
-		outfits: OUTFITS,
+		items: WARDROBE,
 		owned: owned.results.map((o) => o.outfit_id),
 		bonusAmounts: BONUS_AMOUNTS,
 	};
@@ -162,26 +188,34 @@ export async function renameMember(env: Env, userId: string, agentId: string, ra
 	return name;
 }
 
-export async function buyOutfit(env: Env, userId: string, outfitId: string): Promise<void> {
-	const outfit = OUTFITS.find((o) => o.id === outfitId);
-	if (!outfit) throw new Error('Unknown outfit');
-	if (!(await canCustomize(env, userId))) throw new Error('The outfit shop is part of the Pro plan');
+export async function buyItem(env: Env, userId: string, itemId: string): Promise<void> {
+	const found = WARDROBE.find((o) => o.id === itemId);
+	if (!found) throw new Error('Unknown item');
+	if (!(await canCustomize(env, userId))) throw new Error('The wardrobe is part of the Pro plan');
 	await ensureTables(env);
-	const have = await env.DB.prepare('SELECT 1 AS x FROM troop_outfits WHERE user_id = ?1 AND outfit_id = ?2').bind(userId, outfitId).first();
-	if (have) throw new Error('You already own this outfit');
-	if (!(await trySpendPurchased(env, userId, outfit.price))) throw new Error('Not enough credits');
-	await env.DB.prepare('INSERT OR IGNORE INTO troop_outfits (user_id, outfit_id) VALUES (?1, ?2)').bind(userId, outfitId).run();
+	const have = await env.DB.prepare('SELECT 1 AS x FROM troop_outfits WHERE user_id = ?1 AND outfit_id = ?2').bind(userId, itemId).first();
+	if (have) throw new Error('You already own this');
+	if (!(await trySpendPurchased(env, userId, found.price))) throw new Error('Not enough credits');
+	await env.DB.prepare('INSERT OR IGNORE INTO troop_outfits (user_id, outfit_id) VALUES (?1, ?2)').bind(userId, itemId).run();
 }
 
-export async function equipOutfit(env: Env, userId: string, agentId: string, outfitId: string | null): Promise<void> {
+/** Puts an owned item on a teammate, or takes the slot back to the original look when itemId is null. */
+export async function wearItem(env: Env, userId: string, agentId: string, slot: string, itemId: string | null): Promise<void> {
 	if (!isAgent(agentId)) throw new Error('Unknown team member');
+	if (!SLOTS.some((s) => s === slot)) throw new Error('Unknown clothing slot');
 	await ensureTables(env);
-	if (outfitId) {
-		const owns = await env.DB.prepare('SELECT 1 AS x FROM troop_outfits WHERE user_id = ?1 AND outfit_id = ?2').bind(userId, outfitId).first();
-		if (!owns) throw new Error('Buy this outfit first');
+	if (!itemId) {
+		await env.DB.prepare('DELETE FROM troop_wear WHERE user_id = ?1 AND agent_id = ?2 AND slot = ?3').bind(userId, agentId, slot).run();
+		return;
 	}
-	await upsertMember(env, userId, agentId);
-	await env.DB.prepare('UPDATE troop_team SET outfit = ?1 WHERE user_id = ?2 AND agent_id = ?3').bind(outfitId, userId, agentId).run();
+	const found = WARDROBE.find((o) => o.id === itemId);
+	if (!found || found.slot !== slot) throw new Error('That does not go there');
+	const owns = await env.DB.prepare('SELECT 1 AS x FROM troop_outfits WHERE user_id = ?1 AND outfit_id = ?2').bind(userId, itemId).first();
+	if (!owns) throw new Error('Buy this first');
+	await env.DB
+		.prepare('INSERT INTO troop_wear (user_id, agent_id, slot, item_id) VALUES (?1, ?2, ?3, ?4) ON CONFLICT (user_id, agent_id, slot) DO UPDATE SET item_id = ?4')
+		.bind(userId, agentId, slot, itemId)
+		.run();
 }
 
 export async function giveBonus(env: Env, userId: string, agentId: string, amount: number): Promise<string> {

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { isLightDevice } from '@/lib/motion';
 
 interface Node {
 	x: number;
@@ -21,7 +22,7 @@ const LINK = 150;
  * A 2050 control room behind the page: a neon floor receding to the horizon, a drifting
  * neural network with data pulses, a radar ring and a slow scan beam.
  */
-export function FutureBackdrop({ intensity = 1 }: { intensity?: number }) {
+export function FutureBackdrop({ intensity = 1, yieldToCover = false }: { intensity?: number; yieldToCover?: boolean }) {
 	const ref = useRef<HTMLCanvasElement>(null);
 
 	useEffect(() => {
@@ -29,7 +30,11 @@ export function FutureBackdrop({ intensity = 1 }: { intensity?: number }) {
 		const ctx = canvas?.getContext('2d');
 		if (!canvas || !ctx) return;
 		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+		const light = isLightDevice();
+		const dpr = light ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
+		const frameMs = light ? 50 : 33;
+		let floorGlow: CanvasGradient | null = null;
+		let last = 0;
 		let w = 0;
 		let h = 0;
 		let nodes: Node[] = [];
@@ -43,7 +48,10 @@ export function FutureBackdrop({ intensity = 1 }: { intensity?: number }) {
 			canvas.width = Math.floor(w * dpr);
 			canvas.height = Math.floor(h * dpr);
 			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-			const count = Math.min(70, Math.floor((w * h) / 16000));
+			floorGlow = ctx.createLinearGradient(0, h * 0.62, 0, h);
+			floorGlow.addColorStop(0, `rgba(${MINT},0)`);
+			floorGlow.addColorStop(1, `rgba(${MINT},${0.2 * intensity})`);
+			const count = Math.min(light ? 22 : 60, Math.floor((w * h) / 16000));
 			nodes = Array.from({ length: count }, () => ({
 				x: Math.random() * w,
 				y: Math.random() * h * 0.7,
@@ -58,10 +66,7 @@ export function FutureBackdrop({ intensity = 1 }: { intensity?: number }) {
 			const gap = Math.max(60, w / 12);
 			ctx.lineWidth = 1;
 			for (let i = -14; i <= 14; i += 1) {
-				const g = ctx.createLinearGradient(0, horizon, 0, h);
-				g.addColorStop(0, `rgba(${MINT},0)`);
-				g.addColorStop(1, `rgba(${MINT},${0.2 * intensity})`);
-				ctx.strokeStyle = g;
+				if (floorGlow) ctx.strokeStyle = floorGlow;
 				ctx.beginPath();
 				ctx.moveTo(cx + i * gap * 0.12, horizon);
 				ctx.lineTo(cx + i * gap * 1.6, h);
@@ -115,12 +120,9 @@ export function FutureBackdrop({ intensity = 1 }: { intensity?: number }) {
 				const a = nodes[p.a];
 				const b = nodes[p.b];
 				ctx.fillStyle = `rgba(${MINT},${0.95 * intensity})`;
-				ctx.shadowColor = `rgb(${MINT})`;
-				ctx.shadowBlur = 10;
 				ctx.beginPath();
 				ctx.arc(a.x + (b.x - a.x) * p.t, a.y + (b.y - a.y) * p.t, 2.4, 0, Math.PI * 2);
 				ctx.fill();
-				ctx.shadowBlur = 0;
 			}
 		};
 
@@ -162,18 +164,22 @@ export function FutureBackdrop({ intensity = 1 }: { intensity?: number }) {
 			ctx.fillRect(0, y - 60, w, 120);
 		};
 
-		const frame = () => {
-			t += 0.016;
+		const frame = (now = 0) => {
+			if (!reduce) raf = requestAnimationFrame(frame);
+			const covered = yieldToCover && document.documentElement.dataset.cover === '1';
+			if (covered || now - last < frameMs) return;
+			t += ((last ? now - last : frameMs) / 1000) * 1;
+			last = now;
 			ctx.clearRect(0, 0, w, h);
 			floor();
 			network();
 			radar();
 			beam();
-			if (!reduce) raf = requestAnimationFrame(frame);
 		};
 
 		const onVisibility = () => {
 			cancelAnimationFrame(raf);
+			last = 0;
 			if (!document.hidden && !reduce) raf = requestAnimationFrame(frame);
 		};
 

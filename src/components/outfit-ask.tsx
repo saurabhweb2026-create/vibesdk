@@ -16,17 +16,17 @@ const ASKERS: Array<{ person: TroopPerson; name: string }> = [
 /** When a festival is near, a teammate asks to change into the matching outfit. */
 export function OutfitAsk() {
 	const { faceSrc, answered } = useOutfit();
-	const { user } = useAuth();
+	const { user, isLoading } = useAuth();
 	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (!user) return;
 		apiClient
 			.getTeam()
-			.then((res) => res.data && syncWorn(Object.fromEntries(res.data.members.map((m) => [m.id, m.outfit]))))
+			.then((res) => res.data && syncWorn(res.data.members, res.data.items))
 			.catch(() => undefined);
 	}, [user]);
-	const occasion = user && answered && pendingOccasion();
+	const occasion = user && !isLoading && answered && pendingOccasion();
 	const asker = ASKERS[new Date().getDate() % ASKERS.length];
 
 	return (
@@ -53,15 +53,15 @@ export function OutfitAsk() {
 							<button
 								type="button"
 								onClick={() => {
-									answerOccasion(occasion, false);
+									answerOccasion(occasion);
 									void speak('Let me show you our outfits. You pick what we wear!');
-									navigate(`/wardrobe?outfit=${occasion.outfit}&who=${asker.person}`);
+									navigate(`/wardrobe?item=${occasion.item}&who=${asker.person}`);
 								}}
 								className="rounded-full bg-white px-4 py-1.5 text-xs font-medium text-black hover:bg-white/85"
 							>
 								See outfits
 							</button>
-							<button type="button" onClick={() => answerOccasion(occasion, false)} className="rounded-full px-3 py-1.5 text-xs text-white/60 hover:text-white">
+							<button type="button" onClick={() => answerOccasion(occasion)} className="rounded-full px-3 py-1.5 text-xs text-white/60 hover:text-white">
 								Not now
 							</button>
 						</div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { isLightDevice } from '@/lib/motion';
 
 interface Particle {
 	x: number;
@@ -19,7 +20,8 @@ export function FlowField({ className = '' }: { className?: string }) {
 		const ctx = canvas?.getContext('2d');
 		if (!canvas || !ctx) return;
 		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+		const light = isLightDevice();
+		const dpr = light ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
 		let width = 0;
 		let height = 0;
 		let particles: Particle[] = [];
@@ -41,7 +43,7 @@ export function FlowField({ className = '' }: { className?: string }) {
 			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 			ctx.fillStyle = '#0b0b0d';
 			ctx.fillRect(0, 0, width, height);
-			particles = Array.from({ length: Math.min(900, Math.floor((width * height) / 2200)) }, spawn);
+			particles = Array.from({ length: Math.min(light ? 260 : 700, Math.floor((width * height) / 2200)) }, spawn);
 		};
 
 		const step = () => {

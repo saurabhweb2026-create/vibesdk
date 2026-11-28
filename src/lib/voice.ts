@@ -37,31 +37,45 @@ function loadVoices(): Promise<SpeechSynthesisVoice[]> {
 	});
 }
 
-/** The most human male voice the device has for a language: neural and Indian first, then any male voice. */
-function pickVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | undefined {
+export type VoiceWho = 'bob' | 'jack' | 'john' | 'maria';
+
+/** How each speaker sounds: Maria gets a female voice, the men differ in pitch and in which male voice they take. */
+const STYLE: Record<VoiceWho, { female: boolean; pitch: number; rate: number; rank: number }> = {
+	bob: { female: false, pitch: 0.95, rate: 0.98, rank: 0 },
+	jack: { female: false, pitch: 1.12, rate: 1.04, rank: 1 },
+	john: { female: false, pitch: 0.8, rate: 0.94, rank: 2 },
+	maria: { female: true, pitch: 1.05, rate: 1, rank: 0 },
+};
+
+/** The most human voice the device has for a language and speaker: neural and Indian first. */
+function pickVoice(voices: SpeechSynthesisVoice[], lang: string, who: VoiceWho): SpeechSynthesisVoice | undefined {
 	const base = lang.split('-')[0].toLowerCase();
 	const same = voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(base));
 	const exact = same.filter((v) => v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase());
 	const pool = exact.length ? exact : same;
-	const score = (v: SpeechSynthesisVoice) => (FEMALE.test(v.name) ? 0 : 2) + (NEURAL.test(v.name) ? 1 : 0);
-	return [...pool].sort((a, b) => score(b) - score(a))[0];
+	const style = STYLE[who];
+	const score = (v: SpeechSynthesisVoice) => (FEMALE.test(v.name) === style.female ? 2 : 0) + (NEURAL.test(v.name) ? 1 : 0);
+	const ranked = [...pool].sort((a, b) => score(b) - score(a));
+	const best = score(ranked[0]);
+	const equals = ranked.filter((v) => score(v) === best);
+	return equals[style.rank % equals.length];
 }
 
 let speakToken = 0;
 
-/** Speaks in Vinod's voice in the given language and resolves when the sentence has finished. */
-export async function speak(text: string, lang = 'en-IN'): Promise<void> {
+/** Speaks as the given teammate in the given language and resolves when the sentence has finished. */
+export async function speak(text: string, lang = 'en-IN', who: VoiceWho = 'bob'): Promise<void> {
 	if (!canSpeak()) return;
 	window.speechSynthesis.cancel();
 	const token = ++speakToken;
-	const voice = pickVoice(await loadVoices(), lang);
+	const voice = pickVoice(await loadVoices(), lang, who);
 	if (token !== speakToken) return;
 	await new Promise<void>((resolve) => {
 		const utterance = new SpeechSynthesisUtterance(text);
 		utterance.voice = voice ?? null;
 		utterance.lang = voice?.lang ?? lang;
-		utterance.rate = 0.98;
-		utterance.pitch = 0.95;
+		utterance.rate = STYLE[who].rate;
+		utterance.pitch = STYLE[who].pitch;
 		utterance.onend = () => resolve();
 		utterance.onerror = () => resolve();
 		window.speechSynthesis.speak(utterance);

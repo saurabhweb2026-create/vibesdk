@@ -9,8 +9,8 @@ const LEAD = 'When you ask your team,';
 const QUESTION = 'Are you available?...';
 const FULL_TEXT = `${LEAD}\n${QUESTION}`;
 const STORAGE_KEY = 'alwaysbro-splash-seen';
-const TYPE_MS = 70;
-const BRAND_HOLD_MS = 3600;
+const TYPE_MS = 45;
+const BRAND_HOLD_MS = 1800;
 
 function alreadySeen(): boolean {
 	try {

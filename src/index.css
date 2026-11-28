@@ -551,12 +551,18 @@
 	font-display: swap;
 }
 
-/* Cyan to violet sheen for headlines. */
+/* Cyan to violet sheen for headlines: dark ink in daylight, bright on dark surfaces. */
 .text-future {
-	background: linear-gradient(100deg, #ffffff 10%, #8bf0c4 45%, #7aa2ff 75%, #c084fc 100%);
+	background: linear-gradient(100deg, #0b3b34 5%, #0f8f6c 45%, #3b5bdb 75%, #7c3aed 100%);
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
+}
+
+[data-mode='dark'] .text-future {
+	background: linear-gradient(100deg, #ffffff 10%, #8bf0c4 45%, #7aa2ff 75%, #c084fc 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
 }
 
 .font-label {
@@ -717,7 +723,24 @@ html[data-motion='hyper'] .aurora__grid {
 	opacity: 0.3;
 }
 
-/* While Vinod is talking the app runs in the right half (bottom on phones). */
+/* Phones and daylight mode skip the heavy blurred blobs. */
+@media (max-width: 767px) {
+	.aurora__blob,
+	.aurora__grid {
+		animation: none;
+	}
+
+	.aurora__blob {
+		filter: blur(50px);
+	}
+}
+
+html:not([data-mode='dark']) .aurora__blob,
+html:not([data-mode='dark']) .aurora__grid {
+	display: none;
+}
+
+/* While Bob is talking the app runs in the right half (bottom on phones). */
 body.voice-split #root {
 	position: fixed;
 	inset: 0 0 0 50%;

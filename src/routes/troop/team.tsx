@@ -1,8 +1,8 @@
 import { WavingCharacter, type TroopPerson } from '@/components/brand/waving-character';
 import { Link } from 'react-router';
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { apiClient, type AgentId, type TeamData, type TeamMember } from '@/lib/api-client';
+import { syncWorn } from '@/lib/outfits';
 import { INPUT, PANEL } from './troop-shared';
 
 const FACE: Record<AgentId, TroopPerson> = { caesar: 'jack', louie: 'john', jack: 'maria' };
@@ -21,8 +21,7 @@ function MemberCard({ m, data, reload }: { m: TeamMember; data: TeamData; reload
 	const [busy, setBusy] = useState(false);
 	const [reply, setReply] = useState('');
 	const color = COLOR[m.id];
-	const outfit = data.outfits.find((o) => o.id === m.outfit);
-	const ringColor = outfit?.color ?? color;
+	const ringColor = color;
 	const xpBase = m.nextLevelXp ? m.xp / m.nextLevelXp : 1;
 
 	useEffect(() => setName(m.name), [m.name]);
@@ -46,9 +45,6 @@ function MemberCard({ m, data, reload }: { m: TeamMember; data: TeamData; reload
 					style={{ boxShadow: `0 0 0 3px ${ringColor}, 0 0 24px ${ringColor}66` }}
 				>
 					<WavingCharacter person={FACE[m.id]} color={ringColor} className="h-40" />
-					{outfit && (
-						<span className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-center text-[11px] text-white">{outfit.name}</span>
-					)}
 				</div>
 				<div className="min-w-0 flex-1">
 					<div className="text-base font-semibold text-white">{m.name}</div>
@@ -108,32 +104,6 @@ function MemberCard({ m, data, reload }: { m: TeamMember; data: TeamData; reload
 				))}
 			</ol>
 
-			{data.canCustomize && data.owned.length > 0 && (
-				<div className="mt-5 flex flex-wrap gap-2">
-					<button
-						type="button"
-						disabled={busy || m.outfit === null}
-						onClick={() => run(async () => void (await apiClient.equipOutfit(m.id, null)))}
-						className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/75 disabled:opacity-40"
-					>
-						No outfit
-					</button>
-					{data.outfits
-						.filter((o) => data.owned.includes(o.id))
-						.map((o) => (
-							<button
-								key={o.id}
-								type="button"
-								disabled={busy}
-								onClick={() => run(async () => void (await apiClient.equipOutfit(m.id, o.id)))}
-								className="rounded-full border px-3 py-1 text-xs text-white"
-								style={{ borderColor: m.outfit === o.id ? o.color : 'rgba(255,255,255,0.15)', background: m.outfit === o.id ? `${o.color}33` : 'transparent' }}
-							>
-								{o.name}
-							</button>
-						))}
-				</div>
-			)}
 		</div>
 	);
 }
@@ -146,23 +116,15 @@ export default function TeamPage() {
 		apiClient
 			.getTeam()
 			.then((res) => {
-				if (res.data) setData(res.data);
-				else setError('Could not load your team');
+				if (res.data) {
+					setData(res.data);
+					syncWorn(res.data.members, res.data.items);
+				} else setError('Could not load your team');
 			})
 			.catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load your team'));
 	}, []);
 
 	useEffect(reload, [reload]);
-
-	const buy = async (id: string) => {
-		try {
-			await apiClient.buyOutfit(id);
-			toast.success('Outfit bought');
-			reload();
-		} catch {
-			// the API client already shows the reason
-		}
-	};
 
 	return (
 		<div className="mx-auto max-w-5xl px-5 py-8 text-white">
@@ -180,26 +142,6 @@ export default function TeamPage() {
 						{data.members.map((m) => (
 							<MemberCard key={m.id} m={m} data={data} reload={reload} />
 						))}
-					</div>
-					<h2 className="mt-8 text-xl font-medium tracking-[-0.02em]">Outfit shop</h2>
-					<div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-						{data.outfits.map((o) => {
-							const owned = data.owned.includes(o.id);
-							return (
-								<div key={o.id} className={PANEL} style={{ borderColor: `${o.color}66` }}>
-									<div className="text-sm font-semibold" style={{ color: o.color }}>{o.name}</div>
-									<div className="mt-1 min-h-8 text-xs text-white/60">{o.perk}</div>
-									<button
-										type="button"
-										disabled={owned || !data.canCustomize || data.balance < o.price}
-										onClick={() => buy(o.id)}
-										className="mt-3 w-full rounded-full border border-white/15 px-3 py-1.5 text-sm text-white hover:bg-white/10 disabled:opacity-50"
-									>
-										{owned ? 'Owned' : `${o.price} credits`}
-									</button>
-								</div>
-							);
-						})}
 					</div>
 				</>
 			)}

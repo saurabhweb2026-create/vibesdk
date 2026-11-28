@@ -20,8 +20,8 @@ export function setupTroopRoutes(app: Hono<AppEnv>): void {
 	app.put('/api/jack/bot', setAuthLevel(AuthConfig.authenticated), adaptController(TroopController, TroopController.saveJack));
 	app.get('/api/team', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.getTeam));
 	app.put('/api/team/name', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.rename));
-	app.post('/api/team/outfit/buy', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.buy));
-	app.post('/api/team/outfit/equip', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.equip));
+	app.post('/api/team/wardrobe/buy', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.buy));
+	app.post('/api/team/wardrobe/wear', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.wear));
 	app.get('/api/skins', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.getSkins));
 	app.post('/api/skins/buy', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.buySkin));
 	app.post('/api/skins/equip', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.equipSkin));

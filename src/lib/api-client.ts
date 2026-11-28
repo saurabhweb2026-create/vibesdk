@@ -1422,16 +1422,16 @@ class ApiClient {
 		return this.request<{ name: string }>('/api/team/name', { method: 'PUT', body: { agentId, name } });
 	}
 
-	async buyOutfit(outfitId: string): Promise<ApiResponse<{ ok: boolean }>> {
-		return this.request<{ ok: boolean }>('/api/team/outfit/buy', { method: 'POST', body: { outfitId } });
+	async buyItem(itemId: string): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>('/api/team/wardrobe/buy', { method: 'POST', body: { itemId } });
 	}
 
-	async equipOutfit(agentId: AgentId, outfitId: string | null): Promise<ApiResponse<{ ok: boolean }>> {
-		return this.request<{ ok: boolean }>('/api/team/outfit/equip', { method: 'POST', body: { agentId, outfitId } });
+	async wearItem(agentId: AgentId, slot: WardrobeSlot, itemId: string | null): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>('/api/team/wardrobe/wear', { method: 'POST', body: { agentId, slot, itemId } });
 	}
 
-	async voiceTurn(text: string, history: VoiceHistoryTurn[], page?: string): Promise<ApiResponse<VoiceTurn>> {
-		return this.request<VoiceTurn>('/api/voice/turn', { method: 'POST', body: { text, history, page } }, true);
+	async voiceTurn(text: string, history: VoiceHistoryTurn[], opts: { speaker: VoiceSpeaker; lang: string; page?: string }): Promise<ApiResponse<VoiceTurn>> {
+		return this.request<VoiceTurn>('/api/voice/turn', { method: 'POST', body: { text, history, ...opts } }, true);
 	}
 
 	async getSkins(): Promise<ApiResponse<SkinData>> {
@@ -1561,18 +1561,22 @@ export type CouncilResult = {
 	doNext: string[];
 	tripwire: string;
 };
-export type VoiceHistoryTurn = { role: 'user' | 'assistant'; content: string };
+export type VoiceSpeaker = 'bob' | 'jack' | 'john' | 'maria';
+export type VoiceHistoryTurn = { role: 'user' | 'assistant'; content: string; speaker?: VoiceSpeaker };
 export type VoiceTurn = {
+	speaker: VoiceSpeaker;
+	joined: boolean;
 	reply: string;
 	lang: string;
-	action: { type: 'none' | 'build' | 'ads' | 'support' | 'wardrobe' | 'end'; task: string; outfit: string };
+	action: { type: 'none' | 'build' | 'ads' | 'support' | 'wardrobe' | 'back' | 'end'; task: string; outfit: string };
 };
-export type TeamOutfit = { id: string; name: string; price: number; color: string; perk: string };
+export type WardrobeSlot = 'set' | 'head' | 'top' | 'bottom' | 'shoes';
+export type WardrobeItem = { id: string; slot: WardrobeSlot; name: string; price: number; color: string; perk: string };
 export type TeamMember = {
 	id: AgentId;
 	name: string;
 	role: string;
-	outfit: string | null;
+	wearing: Partial<Record<WardrobeSlot, string>>;
 	xp: number;
 	level: number;
 	nextLevelXp: number | null;
@@ -1583,7 +1587,7 @@ export type TeamData = {
 	canCustomize: boolean;
 	balance: number;
 	members: TeamMember[];
-	outfits: TeamOutfit[];
+	items: WardrobeItem[];
 	owned: string[];
 	bonusAmounts: number[];
 };

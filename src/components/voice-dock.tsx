@@ -2,16 +2,54 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { MicrophoneIcon, StopIcon } from '@phosphor-icons/react';
+import { ArrowUUpLeftIcon, MicrophoneIcon, StopIcon } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/auth-context';
 import { useAuthModal } from '@/components/auth/AuthModalProvider';
-import { apiClient, type VoiceHistoryTurn, type VoiceTurn } from '@/lib/api-client';
+import { apiClient, type VoiceHistoryTurn, type VoiceSpeaker, type VoiceTurn } from '@/lib/api-client';
+import { useOutfit, type TroopPerson } from '@/lib/outfits';
 import { AUTO_RUN_KEY, PROMPT_STORAGE_KEY } from '@/lib/themes';
 import { canListen, speak, stopSpeaking, useListen } from '@/lib/voice';
 
+const LANG_KEY = 'alwaysbro-voice-lang';
+
+/** Auto lets Bob follow whichever language the owner speaks. */
+const LANGUAGES: Array<{ code: string; label: string }> = [
+	{ code: 'auto', label: 'Auto' },
+	{ code: 'en-IN', label: 'English' },
+	{ code: 'hi-IN', label: 'हिन्दी' },
+	{ code: 'ta-IN', label: 'தமிழ்' },
+	{ code: 'te-IN', label: 'తెలుగు' },
+	{ code: 'bn-IN', label: 'বাংলা' },
+	{ code: 'mr-IN', label: 'मराठी' },
+	{ code: 'gu-IN', label: 'ગુજરાતી' },
+	{ code: 'kn-IN', label: 'ಕನ್ನಡ' },
+	{ code: 'ml-IN', label: 'മലയാളം' },
+	{ code: 'pa-IN', label: 'ਪੰਜਾਬੀ' },
+];
+
+const GREETING: Record<string, string> = {
+	'en-IN': 'Hello! I am Bob. Tell me, what shall we do today?',
+	'hi-IN': 'नमस्ते! मैं बॉब हूँ। बताइए, आज क्या करना है?',
+	'ta-IN': 'வணக்கம்! நான் பாப். சொல்லுங்கள், இன்று என்ன செய்யலாம்?',
+	'te-IN': 'నమస్కారం! నేను బాబ్. చెప్పండి, ఈ రోజు ఏం చేద్దాం?',
+	'bn-IN': 'নমস্কার! আমি বব। বলুন, আজ কী করব?',
+	'mr-IN': 'नमस्कार! मी बॉब आहे. सांगा, आज काय करूया?',
+	'gu-IN': 'નમસ્તે! હું બોબ છું. કહો, આજે શું કરીએ?',
+	'kn-IN': 'ನಮಸ್ಕಾರ! ನಾನು ಬಾಬ್. ಹೇಳಿ, ಇಂದು ಏನು ಮಾಡೋಣ?',
+	'ml-IN': 'നമസ്കാരം! ഞാൻ ബോബ്. പറയൂ, ഇന്ന് എന്ത് ചെയ്യണം?',
+	'pa-IN': 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਬੌਬ ਹਾਂ। ਦੱਸੋ, ਅੱਜ ਕੀ ਕਰੀਏ?',
+};
+
+const CREW: Record<VoiceSpeaker, { name: string; person: TroopPerson | null; route: string | null; hello: string }> = {
+	bob: { name: 'Bob', person: null, route: null, hello: '' },
+	jack: { name: 'Jack', person: 'jack', route: '/', hello: 'Hi, Jack here. What shall we build?' },
+	john: { name: 'John', person: 'john', route: '/louie', hello: 'John here. Tell me about your ads and your audience.' },
+	maria: { name: 'Maria', person: 'maria', route: '/jack', hello: 'Maria here. How can I help your customers today?' },
+};
+
 type Phase = 'listening' | 'thinking' | 'speaking';
 interface Line {
-	who: 'you' | 'vinod';
+	who: 'you' | VoiceSpeaker;
 	text: string;
 }
 
@@ -20,8 +58,9 @@ const MAX_SILENT_ROUNDS = 3;
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Vinod, the team's voice. One tap starts a hands-free conversation: he listens, answers aloud,
- * puts the team to work on the right half of the screen, and listens again until you stop him.
+ * Bob, the team's voice. One tap starts a hands-free conversation: he listens, answers aloud,
+ * brings in Jack, John or Maria when asked, puts the team to work on the right half of the screen,
+ * and listens again until you stop him.
  */
 export function VoiceDock() {
 	const { user } = useAuth();
@@ -35,6 +74,16 @@ export function VoiceDock() {
 	const running = useRef(false);
 	const history = useRef<VoiceHistoryTurn[]>([]);
 	const lang = useRef('en-IN');
+	const speaker = useRef<VoiceSpeaker>('bob');
+	const { faceSrc } = useOutfit();
+	const [onCall, setOnCall] = useState<VoiceSpeaker>('bob');
+	const [pick, setPick] = useState(() => {
+		try {
+			return localStorage.getItem(LANG_KEY) ?? 'auto';
+		} catch {
+			return 'auto';
+		}
+	});
 	const path = useRef(pathname);
 	const feed = useRef<HTMLDivElement>(null);
 	path.current = pathname;
@@ -72,18 +121,34 @@ export function VoiceDock() {
 				navigate(`/jack?say=${encodeURIComponent(action.task)}`);
 				break;
 			case 'wardrobe':
-				navigate(`/wardrobe?outfit=${encodeURIComponent(action.outfit)}`);
+				navigate(`/wardrobe?item=${encodeURIComponent(action.outfit)}`);
 				break;
 		}
+	};
+
+	const switchTo = (who: VoiceSpeaker) => {
+		speaker.current = who;
+		setOnCall(who);
+		const route = CREW[who].route;
+		if (route && path.current !== route) navigate(route);
 	};
 
 	const say = (who: Line['who'], text: string) => setLines((all) => [...all.slice(-30), { who, text }]);
 
 	const converse = async (spoken: string): Promise<VoiceTurn> => {
-		const res = await apiClient.voiceTurn(spoken, history.current, path.current);
+		const res = await apiClient.voiceTurn(spoken, history.current, {
+			speaker: speaker.current,
+			lang: pick === 'auto' ? '' : pick,
+			page: path.current,
+		});
 		if (!res.data) throw new Error('empty');
-		history.current = [...history.current, { role: 'user' as const, content: spoken }, { role: 'assistant' as const, content: res.data.reply }].slice(-12);
-		return res.data;
+		const turn = res.data;
+		history.current = [
+			...history.current,
+			{ role: 'user' as const, content: spoken },
+			{ role: 'assistant' as const, content: turn.reply, speaker: turn.speaker },
+		].slice(-12);
+		return turn;
 	};
 
 	const loop = async () => {
@@ -98,11 +163,11 @@ export function VoiceDock() {
 				const reason = error instanceof Error ? error.message : '';
 				if (reason === 'aborted') break;
 				if (reason === 'not-allowed' || reason === 'service-not-allowed') {
-					toast.error('Allow the microphone to talk to Vinod');
+					toast.error('Allow the microphone to talk to Bob');
 					break;
 				}
 				if (++silent >= MAX_SILENT_ROUNDS) {
-					toast.message('Vinod is here whenever you need him. Tap the mic to talk again.');
+					toast.message('Bob is here whenever you need him. Tap the mic to talk again.');
 					break;
 				}
 				await pause(300);
@@ -113,14 +178,18 @@ export function VoiceDock() {
 			try {
 				const turn = await converse(spoken);
 				lang.current = turn.lang;
-				say('vinod', turn.reply);
+				const joined = turn.speaker !== speaker.current;
+				if (joined) switchTo(turn.speaker);
+				if (turn.action.type === 'back') switchTo('bob');
+				say(turn.speaker, turn.reply);
 				act(turn);
 				setPhase('speaking');
-				await speak(turn.reply, turn.lang);
+				await speak(turn.reply, turn.lang, turn.speaker);
 				if (turn.action.type === 'end') break;
 			} catch {
-				say('vinod', 'Sorry, I lost the line for a moment. Please say that again.');
-				await speak('Sorry, I lost the line for a moment. Please say that again.', 'en-IN');
+				const sorry = 'Sorry, I lost the line for a moment. Please say that again.';
+				say(speaker.current, sorry);
+				await speak(sorry, 'en-IN', speaker.current);
 			}
 		}
 		running.current = false;
@@ -131,10 +200,14 @@ export function VoiceDock() {
 		if (running.current) return;
 		running.current = true;
 		history.current = [];
-		lang.current = 'en-IN';
+		lang.current = pick === 'auto' ? 'en-IN' : pick;
+		speaker.current = 'bob';
+		setOnCall('bob');
 		setLines([]);
 		setLive(true);
-		void loop();
+		const hello = GREETING[lang.current] ?? GREETING['en-IN'];
+		say('bob', hello);
+		void speak(hello, lang.current, 'bob').then(() => loop());
 	};
 
 	const stop = () => {
@@ -142,6 +215,16 @@ export function VoiceDock() {
 		cancel();
 		stopSpeaking();
 		setLive(false);
+	};
+
+	const choose = (code: string) => {
+		setPick(code);
+		if (code !== 'auto') lang.current = code;
+		try {
+			localStorage.setItem(LANG_KEY, code);
+		} catch {
+			// the choice then lasts until the page closes
+		}
 	};
 
 	const press = () => (user ? start() : showAuthModal('Sign in to talk to your team', start));
@@ -152,7 +235,7 @@ export function VoiceDock() {
 				<button
 					type="button"
 					onClick={press}
-					aria-label="Talk to Vinod"
+					aria-label="Talk to Bob"
 					className="fixed bottom-5 right-5 z-[70] flex size-14 items-center justify-center rounded-full bg-white pb-[env(safe-area-inset-bottom)] text-black shadow-[0_0_40px_rgba(139,240,196,0.35)] transition-transform hover:scale-105 active:scale-95"
 				>
 					<MicrophoneIcon className="size-6" weight="fill" />
@@ -167,14 +250,28 @@ export function VoiceDock() {
 									className="absolute inset-0 rounded-full bg-gradient-to-br from-[#8bf0c4] via-[#7aa2ff] to-[#c084fc] opacity-70 blur-md"
 									style={{ animation: `voice-pulse ${phase === 'speaking' ? 0.9 : phase === 'thinking' ? 0.5 : 2.4}s ease-in-out infinite` }}
 								/>
-								<span className="relative flex size-12 items-center justify-center rounded-full bg-black/80 ring-1 ring-white/25">
-									<MicrophoneIcon className="size-5 text-[#8bf0c4]" weight="fill" />
+								<span className="relative flex size-12 items-center justify-center overflow-hidden rounded-full bg-black/80 ring-1 ring-white/25">
+									{CREW[onCall].person ? (
+										<img src={faceSrc(CREW[onCall].person as TroopPerson)} alt="" className="size-full object-cover" />
+									) : (
+										<MicrophoneIcon className="size-5 text-[#8bf0c4]" weight="fill" />
+									)}
 								</span>
 							</div>
 							<div className="min-w-0 flex-1">
-								<div className="text-lg font-medium tracking-[-0.02em]">Vinod</div>
-								<div className="font-label text-[11px] text-[#8bf0c4]">{PHASE_LABEL[phase]}</div>
+								<div className="text-lg font-medium tracking-[-0.02em]">{CREW[onCall].name}</div>
+								<div className="font-label text-[11px] text-[#8bf0c4]">{onCall === 'bob' ? PHASE_LABEL[phase] : `On call, ${PHASE_LABEL[phase].toLowerCase()}`}</div>
 							</div>
+							{onCall !== 'bob' && (
+								<button
+									type="button"
+									onClick={() => switchTo('bob')}
+									className="font-label flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-2 text-[11px] hover:bg-white/10"
+								>
+									<ArrowUUpLeftIcon className="size-4" />
+									Bob
+								</button>
+							)}
 							<button
 								type="button"
 								onClick={stop}
@@ -184,8 +281,21 @@ export function VoiceDock() {
 								End
 							</button>
 						</header>
+						<div className="flex gap-1.5 overflow-x-auto px-5 pb-3">
+							{LANGUAGES.map((l) => (
+								<button
+									key={l.code}
+									type="button"
+									onClick={() => choose(l.code)}
+									className="shrink-0 rounded-full border px-3 py-1 text-[11px]"
+									style={{ borderColor: pick === l.code ? '#8bf0c4' : 'rgba(255,255,255,0.15)', background: pick === l.code ? 'rgba(139,240,196,0.14)' : 'transparent' }}
+								>
+									{l.label}
+								</button>
+							))}
+						</div>
 						<div ref={feed} className="flex-1 space-y-3 overflow-y-auto px-5 pb-5">
-							{lines.length === 0 && <p className="text-sm text-white/50">Go ahead, I am listening. Ask in any Indian language.</p>}
+							{lines.length === 0 && <p className="text-sm text-white/50">Go ahead, I am listening. Ask in any Indian language, or say "call Maria".</p>}
 							{lines.map((line, i) => (
 								<div key={i} className={line.who === 'you' ? 'flex justify-end' : 'flex'}>
 									<p

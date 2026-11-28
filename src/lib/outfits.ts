@@ -1,31 +1,27 @@
 import { useSyncExternalStore } from 'react';
+import type { TeamMember, WardrobeItem, WardrobeSlot } from '@/lib/api-client';
 
 export type TroopPerson = 'jack' | 'john' | 'maria';
-export type OutfitId = 'classic' | 'festive' | 'christmas';
 
 /** The teammate each server-side agent id stands for. */
 export const PERSON_AGENT = { jack: 'caesar', john: 'louie', maria: 'jack' } as const satisfies Record<TroopPerson, string>;
 
-export interface Outfit {
-	id: OutfitId;
-	label: string;
-	/** File infix of the artwork this outfit uses. */
-	art: '' | '-ethnic';
-	santaHat: boolean;
+/** One worn item: its id and the colour it tints with. */
+export interface Worn {
+	id: string;
+	color: string;
 }
 
-export const OUTFITS: Record<OutfitId, Outfit> = {
-	classic: { id: 'classic', label: 'Everyday', art: '', santaHat: false },
-	festive: { id: 'festive', label: 'Festive', art: '-ethnic', santaHat: false },
-	christmas: { id: 'christmas', label: 'Christmas', art: '', santaHat: true },
-};
+export type Look = Partial<Record<WardrobeSlot, Worn>>;
 
-export const OUTFIT_ORDER: OutfitId[] = ['classic', 'festive', 'christmas'];
+/** The festive set swaps the whole artwork, so it also swaps the face icons. */
+export const isFestive = (look: Look | undefined) => look?.set?.id === 'festive';
 
 export interface Occasion {
 	id: string;
 	name: string;
-	outfit: OutfitId;
+	/** The wardrobe item the team asks for. */
+	item: string;
 	/** Inclusive start and end as [month, day], month starting at 1. */
 	from: [number, number];
 	to: [number, number];
@@ -35,11 +31,11 @@ export interface Occasion {
 
 /** Festivals that move each year are listed as the window around their next date. */
 export const OCCASIONS: Occasion[] = [
-	{ id: 'christmas', name: 'Christmas', outfit: 'christmas', from: [11, 20], to: [12, 26], ask: 'Christmas is coming! Can we get Santa hats for the team?' },
-	{ id: 'sankranti', name: 'Makar Sankranti and Pongal', outfit: 'festive', from: [1, 8], to: [1, 16], ask: 'Sankranti and Pongal are here! Can we wear our festive outfits?' },
-	{ id: 'republic-day', name: 'Republic Day', outfit: 'festive', from: [1, 22], to: [1, 26], ask: 'Republic Day is near. Can we dress up in our ethnic wear?' },
-	{ id: 'holi', name: 'Holi', outfit: 'festive', from: [3, 18], to: [3, 23], ask: 'Holi is almost here! Can we put on our festive outfits?' },
-	{ id: 'diwali', name: 'Diwali', outfit: 'festive', from: [10, 22], to: [11, 1], ask: 'Diwali is around the corner! Can we dress in our festive best?' },
+	{ id: 'christmas', name: 'Christmas', item: 'christmas', from: [11, 20], to: [12, 26], ask: 'Christmas is coming! Can we get Santa hats for the team?' },
+	{ id: 'sankranti', name: 'Makar Sankranti and Pongal', item: 'festive', from: [1, 8], to: [1, 16], ask: 'Sankranti and Pongal are here! Can we wear our festive outfits?' },
+	{ id: 'republic-day', name: 'Republic Day', item: 'festive', from: [1, 22], to: [1, 26], ask: 'Republic Day is near. Can we dress up in our ethnic wear?' },
+	{ id: 'holi', name: 'Holi', item: 'festive', from: [3, 18], to: [3, 23], ask: 'Holi is almost here! Can we put on our festive outfits?' },
+	{ id: 'diwali', name: 'Diwali', item: 'festive', from: [10, 22], to: [11, 1], ask: 'Diwali is around the corner! Can we dress in our festive best?' },
 ];
 
 const dayNumber = (month: number, day: number) => month * 100 + day;
@@ -49,37 +45,32 @@ export function activeOccasion(date = new Date()): Occasion | null {
 	return OCCASIONS.find((o) => today >= dayNumber(...o.from) && today <= dayNumber(...o.to)) ?? null;
 }
 
-const STORAGE_KEY = 'alwaysbro-outfit';
+const STORAGE_KEY = 'alwaysbro-wardrobe';
 
-interface OutfitState {
-	outfit: OutfitId;
+interface WardrobeState {
 	/** Occasion windows the user has already answered, as "id-year". */
 	answered: string[];
-	/** What each teammate wears when it differs from the shared outfit. */
-	worn: Partial<Record<TroopPerson, OutfitId>>;
+	worn: Partial<Record<TroopPerson, Look>>;
 }
 
-const isOutfitId = (id: unknown): id is OutfitId => typeof id === 'string' && id in OUTFITS;
-
 const listeners = new Set<() => void>();
-let state: OutfitState = read();
+let state: WardrobeState = read();
 
-function read(): OutfitState {
+function read(): WardrobeState {
 	try {
-		const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '') as Partial<OutfitState>;
-		const outfit = isOutfitId(parsed.outfit) ? parsed.outfit : 'classic';
-		return { outfit, answered: Array.isArray(parsed.answered) ? parsed.answered : [], worn: parsed.worn ?? {} };
+		const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '') as Partial<WardrobeState>;
+		return { answered: Array.isArray(parsed.answered) ? parsed.answered : [], worn: parsed.worn ?? {} };
 	} catch {
-		return { outfit: 'classic', answered: [], worn: {} };
+		return { answered: [], worn: {} };
 	}
 }
 
-function write(next: OutfitState) {
+function write(next: WardrobeState) {
 	state = next;
 	try {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 	} catch {
-		// the choice then lasts until the page closes
+		// the look then lasts until the page closes
 	}
 	listeners.forEach((fn) => fn());
 }
@@ -89,29 +80,29 @@ const subscribe = (fn: () => void) => {
 	return () => listeners.delete(fn);
 };
 
-export function setOutfit(outfit: OutfitId) {
-	write({ ...state, outfit });
+/** Builds the look a team member wears from the items the server says they have on. */
+export function lookOf(member: TeamMember, items: WardrobeItem[]): Look {
+	const look: Look = {};
+	for (const [slot, id] of Object.entries(member.wearing) as Array<[WardrobeSlot, string]>) {
+		const item = items.find((i) => i.id === id);
+		if (item) look[slot] = { id: item.id, color: item.color };
+	}
+	return look;
 }
 
-/** Server outfit ids that have no artwork of their own keep the everyday look. */
-export const artOutfit = (serverId: string | null): OutfitId => (isOutfitId(serverId) ? serverId : 'classic');
-
-/** Adopts what the signed-in user's teammates wear, keyed by server agent id. */
-export function syncWorn(outfits: Record<string, string | null>) {
-	const worn: Partial<Record<TroopPerson, OutfitId>> = {};
+/** Adopts what the signed-in user's teammates wear. */
+export function syncWorn(members: TeamMember[], items: WardrobeItem[]) {
+	const worn: Partial<Record<TroopPerson, Look>> = {};
 	for (const person of Object.keys(PERSON_AGENT) as TroopPerson[]) {
-		worn[person] = artOutfit(outfits[PERSON_AGENT[person]] ?? null);
+		const member = members.find((m) => m.id === PERSON_AGENT[person]);
+		worn[person] = member ? lookOf(member, items) : {};
 	}
 	write({ ...state, worn });
 }
 
-export function answerOccasion(occasion: Occasion, accepted: boolean) {
+export function answerOccasion(occasion: Occasion) {
 	const key = `${occasion.id}-${new Date().getFullYear()}`;
-	write({
-		...state,
-		outfit: accepted ? occasion.outfit : state.outfit,
-		answered: state.answered.includes(key) ? state.answered : [...state.answered, key],
-	});
+	if (!state.answered.includes(key)) write({ ...state, answered: [...state.answered, key] });
 }
 
 export function pendingOccasion(): Occasion | null {
@@ -122,13 +113,11 @@ export function pendingOccasion(): Occasion | null {
 
 export function useOutfit() {
 	const current = useSyncExternalStore(subscribe, () => state);
-	const outfit = OUTFITS[current.outfit];
-	const outfitFor = (person: TroopPerson) => OUTFITS[current.worn[person] ?? current.outfit];
+	const lookFor = (person: TroopPerson): Look => current.worn[person] ?? {};
 	return {
-		outfit,
-		outfitFor,
 		answered: current.answered,
-		waveSrc: (person: TroopPerson) => `/troop/${person}${outfitFor(person).art}-wave.webp`,
-		faceSrc: (person: TroopPerson) => `/troop/${person}${outfitFor(person).art}-face.webp`,
+		lookFor,
+		waveSrc: (person: TroopPerson) => `/troop/${person}${isFestive(lookFor(person)) ? '-ethnic' : ''}-wave.webp`,
+		faceSrc: (person: TroopPerson) => `/troop/${person}${isFestive(lookFor(person)) ? '-ethnic' : ''}-face.webp`,
 	};
 }

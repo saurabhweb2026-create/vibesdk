@@ -240,6 +240,23 @@ async function handleUserAppRequest(request: Request, env: Env): Promise<Respons
 	}
 }
 
+const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
+const MEDIA_CACHE = 'public, max-age=86400, stale-while-revalidate=604800';
+
+/** Hashed build files never change, so browsers keep them; art and fonts are kept for a day. */
+function withAssetCaching(pathname: string, response: Response): Response {
+	if (response.status !== 200) return response;
+	const cache = pathname.startsWith('/assets/')
+		? IMMUTABLE_CACHE
+		: /^\/(troop|themes|fonts)\//.test(pathname)
+			? MEDIA_CACHE
+			: null;
+	if (!cache) return response;
+	const cached = new Response(response.body, response);
+	cached.headers.set('Cache-Control', cache);
+	return cached;
+}
+
 /**
  * Main Worker fetch handler with robust, secure routing.
  */
@@ -325,7 +342,7 @@ const worker = {
 			
 			// Serve static assets for all other non-API routes from the ASSETS binding.
 			if (!pathname.startsWith('/api/')) {
-				return env.ASSETS.fetch(request);
+				return withAssetCaching(pathname, await env.ASSETS.fetch(request));
 			}
 			// Handle all API requests with the main Hono application.
 			// Log pathname only: some API routes (e.g. /api/auth/callback/:provider)

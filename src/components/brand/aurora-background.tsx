@@ -3,11 +3,13 @@ import { useAuth } from '@/contexts/auth-context';
 import { apiClient } from '@/lib/api-client';
 import { FutureBackdrop } from './future-backdrop';
 import { setActiveSkin, useActiveSkin } from '@/lib/skins';
+import { useTheme } from '@/contexts/theme-context';
 
 /** Slow, drifting colour blobs behind the whole app. The palette follows the chosen look. */
 export function AuroraBackground() {
 	const skin = useActiveSkin();
 	const { user } = useAuth();
+	const { resolvedTheme } = useTheme();
 
 	useEffect(() => {
 		const root = document.documentElement;
@@ -39,7 +41,7 @@ export function AuroraBackground() {
 			<span className="aurora__blob aurora__blob--b" />
 			<span className="aurora__blob aurora__blob--c" />
 			<span className="aurora__grid" />
-			<FutureBackdrop intensity={0.8} />
+			{resolvedTheme === 'dark' && <FutureBackdrop intensity={0.8} yieldToCover />}
 		</div>
 	);
 }

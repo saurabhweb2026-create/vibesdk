@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { BrandLogo, BrandName } from '@/components/brand/brand-mark';
 import { GlyphMatrix } from '@/components/brand/glyph-matrix';
@@ -38,7 +38,18 @@ function Label({ children }: { children: string }) {
 	return <p className="font-label mb-4 text-xs text-white/50">{children}</p>;
 }
 
+/** Tells the app-wide backdrop to rest while the landing page covers it. */
+function useCoverFlag() {
+	useEffect(() => {
+		document.documentElement.dataset.cover = '1';
+		return () => {
+			delete document.documentElement.dataset.cover;
+		};
+	}, []);
+}
+
 export default function Landing({ onEnter }: { onEnter: () => void }) {
+	useCoverFlag();
 	const reduce = useReducedMotion();
 	const { showAuthModal } = useAuthModal();
 	const [prompt, setPrompt] = useState('');
@@ -63,7 +74,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 	const signIn = () => showAuthModal('Sign in to meet your team', onEnter);
 
 	return (
-		<div className="fixed inset-0 z-[60] overflow-y-auto scroll-smooth bg-[#0b0b0d] text-white">
+		<div data-mode="dark" className="fixed inset-0 z-[60] overflow-y-auto scroll-smooth bg-[#0b0b0d] text-white">
 			<div className="pointer-events-none fixed inset-0">
 				<FutureBackdrop />
 			</div>
