@@ -4,6 +4,7 @@ import { TroopController } from '../controllers/troop/controller';
 import { DomainController } from '../controllers/domains/controller';
 import { MetaController } from '../controllers/meta/controller';
 import { completeConnect, readMedia } from '../../services/meta/metaService';
+import { PlanController } from '../controllers/plan/controller';
 import { TeamController } from '../controllers/team/controller';
 import { VoiceController } from '../controllers/voice/controller';
 import { speakAs, ttsConfigured } from '../../services/troop/tts';
@@ -55,6 +56,11 @@ export function setupTroopRoutes(app: Hono<AppEnv>): void {
 		if (!media) return c.notFound();
 		return new Response(media.body, { headers: { 'content-type': media.type, 'cache-control': 'public, max-age=86400' } });
 	});
+	app.get('/api/plan/:appId', setAuthLevel(AuthConfig.authenticated), adaptController(PlanController, PlanController.get));
+	app.post('/api/plan/:appId/brand', setAuthLevel(AuthConfig.authenticated), adaptController(PlanController, PlanController.learn));
+	app.post('/api/plan/:appId/generate', setAuthLevel(AuthConfig.authenticated), adaptController(PlanController, PlanController.generate));
+	app.patch('/api/plan/item/:id', setAuthLevel(AuthConfig.authenticated), adaptController(PlanController, PlanController.edit));
+	app.post('/api/plan/item/:id/approve', setAuthLevel(AuthConfig.authenticated), adaptController(PlanController, PlanController.approve));
 	app.get('/api/voice/status', setAuthLevel(AuthConfig.authenticated), (c) => c.json({ success: true, data: { studio: ttsConfigured(c.env) } }));
 	app.post('/api/voice/speak', setAuthLevel(AuthConfig.authenticated), async (c) => {
 		if (!ttsConfigured(c.env)) return c.json({ success: false, error: { message: 'Studio voice is not set up' } }, 501);

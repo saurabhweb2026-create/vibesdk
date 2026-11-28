@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { apiClient, type MetaStatus, type MetaTarget } from '@/lib/api-client';
-import { composeCreative, loadImage } from '@/lib/creative-image';
-import { renderShortVideo, type VideoShot } from '@/lib/short-video';
+import { blobToDataUrl, cutReel, drawPicture } from '@/lib/make-media';
 import { toJpegDataUrl } from '@/components/meta-post-dialog';
 import { speak } from '@/lib/voice';
 import { PANEL } from './troop-shared';
 
 const PINK = '#ec4899';
-const SCENE_PICTURES = 3;
 
 interface Brief {
 	goal: string;
@@ -26,14 +24,6 @@ interface Made {
 	videoBlob: Blob | null;
 	videoIsMp4: boolean;
 }
-
-const blobToDataUrl = (blob: Blob): Promise<string> =>
-	new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onload = () => resolve(String(reader.result));
-		reader.onerror = () => reject(new Error('Could not read the video'));
-		reader.readAsDataURL(blob);
-	});
 
 interface Props {
 	appId: string;
@@ -75,29 +65,15 @@ export function QuickCampaign({ appId, brand, brief, meta, onPosted, autoStart }
 			if (!content || !creative) throw new Error('John could not plan a creative this time. Please try again.');
 
 			setStep('John is drawing the picture…');
-			const drawn = await apiClient.generateLouieImage({ appId, prompt: creative.imagePrompt || creative.visual });
-			if (!drawn.data?.image) throw new Error('John could not draw the picture');
-			const picture = await composeCreative(drawn.data.image, creative.overlayText, brand, PINK);
+			const picture = await drawPicture(appId, creative.imagePrompt || creative.visual, creative.overlayText, brand, PINK);
 			const tags = (content.hashtags?.niche ?? []).slice(0, 4).join(' ');
 			const caption = [creative.caption, tags].filter(Boolean).join('\n\n');
 			setMade({ picture, caption, videoUrl: null, videoBlob: null, videoIsMp4: false });
 
 			if (script?.shots?.length) {
 				setStep('John is cutting the video…');
-				const shots: VideoShot[] = script.shots.map((sh) => ({ seconds: sh.seconds, text: sh.text }));
-				const wanted = script.shots.map((sh, i) => ({ i, prompt: sh.imagePrompt ?? '' })).filter((x) => x.prompt.length > 4).slice(0, SCENE_PICTURES);
-				const scenes = await Promise.all(
-					wanted.map(async (w) => {
-						const out = await apiClient.generateLouieImage({ appId, prompt: w.prompt });
-						return out.data?.image ? { i: w.i, image: await loadImage(out.data.image) } : null;
-					}),
-				);
-				for (const s of scenes) if (s) shots[s.i].image = s.image;
-				shots.forEach((sh, i) => {
-					if (!sh.image) sh.image = shots.slice(0, i).reverse().find((x) => x.image)?.image ?? shots.find((x) => x.image)?.image ?? null;
-				});
-				const { blob } = await renderShortVideo({ shots, cta: script.cta, brand: script.title, accent: PINK, music: true, preferMp4: true });
-				setMade({ picture, caption, videoUrl: URL.createObjectURL(blob), videoBlob: blob, videoIsMp4: blob.type.includes('mp4') });
+				const { blob, isMp4 } = await cutReel(appId, script.shots, script.cta, script.title, PINK);
+				setMade({ picture, caption, videoUrl: URL.createObjectURL(blob), videoBlob: blob, videoIsMp4: isMp4 });
 			}
 			toast.success('John finished your creative');
 			if (spoken) void speak('Your picture and video are ready. Tap post when you like them.');

@@ -1,11 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
+import { canListen, useListen } from '@/lib/voice';
 import { toast } from 'sonner';
 import { apiClient, type LouieAdContent, type LouiePack, type MetaStatus } from '@/lib/api-client';
 import { composeCreative, loadImage } from '@/lib/creative-image';
 import { renderShortVideo, type VideoShot } from '@/lib/short-video';
 import { MetaPostDialog, useMetaStatus } from '@/components/meta-post-dialog';
 import { MarketingCouncil } from './marketing-council';
+import { ContentCalendar } from './content-calendar';
 import { QuickCampaign } from './quick-campaign';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
@@ -387,7 +389,22 @@ export default function LouiePage() {
 
 	// A spoken request starts the one-click campaign straight away.
 	const [params] = useSearchParams();
-	const say = params.get('say');
+	const [ask, setAsk] = useState(params.get('say') ?? '');
+	const [typed, setTyped] = useState('');
+	const { listen, listening } = useListen();
+
+	const askJohn = (text: string) => {
+		const request = text.trim();
+		if (request.length < 3) return;
+		setAsk(request);
+		setTyped('');
+	};
+
+	const askByVoice = () => {
+		listen('en-IN')
+			.then(askJohn)
+			.catch(() => toast.error('John could not hear you. Please type it instead.'));
+	};
 
 	return (
 		<div className="mx-auto max-w-3xl px-5 py-8 text-white">
@@ -400,14 +417,45 @@ export default function LouiePage() {
 					<SitePicker sites={sites} selectedId={selectedId} onSelect={select} />
 					<MetaPanel status={meta} refresh={refreshMeta} />
 					{selectedId && (
+						<ContentCalendar
+							key={`plan-${selectedId}`}
+							appId={selectedId}
+							brand={sites.find((x) => x.id === selectedId)?.title ?? 'AlwaysBro'}
+							meta={meta}
+							onPosted={() => void refreshMeta()}
+						/>
+					)}
+					{selectedId && (
+						<form
+							className={PANEL}
+							onSubmit={(e) => {
+								e.preventDefault();
+								askJohn(typed);
+							}}
+						>
+							<div className="text-sm text-white/70">Need something extra? Tell John, by typing or speaking.</div>
+							<div className="mt-2 flex gap-2">
+								<input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Diwali offer post, today's sales update, a reel for the new shirt…" className={`${INPUT} min-w-0 flex-1`} />
+								{canListen() && (
+									<button type="button" onClick={askByVoice} disabled={listening} className="rounded-full border border-white/20 px-4 py-2 text-sm text-white disabled:opacity-60">
+										{listening ? 'Listening…' : 'Speak'}
+									</button>
+								)}
+								<button type="submit" className="rounded-full px-5 py-2 text-sm font-semibold text-black" style={{ background: PINK }}>
+									Make it
+								</button>
+							</div>
+						</form>
+					)}
+					{selectedId && (
 						<QuickCampaign
-							key={selectedId}
+							key={`${selectedId}-${ask}`}
 							appId={selectedId}
 							brand={sites.find((x) => x.id === selectedId)?.title ?? 'AlwaysBro'}
 							brief={{ goal, tone, offer, audience, location, budgetInr: Number(budget) || 10000 }}
 							meta={meta}
 							onPosted={() => void refreshMeta()}
-							autoStart={say ?? undefined}
+							autoStart={ask || undefined}
 						/>
 					)}
 					{selectedId && (

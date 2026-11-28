@@ -1386,6 +1386,26 @@ class ApiClient {
 		return this.request<{ ok: boolean }>(`/api/meta/post/${encodeURIComponent(id)}`, { method: 'DELETE' });
 	}
 
+	async getPlan(appId: string): Promise<ApiResponse<PlanData>> {
+		return this.request<PlanData>(`/api/plan/${encodeURIComponent(appId)}`);
+	}
+
+	async learnBrand(appId: string, link: string): Promise<ApiResponse<{ brand: PlanBrand }>> {
+		return this.request<{ brand: PlanBrand }>(`/api/plan/${encodeURIComponent(appId)}/brand`, { method: 'POST', body: { link } });
+	}
+
+	async generatePlan(appId: string, focus: string): Promise<ApiResponse<PlanData>> {
+		return this.request<PlanData>(`/api/plan/${encodeURIComponent(appId)}/generate`, { method: 'POST', body: { focus } });
+	}
+
+	async editPlanItem(id: string, body: { caption?: string; day?: string; skip?: boolean }): Promise<ApiResponse<{ ok: boolean }>> {
+		return this.request<{ ok: boolean }>(`/api/plan/item/${encodeURIComponent(id)}`, { method: 'PATCH', body });
+	}
+
+	async approvePlanItem(id: string, body: { message: string; target: MetaTarget; image?: string; video?: string }): Promise<ApiResponse<{ item: PlanItem }>> {
+		return this.request<{ item: PlanItem }>(`/api/plan/item/${encodeURIComponent(id)}/approve`, { method: 'POST', body });
+	}
+
 	async getDomain(appId: string): Promise<ApiResponse<{ domain: DomainState | null }>> {
 		return this.request<{ domain: DomainState | null }>(`/api/domains/${encodeURIComponent(appId)}`);
 	}
@@ -1560,6 +1580,24 @@ export type LouiePack = { id: string; appId: string; goal: string | null; budget
 export type MetaTarget = 'facebook' | 'instagram' | 'both';
 export type MetaPostRow = { id: string; appId: string; target: MetaTarget; message: string; hasImage: boolean; hasVideo: boolean; status: 'scheduled' | 'publishing' | 'posted' | 'failed' | 'cancelled'; scheduledAt: number | null; publishedAt: number | null; error: string | null };
 export type MetaStatus = { configured: boolean; connected: boolean; pageName: string | null; instagramName: string | null; posts: MetaPostRow[] };
+export type PlanBrand = { url: string; about: string; tone: string; audience: string; products: Array<{ name: string; price: string }> };
+export type PlanShot = { seconds: number; text: string; imagePrompt: string };
+export type PlanItem = {
+	id: string;
+	appId: string;
+	day: string;
+	kind: 'image' | 'reel';
+	idea: string;
+	caption: string;
+	imagePrompt: string;
+	overlay: string;
+	shots: PlanShot[];
+	cta: string;
+	status: 'draft' | 'approved' | 'posted' | 'failed' | 'skipped';
+	scheduledAt: number | null;
+	error: string | null;
+};
+export type PlanData = { brand: PlanBrand | null; items: PlanItem[] };
 export type MetaPostRequest = { appId: string; message: string; target: MetaTarget; image?: string; video?: string; scheduleAt?: number };
 export type DomainState = { hostname: string; status: 'pending' | 'active' | 'failed'; records: Array<{ type: 'CNAME' | 'TXT'; name: string; value: string }>; note: string };
 export type SkinData = { balance: number; skins: Array<{ id: string; name: string; price: number }>; owned: string[]; active: string };
