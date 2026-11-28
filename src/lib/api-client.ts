@@ -1568,7 +1568,7 @@ export type VoiceTurn = {
 	joined: boolean;
 	reply: string;
 	lang: string;
-	action: { type: 'none' | 'build' | 'ads' | 'support' | 'wardrobe' | 'back' | 'end'; task: string; outfit: string };
+	action: { type: 'none' | 'build' | 'open' | 'edit' | 'ads' | 'support' | 'wardrobe' | 'back' | 'end'; task: string; outfit: string };
 };
 export type WardrobeSlot = 'set' | 'head' | 'top' | 'bottom' | 'shoes';
 export type WardrobeItem = { id: string; slot: WardrobeSlot; name: string; price: number; color: string; perk: string };

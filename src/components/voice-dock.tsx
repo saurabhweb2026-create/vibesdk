@@ -6,7 +6,9 @@ import { ArrowUUpLeftIcon, MicrophoneIcon, StopIcon } from '@phosphor-icons/reac
 import { useAuth } from '@/contexts/auth-context';
 import { useAuthModal } from '@/components/auth/AuthModalProvider';
 import { apiClient, type VoiceHistoryTurn, type VoiceSpeaker, type VoiceTurn } from '@/lib/api-client';
+import { BobAvatar } from '@/components/brand/bob-avatar';
 import { useOutfit, type TroopPerson } from '@/lib/outfits';
+import { queueVoiceEdit } from '@/lib/voice-edit';
 import { AUTO_RUN_KEY, PROMPT_STORAGE_KEY } from '@/lib/themes';
 import { canListen, speak, stopSpeaking, useListen } from '@/lib/voice';
 
@@ -42,7 +44,7 @@ const GREETING: Record<string, string> = {
 
 const CREW: Record<VoiceSpeaker, { name: string; person: TroopPerson | null; route: string | null; hello: string }> = {
 	bob: { name: 'Bob', person: null, route: null, hello: '' },
-	jack: { name: 'Jack', person: 'jack', route: '/', hello: 'Hi, Jack here. What shall we build?' },
+	jack: { name: 'Jack', person: 'jack', route: null, hello: 'Hi, Jack here. What shall we build?' },
 	john: { name: 'John', person: 'john', route: '/louie', hello: 'John here. Tell me about your ads and your audience.' },
 	maria: { name: 'Maria', person: 'maria', route: '/jack', hello: 'Maria here. How can I help your customers today?' },
 };
@@ -107,8 +109,32 @@ export function VoiceDock() {
 
 	if (!canListen()) return null;
 
+	/** The project the owner means: the one open on screen, else the named one, else the latest. */
+	const openProject = async (hint: string): Promise<boolean> => {
+		const current = /^\/chat\/([^/]+)/.exec(path.current)?.[1];
+		if (current && !hint) return true;
+		const res = await apiClient.getRecentApps();
+		const apps = res.data?.apps ?? [];
+		const wanted = hint.trim().toLowerCase();
+		const match = (wanted && apps.find((a) => a.title.toLowerCase().includes(wanted))) || apps[0];
+		if (!match) return false;
+		if (current !== match.id) navigate(`/chat/${match.id}`);
+		return true;
+	};
+
 	const act = ({ action }: VoiceTurn) => {
 		switch (action.type) {
+			case 'open':
+				void openProject(action.task).then((found) => {
+					if (!found) toast.message('You have no projects yet. Ask Jack to build one.');
+				});
+				break;
+			case 'edit':
+				void openProject('').then((found) => {
+					if (found) queueVoiceEdit(action.task);
+					else toast.message('You have no projects yet. Ask Jack to build one.');
+				});
+				break;
 			case 'build':
 				sessionStorage.setItem(PROMPT_STORAGE_KEY, action.task);
 				sessionStorage.setItem(AUTO_RUN_KEY, '1');
@@ -235,10 +261,22 @@ export function VoiceDock() {
 				<button
 					type="button"
 					onClick={press}
-					aria-label="Talk to Bob"
-					className="fixed bottom-5 right-5 z-[70] flex size-14 items-center justify-center rounded-full bg-white pb-[env(safe-area-inset-bottom)] text-black shadow-[0_0_40px_rgba(139,240,196,0.35)] transition-transform hover:scale-105 active:scale-95"
+					aria-label="Talk to Bob, the voice assistant"
+					className="fixed bottom-24 right-3 z-[70] flex items-center gap-2.5 rounded-full border border-[#8bf0c4]/50 bg-[#07080b]/90 py-1.5 pr-4 pl-1.5 text-white shadow-[0_0_32px_rgba(139,240,196,0.35)] backdrop-blur transition-transform hover:scale-105 active:scale-95 md:bottom-28 md:right-5"
 				>
-					<MicrophoneIcon className="size-6" weight="fill" />
+					<span className="relative size-11 shrink-0">
+						<span className="absolute -inset-1 rounded-full bg-[#8bf0c4]/40 blur-sm" style={{ animation: 'voice-pulse 2.4s ease-in-out infinite' }} />
+						<span className="relative block size-full overflow-hidden rounded-full ring-2 ring-[#8bf0c4]">
+							<BobAvatar />
+						</span>
+						<span className="absolute -right-0.5 -bottom-0.5 flex size-4.5 items-center justify-center rounded-full bg-[#8bf0c4] text-black">
+							<MicrophoneIcon className="size-3" weight="fill" />
+						</span>
+					</span>
+					<span className="text-left leading-tight">
+						<span className="block text-sm font-medium">Bob</span>
+						<span className="font-label block text-[9px] text-[#8bf0c4]">Voice assistant</span>
+					</span>
 				</button>
 			)}
 			{live &&
@@ -251,15 +289,14 @@ export function VoiceDock() {
 									style={{ animation: `voice-pulse ${phase === 'speaking' ? 0.9 : phase === 'thinking' ? 0.5 : 2.4}s ease-in-out infinite` }}
 								/>
 								<span className="relative flex size-12 items-center justify-center overflow-hidden rounded-full bg-black/80 ring-1 ring-white/25">
-									{CREW[onCall].person ? (
-										<img src={faceSrc(CREW[onCall].person as TroopPerson)} alt="" className="size-full object-cover" />
-									) : (
-										<MicrophoneIcon className="size-5 text-[#8bf0c4]" weight="fill" />
-									)}
+									{CREW[onCall].person ? <img src={faceSrc(CREW[onCall].person as TroopPerson)} alt="" className="size-full object-cover" /> : <BobAvatar />}
 								</span>
 							</div>
 							<div className="min-w-0 flex-1">
-								<div className="text-lg font-medium tracking-[-0.02em]">{CREW[onCall].name}</div>
+								<div className="text-lg font-medium tracking-[-0.02em]">
+									{CREW[onCall].name}
+									{onCall === 'bob' && <span className="font-label ml-2 rounded-full bg-[#8bf0c4]/15 px-2 py-0.5 align-middle text-[9px] text-[#8bf0c4]">Voice assistant</span>}
+								</div>
 								<div className="font-label text-[11px] text-[#8bf0c4]">{onCall === 'bob' ? PHASE_LABEL[phase] : `On call, ${PHASE_LABEL[phase].toLowerCase()}`}</div>
 							</div>
 							{onCall !== 'bob' && (

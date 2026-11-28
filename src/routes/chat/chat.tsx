@@ -68,6 +68,7 @@ import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { useImageUpload } from '@/hooks/use-image-upload';
 import { useDragDrop } from '@/hooks/use-drag-drop';
 import { sendWebSocketMessage } from './utils/websocket-helpers';
+import { onVoiceEdit, takeVoiceEdit } from '@/lib/voice-edit';
 import {
 	RollbackContext,
 	type RollbackHandler,
@@ -999,6 +1000,31 @@ function ChatSession() {
 			limitsLoading,
 		],
 	);
+
+	// Instructions spoken on a voice call go to the builder like typed ones, once the chat is connected.
+	useEffect(() => {
+		if (!websocket || isChatDisabled) return;
+		let waited = 0;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const deliver = (text: string) => {
+			if (sendWebSocketMessage(websocket, 'user_suggestion', { message: text })) {
+				sendUserMessage(text);
+				requestAnimationFrame(() => scrollToBottom());
+			} else if ((waited += 500) < 20000) {
+				timer = setTimeout(() => deliver(text), 500);
+			}
+		};
+		const pickUp = () => {
+			const text = takeVoiceEdit();
+			if (text) deliver(text);
+		};
+		pickUp();
+		const off = onVoiceEdit(pickUp);
+		return () => {
+			off();
+			clearTimeout(timer);
+		};
+	}, [websocket, isChatDisabled, sendUserMessage, scrollToBottom]);
 
 	const [progress, total] = useMemo((): [number, number] => {
 		// Calculate phase progress instead of file progress

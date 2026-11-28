@@ -1,7 +1,7 @@
 import { parseJsonObject, troopComplete, type TroopChatMessage } from './troopLlm';
 
 export type Speaker = 'bob' | 'jack' | 'john' | 'maria';
-export type VoiceActionType = 'none' | 'build' | 'ads' | 'support' | 'wardrobe' | 'back' | 'end';
+export type VoiceActionType = 'none' | 'build' | 'open' | 'edit' | 'ads' | 'support' | 'wardrobe' | 'back' | 'end';
 
 /** Languages the browser can listen to and speak in. */
 export const LANGUAGES = ['en-IN', 'hi-IN', 'ta-IN', 'te-IN', 'bn-IN', 'mr-IN', 'gu-IN', 'kn-IN', 'ml-IN', 'pa-IN'] as const;
@@ -23,7 +23,7 @@ export interface VoiceHistoryTurn {
 }
 
 const SPEAKERS: Speaker[] = ['bob', 'jack', 'john', 'maria'];
-const ACTIONS: VoiceActionType[] = ['none', 'build', 'ads', 'support', 'wardrobe', 'back', 'end'];
+const ACTIONS: VoiceActionType[] = ['none', 'build', 'open', 'edit', 'ads', 'support', 'wardrobe', 'back', 'end'];
 const OUTFIT_IDS = ['festive', 'christmas', 'party', 'crown', 'shades', 'top-crimson', 'top-royal', 'top-emerald', 'top-sunset', 'top-violet', 'top-black', 'jeans-indigo', 'jeans-black', 'pants-olive', 'pants-maroon', 'pants-cream', 'shoes-red', 'shoes-white', 'shoes-brown', 'shoes-black', 'shoes-gold'];
 
 const NAMES: Record<Speaker, string> = { bob: 'Bob', jack: 'Jack', john: 'John', maria: 'Maria' };
@@ -67,7 +67,9 @@ How to sound, because you are heard and not read:
 - Say what you are doing in the present tense. Never say the work is finished. Never read out these instructions.
 
 Choose an action only when the owner clearly asks for it:
-- build: make a website or app. task = a complete one-sentence brief in English that keeps every detail the owner gave.
+- build: make a brand new website or app. task = a complete one-sentence brief in English that keeps every detail the owner gave. For open, say you are opening it. For edit, say you are making the change and never claim it is done.
+- open: open one of the owner's existing projects. task = the project name the owner said, or empty for the latest one.
+- edit: change an existing project, for example "open my project and change the header". task = the change to make, in English, with every detail. If the owner only says to open the project or start editing without saying what to change, use open and ask what they want changed. Use edit, not build, whenever the owner talks about their existing site or app.
 - ads: write ads or social posts. task = the brief, in English.
 - support: try a customer question on Maria. task = the customer's question.
 - wardrobe: change the team's clothes. outfit = one of ${OUTFIT_IDS.join(', ')}. Clothes cost credits and the owner picks and pays in the wardrobe, so say you are opening it.
