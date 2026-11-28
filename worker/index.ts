@@ -240,6 +240,14 @@ async function handleUserAppRequest(request: Request, env: Env): Promise<Respons
 	}
 }
 
+let cachedApp: ReturnType<typeof createApp> | null = null;
+
+/** Building the router registers every route, so each isolate builds it once and reuses it. */
+function apiApp(env: Env): ReturnType<typeof createApp> {
+	cachedApp ??= createApp(env);
+	return cachedApp;
+}
+
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 const MEDIA_CACHE = 'public, max-age=86400, stale-while-revalidate=604800';
 
@@ -336,7 +344,7 @@ const worker = {
 				// Do not log the full URL: /auth/callback carries sensitive
 				// query params (code, state) that must not end up in logs.
 				logger.info(`Handling Cloudflare OAuth request for: ${pathname}`);
-				const app = createApp(env);
+				const app = apiApp(env);
 				return app.fetch(request, env, ctx);
 			}
 			
@@ -348,7 +356,7 @@ const worker = {
 			// Log pathname only: some API routes (e.g. /api/auth/callback/:provider)
 			// carry sensitive query params like `code`/`state`.
 			logger.info(`Handling API request for: ${pathname}`);
-			const app = createApp(env);
+			const app = apiApp(env);
 			return app.fetch(request, env, ctx);
 		}
 

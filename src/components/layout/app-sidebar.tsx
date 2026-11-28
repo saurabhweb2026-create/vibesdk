@@ -327,6 +327,16 @@ export function AppSidebar() {
 							shape="square"
 							size="base"
 							variant="ghost"
+							aria-label="Jack, websites"
+							title="Jack, websites"
+							onClick={() => navigate('/')}
+							className={cn(pathname === '/' && 'bg-(--sidebar-active-bg)')}
+							icon={<BrandFace face="caesar" className="size-5" />}
+						/>
+						<Button
+							shape="square"
+							size="base"
+							variant="ghost"
 							aria-label="John, ads"
 							title="John, ads"
 							onClick={() => navigate('/louie')}
@@ -382,6 +392,16 @@ export function AppSidebar() {
 							<div className="font-label mt-3 px-2 text-[11px] text-kumo-subtle">
 								Your crew
 							</div>
+							<Sidebar.MenuButton
+								className="text-sm"
+								active={pathname === '/'}
+								icon={<BrandFace face="caesar" className="size-7 -mr-1 ring-1 ring-white/15" />}
+								id="jack-builder-link"
+								tooltip="Jack, websites"
+								onClick={() => navigate('/')}
+							>
+								Jack · Websites and apps
+							</Sidebar.MenuButton>
 							<Sidebar.MenuButton
 								className="text-sm"
 								active={pathname === '/louie'}

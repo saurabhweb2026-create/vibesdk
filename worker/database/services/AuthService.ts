@@ -70,6 +70,14 @@ export function providerLabel(provider: string | null | undefined): string {
 /**
  * Main Authentication Service
  */
+/**
+ * A verified token skips the session and user lookups for a few seconds, which keeps busy pages
+ * from repeating the same two database reads. A revoked session therefore stops working within this window.
+ */
+const VERIFIED_TOKEN_TTL_MS = 15_000;
+const VERIFIED_TOKEN_LIMIT = 500;
+const VERIFIED_TOKENS = new Map<string, { session: AuthUserSession; until: number }>();
+
 export class AuthService extends BaseService {
     private readonly sessionService: SessionService;
     private readonly apiKeyService: ApiKeyService;
@@ -990,6 +998,17 @@ export class AuthService extends BaseService {
      * at token exp.
      */
     async validateTokenAndGetUser(token: string, env: Env): Promise<AuthUserSession | null> {
+        const hit = VERIFIED_TOKENS.get(token);
+        if (hit && hit.until > Date.now()) return hit.session;
+        const session = await this.verifyTokenAndGetUser(token, env);
+        if (session) {
+            if (VERIFIED_TOKENS.size >= VERIFIED_TOKEN_LIMIT) VERIFIED_TOKENS.delete(VERIFIED_TOKENS.keys().next().value as string);
+            VERIFIED_TOKENS.set(token, { session, until: Date.now() + VERIFIED_TOKEN_TTL_MS });
+        }
+        return session;
+    }
+
+    private async verifyTokenAndGetUser(token: string, env: Env): Promise<AuthUserSession | null> {
         try {
             const jwtUtils = JWTUtils.getInstance(env);
             const payload = await jwtUtils.verifyToken(token);

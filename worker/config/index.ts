@@ -4,6 +4,8 @@ import { createLogger } from "../logger";
 const logger = createLogger('GlobalConfigurableSettings');
 
 let cachedConfig: GlobalConfigurableSettings | null = null;
+let cachedConfigAt = 0;
+const CONFIG_TTL_MS = 60_000;
 
 // Per-invocation cache to avoid multiple KV calls within single worker invocation
 const invocationUserCache = new Map<string, GlobalConfigurableSettings>();
@@ -93,7 +95,7 @@ type StoredConfig = DeepPartial<GlobalConfigurableSettings>;
 const CONFIG_KEY = 'platform_configs';
 
 export async function getGlobalConfigurableSettings(env: Env): Promise<GlobalConfigurableSettings> {
-    if (cachedConfig) {
+    if (cachedConfig && Date.now() - cachedConfigAt < CONFIG_TTL_MS) {
         return cachedConfig;
     }
     // Get default configuration
@@ -110,7 +112,9 @@ export async function getGlobalConfigurableSettings(env: Env): Promise<GlobalCon
         const storedConfigJson = await env.VibecoderStore.get(CONFIG_KEY);
         
         if (!storedConfigJson) {
-            // No stored config, use defaults
+            // No stored config, use defaults (cached too, so the lookup is not repeated on every request)
+            cachedConfig = defaultConfig;
+            cachedConfigAt = Date.now();
             return defaultConfig;
         }
         
@@ -122,6 +126,7 @@ export async function getGlobalConfigurableSettings(env: Env): Promise<GlobalCon
         
         logger.info('Loaded configuration with overrides from KV', { storedConfig, mergedConfig });
         cachedConfig = mergedConfig;
+        cachedConfigAt = Date.now();
         return mergedConfig;
         
     } catch (error) {
