@@ -69,7 +69,7 @@ export default function WardrobePage() {
 	return (
 		<div className="mx-auto max-w-5xl px-5 py-8 text-white">
 			<title>Wardrobe - AlwaysBro</title>
-			<h1 className="text-4xl font-medium tracking-[-0.03em]">Wardrobe</h1>
+			<h1 className="text-future text-4xl font-medium tracking-[-0.03em]">Wardrobe</h1>
 			<p className="mt-1 text-sm text-white/60">Try any look for free. Pay credits only for the ones you keep.</p>
 			{error && <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">{error}</div>}
 			{data && member && (

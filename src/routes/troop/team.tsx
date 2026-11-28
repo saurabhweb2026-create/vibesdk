@@ -167,7 +167,7 @@ export default function TeamPage() {
 	return (
 		<div className="mx-auto max-w-5xl px-5 py-8 text-white">
 			<title>Your team - AlwaysBro</title>
-			<h1 className="text-4xl font-medium tracking-[-0.03em]">Your team</h1>
+			<h1 className="text-future text-4xl font-medium tracking-[-0.03em]">Your team</h1>
 			<Link to="/wardrobe" className="font-label mt-4 inline-block rounded-full border border-[#8bf0c4]/50 px-4 py-1.5 text-[11px] text-[#8bf0c4] hover:bg-[#8bf0c4]/10">Open wardrobe</Link>
 			<p className="mt-1 text-sm text-white/60">
 				Jack, John and Maria grow as they work for you. Reward good work with a bonus and watch their story unfold.

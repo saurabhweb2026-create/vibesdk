@@ -253,7 +253,7 @@ export default function Home() {
 						)}
 					>
 						<div className="mb-6 sm:mb-7 grid gap-2">
-							<h1 className="w-full text-center font-display text-[clamp(2rem,5.5vw,3.25rem)] font-medium leading-[1.1] tracking-[-0.03em] text-kumo-strong z-20">
+							<h1 className="w-full text-center font-display text-future text-[clamp(2rem,5.5vw,3.25rem)] font-medium leading-[1.1] tracking-[-0.03em] z-20">
 								<span className="mb-1 block text-[#8bf0c4]">
 									Hey {greetingName}!
 								</span>

@@ -94,7 +94,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 					transition={{ duration: 0.6 }}
 					className="relative mx-auto max-w-3xl px-5 pb-24 pt-24 text-center sm:pt-32"
 				>
-					<h1 className="text-[clamp(2.4rem,6.5vw,4.6rem)] font-medium leading-[1.05] tracking-[-0.03em]">
+					<h1 className="text-future text-[clamp(2.4rem,6.5vw,4.6rem)] font-medium leading-[1.05] tracking-[-0.03em]">
 						Describe your idea.
 						<br />
 						Your AI team <span style={{ color: ACCENT }}>runs the rest.</span>

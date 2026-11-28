@@ -551,6 +551,14 @@
 	font-display: swap;
 }
 
+/* Cyan to violet sheen for headlines. */
+.text-future {
+	background: linear-gradient(100deg, #ffffff 10%, #8bf0c4 45%, #7aa2ff 75%, #c084fc 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
 .font-label {
 	font-family: 'Departure Mono', ui-monospace, monospace;
 	text-transform: uppercase;
