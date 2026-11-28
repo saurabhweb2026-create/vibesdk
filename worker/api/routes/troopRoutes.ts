@@ -6,6 +6,8 @@ import { MetaController } from '../controllers/meta/controller';
 import { completeConnect, readMedia } from '../../services/meta/metaService';
 import { TeamController } from '../controllers/team/controller';
 import { VoiceController } from '../controllers/voice/controller';
+import { speakAs, ttsConfigured } from '../../services/troop/tts';
+import { LANGUAGES, isSpeaker } from '../../services/troop/voice';
 import { adaptController } from '../honoAdapter';
 import { AuthConfig, setAuthLevel } from '../../middleware/auth/routeAuth';
 
@@ -52,6 +54,20 @@ export function setupTroopRoutes(app: Hono<AppEnv>): void {
 		const media = await readMedia(c.env, c.req.param('key'));
 		if (!media) return c.notFound();
 		return new Response(media.body, { headers: { 'content-type': media.type, 'cache-control': 'public, max-age=86400' } });
+	});
+	app.get('/api/voice/status', setAuthLevel(AuthConfig.authenticated), (c) => c.json({ success: true, data: { studio: ttsConfigured(c.env) } }));
+	app.post('/api/voice/speak', setAuthLevel(AuthConfig.authenticated), async (c) => {
+		if (!ttsConfigured(c.env)) return c.json({ success: false, error: { message: 'Studio voice is not set up' } }, 501);
+		const body = (await c.req.json().catch(() => ({}))) as { text?: string; lang?: string; speaker?: string };
+		const text = String(body.text ?? '').trim();
+		const lang = LANGUAGES.find((l) => l === body.lang) ?? 'en-IN';
+		if (!text || !isSpeaker(String(body.speaker))) return c.json({ success: false, error: { message: 'Nothing to say' } }, 400);
+		try {
+			const audio = await speakAs(c.env, text, lang, body.speaker as 'bob' | 'jack' | 'john' | 'maria');
+			return new Response(audio, { headers: { 'content-type': 'audio/wav', 'cache-control': 'no-store' } });
+		} catch {
+			return c.json({ success: false, error: { message: 'The studio voice is busy' } }, 502);
+		}
 	});
 	app.post('/api/voice/turn', setAuthLevel(AuthConfig.authenticated), adaptController(VoiceController, VoiceController.turn));
 	app.post('/api/team/bonus', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.bonus));

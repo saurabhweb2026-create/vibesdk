@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { apiClient } from '@/lib/api-client';
 
 interface RecognitionEvent {
 	results: ArrayLike<ArrayLike<{ transcript: string }>>;
@@ -63,11 +64,46 @@ function pickVoice(voices: SpeechSynthesisVoice[], lang: string, who: VoiceWho):
 
 let speakToken = 0;
 
-/** Speaks as the given teammate in the given language and resolves when the sentence has finished. */
+/** One audio element is reused so the browser keeps allowing playback after the first tap. */
+let player: HTMLAudioElement | null = null;
+/** When the studio voice failed, the device voice is used until this time. */
+let studioRetryAt = 0;
+const STUDIO_RETRY_MS = 5 * 60 * 1000;
+
+async function speakStudio(text: string, lang: string, who: VoiceWho, token: number): Promise<boolean> {
+	if (Date.now() < studioRetryAt) return false;
+	const audio = await apiClient.speakAudio(text, lang, who);
+	if (!audio) {
+		studioRetryAt = Date.now() + STUDIO_RETRY_MS;
+		return false;
+	}
+	if (token !== speakToken) return true;
+	player ??= new Audio();
+	const url = URL.createObjectURL(audio);
+	const el = player;
+	try {
+		await new Promise<void>((resolve, reject) => {
+			el.onended = () => resolve();
+			el.onpause = () => resolve();
+			el.onerror = () => reject(new Error('playback'));
+			el.src = url;
+			void el.play().catch(reject);
+		});
+	} catch {
+		// the sentence is then skipped rather than repeated in a second voice
+	} finally {
+		URL.revokeObjectURL(url);
+	}
+	return true;
+}
+
+/** Speaks as the given teammate: a studio Indian voice when it is set up, the device voice otherwise. */
 export async function speak(text: string, lang = 'en-IN', who: VoiceWho = 'bob'): Promise<void> {
-	if (!canSpeak()) return;
-	window.speechSynthesis.cancel();
 	const token = ++speakToken;
+	if (canSpeak()) window.speechSynthesis.cancel();
+	player?.pause();
+	if (await speakStudio(text, lang, who, token)) return;
+	if (!canSpeak() || token !== speakToken) return;
 	const voice = pickVoice(await loadVoices(), lang, who);
 	if (token !== speakToken) return;
 	await new Promise<void>((resolve) => {
@@ -84,6 +120,7 @@ export async function speak(text: string, lang = 'en-IN', who: VoiceWho = 'bob')
 
 export function stopSpeaking(): void {
 	speakToken++;
+	player?.pause();
 	if (canSpeak()) window.speechSynthesis.cancel();
 }
 

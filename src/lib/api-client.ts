@@ -1430,6 +1430,16 @@ class ApiClient {
 		return this.request<{ ok: boolean }>('/api/team/wardrobe/wear', { method: 'POST', body: { agentId, slot, itemId } });
 	}
 
+	/** Studio-quality speech for a teammate; null when the studio voice is not set up or busy. */
+	async speakAudio(text: string, lang: string, speaker: VoiceSpeaker): Promise<Blob | null> {
+		try {
+			const { response } = await this.requestRaw<unknown>('/api/voice/speak', { method: 'POST', body: { text, lang, speaker }, skipJsonParsing: true }, false, true);
+			return response.ok ? await response.blob() : null;
+		} catch {
+			return null;
+		}
+	}
+
 	async voiceTurn(text: string, history: VoiceHistoryTurn[], opts: { speaker: VoiceSpeaker; lang: string; page?: string }): Promise<ApiResponse<VoiceTurn>> {
 		return this.request<VoiceTurn>('/api/voice/turn', { method: 'POST', body: { text, history, ...opts } }, true);
 	}
