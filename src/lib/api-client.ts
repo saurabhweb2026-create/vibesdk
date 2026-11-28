@@ -1580,7 +1580,7 @@ export type LouiePack = { id: string; appId: string; goal: string | null; budget
 export type MetaTarget = 'facebook' | 'instagram' | 'both';
 export type MetaPostRow = { id: string; appId: string; target: MetaTarget; message: string; hasImage: boolean; hasVideo: boolean; status: 'scheduled' | 'publishing' | 'posted' | 'failed' | 'cancelled'; scheduledAt: number | null; publishedAt: number | null; error: string | null };
 export type MetaStatus = { configured: boolean; connected: boolean; pageName: string | null; instagramName: string | null; posts: MetaPostRow[] };
-export type PlanBrand = { url: string; about: string; tone: string; audience: string; products: Array<{ name: string; price: string }> };
+export type PlanBrand = { url: string; about: string; tone: string; audience: string; colors: string[]; products: Array<{ name: string; price: string }> };
 export type PlanShot = { seconds: number; text: string; imagePrompt: string };
 export type PlanItem = {
 	id: string;
@@ -1597,7 +1597,7 @@ export type PlanItem = {
 	scheduledAt: number | null;
 	error: string | null;
 };
-export type PlanData = { brand: PlanBrand | null; items: PlanItem[] };
+export type PlanData = { brand: PlanBrand | null; items: PlanItem[]; siteLink: string };
 export type MetaPostRequest = { appId: string; message: string; target: MetaTarget; image?: string; video?: string; scheduleAt?: number };
 export type DomainState = { hostname: string; status: 'pending' | 'active' | 'failed'; records: Array<{ type: 'CNAME' | 'TXT'; name: string; value: string }>; note: string };
 export type SkinData = { balance: number; skins: Array<{ id: string; name: string; price: number }>; owned: string[]; active: string };

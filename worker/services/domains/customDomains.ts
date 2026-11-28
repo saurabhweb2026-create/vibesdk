@@ -85,6 +85,13 @@ function toState(row: { hostname: string; status: string }, h: CfHostname | null
 	};
 }
 
+/** The connected hostname of a website, once it is active. */
+export async function activeHostname(env: Env, userId: string, appId: string): Promise<string | null> {
+	await ensureTables(env);
+	const row = await env.DB.prepare("SELECT hostname FROM app_domains WHERE app_id = ?1 AND user_id = ?2 AND status = 'active'").bind(appId, userId).first<{ hostname: string }>();
+	return row?.hostname ?? null;
+}
+
 export async function getDomain(env: Env, userId: string, appId: string, refresh = true): Promise<DomainState | null> {
 	await ensureTables(env);
 	const row = await env.DB.prepare('SELECT hostname, cf_id, status FROM app_domains WHERE app_id = ?1 AND user_id = ?2').bind(appId, userId).first<{ hostname: string; cf_id: string | null; status: string }>();

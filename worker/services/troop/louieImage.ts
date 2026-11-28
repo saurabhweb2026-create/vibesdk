@@ -16,7 +16,7 @@ function toBase64(bytes: Uint8Array): string {
 /** Wraps the idea in photography direction so results look like real campaign pictures, not clip art. */
 export function buildImagePrompt(idea: string, business: string, style: string): string {
 	const direction: Record<string, string> = {
-		photo: 'professional commercial photograph, natural light, shallow depth of field, sharp focus, rich colour, 35mm lens',
+		photo: 'award-winning commercial advertising photograph, one clear hero subject, dramatic soft studio or golden light, rich saturated colour, shallow depth of field, crisp detail, premium magazine campaign quality, shot on 50mm lens',
 		bold: 'bold modern advertising poster artwork, strong colour blocking, clean composition, high contrast, studio quality',
 		cozy: 'warm lifestyle photograph, golden hour light, candid, inviting, soft film grain',
 	};
@@ -25,7 +25,7 @@ export function buildImagePrompt(idea: string, business: string, style: string):
 
 export async function generateCreativeImage(env: Env, prompt: string): Promise<string> {
 	const runner = env.AI as unknown as ImageRunner;
-	const out = await runner.run(IMAGE_MODEL, { prompt, steps: 6 });
+	const out = await runner.run(IMAGE_MODEL, { prompt, steps: 8 });
 	if (out && typeof out === 'object' && 'image' in out && typeof out.image === 'string' && out.image) {
 		return `data:image/jpeg;base64,${out.image}`;
 	}

@@ -44,13 +44,14 @@ export function ContentCalendar({ appId, brand, meta, onPosted }: Props) {
 	const [busy, setBusy] = useState('');
 	const [working, setWorking] = useState<string | null>(null);
 	const [made, setMade] = useState<Record<string, Made>>({});
+	const [problems, setProblems] = useState<Record<string, string>>({});
 
 	const load = useCallback(async () => {
 		const res = await apiClient.getPlan(appId);
 		if (res.data) {
 			setProfile(res.data.brand);
 			setItems(res.data.items);
-			setLink((cur) => cur || res.data?.brand?.url || '');
+			setLink(res.data.brand?.url || res.data.siteLink);
 		}
 	}, [appId]);
 
@@ -94,23 +95,28 @@ export function ContentCalendar({ appId, brand, meta, onPosted }: Props) {
 
 	const patch = (id: string, change: Partial<PlanItem>) => setItems((all) => all.map((i) => (i.id === id ? { ...i, ...change } : i)));
 
+	const brandColor = profile?.colors?.[0];
+
 	const make = async (item: PlanItem, fresh = false): Promise<Made> => {
 		const existing = made[item.id];
 		if (!fresh && (item.kind === 'image' ? existing?.picture : existing?.videoBlob)) return existing as Made;
 		const next: Made =
 			item.kind === 'image'
-				? { picture: await drawPicture(appId, item.imagePrompt || item.idea, item.overlay, brand, PINK) }
-				: await cutReel(appId, item.shots, item.cta, brand, PINK).then(({ blob, isMp4 }) => ({ videoUrl: URL.createObjectURL(blob), videoBlob: blob, videoIsMp4: isMp4 }));
+				? { picture: await drawPicture(appId, item.imagePrompt || item.idea, item.overlay, brand, PINK, { cta: item.cta, variant: items.findIndex((i) => i.id === item.id), brandColor }) }
+				: await cutReel(appId, item.shots, item.cta || 'Order now', brand, PINK, brandColor).then(({ blob, isMp4 }) => ({ videoUrl: URL.createObjectURL(blob), videoBlob: blob, videoIsMp4: isMp4 }));
 		setMade((m) => ({ ...m, [item.id]: next }));
 		return next;
 	};
 
 	const preview = async (item: PlanItem) => {
 		setWorking(item.id);
+		setProblems((p) => ({ ...p, [item.id]: '' }));
 		try {
 			await make(item, true);
 		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'John could not make this one');
+			const reason = e instanceof Error ? e.message : 'John could not make this one';
+			setProblems((p) => ({ ...p, [item.id]: reason }));
+			toast.error(reason);
 		}
 		setWorking(null);
 	};
@@ -127,7 +133,9 @@ export function ContentCalendar({ appId, brand, meta, onPosted }: Props) {
 			setWorking(null);
 			return true;
 		} catch (e) {
-			toast.error(e instanceof Error ? e.message : 'Could not schedule the post');
+			const reason = e instanceof Error ? e.message : 'Could not schedule the post';
+			setProblems((p) => ({ ...p, [item.id]: reason }));
+			toast.error(reason);
 			setWorking(null);
 			return false;
 		}
@@ -163,11 +171,13 @@ export function ContentCalendar({ appId, brand, meta, onPosted }: Props) {
 			<div className="mt-1 text-lg font-medium text-white">Learn, plan, approve, and John posts</div>
 
 			<div className="mt-4 flex flex-wrap gap-2">
-				<input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Your website, Instagram page or catalog link (optional)" className={`${INPUT} min-w-0 flex-1`} />
+				<input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste your website, Instagram page or catalog link" className={`${INPUT} min-w-0 flex-1`} />
 				<button type="button" disabled={!!busy} onClick={() => void learn()} className="rounded-full border border-white/20 px-5 py-2 text-sm font-medium text-white disabled:opacity-60">
 					{busy === 'learn' ? 'Reading…' : profile ? 'Learn again' : 'Let John learn my business'}
 				</button>
 			</div>
+
+			<p className="mt-1 text-xs text-white/45">Filled from the website you selected. Change it to teach John from any other link.</p>
 
 			{profile && (
 				<div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white/80">
@@ -224,7 +234,7 @@ export function ContentCalendar({ appId, brand, meta, onPosted }: Props) {
 									<p className="mt-2 text-sm text-white">{item.idea}</p>
 
 									{m?.picture && <img src={m.picture} alt={item.idea} className="mt-2 w-full rounded-xl border border-white/10" />}
-									{m?.videoUrl && <video src={m.videoUrl} controls playsInline className="mx-auto mt-2 h-72 rounded-xl border border-white/10" />}
+									{m?.videoUrl && <video src={m.videoUrl} controls playsInline loop className="mx-auto mt-2 h-96 rounded-xl border border-white/10" />}
 
 									<textarea
 										value={item.caption}
@@ -234,7 +244,8 @@ export function ContentCalendar({ appId, brand, meta, onPosted }: Props) {
 										rows={4}
 										className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-black/40 p-2 text-xs text-white outline-none focus:border-white/30 disabled:opacity-70"
 									/>
-									{item.error && <p className="mt-1 text-xs text-red-300">{item.error}</p>}
+									{isWorking && <p className="mt-2 text-xs text-white/60">{item.kind === 'reel' ? 'Drawing scenes and recording the reel. This takes about 40 seconds, please keep this tab open.' : 'Drawing the picture…'}</p>}
+									{(problems[item.id] || item.error) && <p className="mt-1 text-xs text-red-300">{problems[item.id] || item.error}</p>}
 
 									{open && (
 										<div className="mt-2 flex flex-wrap gap-2">

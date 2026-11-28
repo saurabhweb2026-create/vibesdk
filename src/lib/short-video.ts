@@ -1,4 +1,4 @@
-import { drawCover } from './creative-image';
+import { drawCover, inkOn } from './creative-image';
 
 export interface VideoShot {
 	seconds: number;
@@ -17,10 +17,12 @@ export interface ShortVideoOptions {
 	preferMp4?: boolean;
 }
 
-const WIDTH = 540;
-const HEIGHT = 960;
-const MIN_SECONDS = 6;
-const MAX_SECONDS = 10;
+const WIDTH = 720;
+const HEIGHT = 1280;
+const MIN_SECONDS = 8;
+const MAX_SECONDS = 15;
+const FADE_SECONDS = 0.4;
+const FONT = '"DM Sans", Inter, system-ui, sans-serif';
 const PALETTES: Array<[string, string]> = [
 	['#1e1b4b', '#4f46e5'],
 	['#500724', '#ec4899'],
@@ -36,7 +38,7 @@ function pickMimeType(preferMp4: boolean): string {
 	return options.find((t) => MediaRecorder.isTypeSupported(t)) ?? '';
 }
 
-/** Fit the shots into 6 to 10 seconds and append the call to action as the last shot. */
+/** Fit the shots into 8 to 15 seconds and append the call to action as the last shot. */
 export function planShots(shots: VideoShot[], cta: string): VideoShot[] {
 	const all = [...shots.filter((s) => s.text.trim()), { seconds: 2, text: cta }];
 	const total = all.reduce((n, s) => n + s.seconds, 0);
@@ -61,7 +63,81 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
 	return lines;
 }
 
-function drawFrame(ctx: CanvasRenderingContext2D, opts: ShortVideoOptions, shots: VideoShot[], t: number, total: number): void {
+const ease = (x: number): number => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+
+/** Background of one shot: its picture with a slow push-in, or a colour wash when there is none. */
+function drawBackground(ctx: CanvasRenderingContext2D, opts: ShortVideoOptions, shot: VideoShot, index: number, progress: number, last: boolean): void {
+	const [from, to] = PALETTES[index % PALETTES.length];
+	const grad = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+	grad.addColorStop(0, from);
+	grad.addColorStop(1, last ? opts.accent : to);
+	ctx.fillStyle = grad;
+	ctx.fillRect(0, 0, WIDTH, HEIGHT);
+	if (shot.image) {
+		const direction = index % 2 === 0 ? 1 : -1;
+		ctx.filter = 'saturate(1.15) contrast(1.05)';
+		drawCover(ctx, shot.image, WIDTH, HEIGHT, 1.06 + progress * 0.16, direction * (progress - 0.5) * 60, 0);
+		ctx.filter = 'none';
+		const shade = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+		shade.addColorStop(0, 'rgba(0,0,0,0.45)');
+		shade.addColorStop(0.45, 'rgba(0,0,0,0.05)');
+		shade.addColorStop(1, last ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.8)');
+		ctx.fillStyle = shade;
+		ctx.fillRect(0, 0, WIDTH, HEIGHT);
+	} else {
+		ctx.globalAlpha = 0.16;
+		ctx.fillStyle = '#ffffff';
+		ctx.beginPath();
+		ctx.arc(WIDTH * (0.85 - progress * 0.3), HEIGHT * (0.2 + progress * 0.1), 260, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.globalAlpha = 1;
+	}
+}
+
+/** The shot's line, one word at a time; the last line sits on an accent bar. */
+function drawCaption(ctx: CanvasRenderingContext2D, opts: ShortVideoOptions, text: string, local: number, centreY: number, size: number): void {
+	ctx.font = `900 ${size}px ${FONT}`;
+	ctx.textBaseline = 'middle';
+	const lines = wrapLines(ctx, text.toUpperCase(), WIDTH - 130);
+	const lineHeight = size * 1.18;
+	const top = centreY - ((lines.length - 1) * lineHeight) / 2;
+	let wordIndex = 0;
+	lines.forEach((line, li) => {
+		const words = line.split(' ');
+		const space = ctx.measureText(' ').width;
+		const widths = words.map((w) => ctx.measureText(w).width);
+		const total = widths.reduce((n, x) => n + x, 0) + space * (words.length - 1);
+		const y = top + li * lineHeight;
+		const lastLine = li === lines.length - 1 && lines.length > 1;
+		if (lastLine) {
+			ctx.fillStyle = opts.accent;
+			ctx.globalAlpha = ease((local - 0.15) / 0.3);
+			ctx.beginPath();
+			ctx.roundRect(WIDTH / 2 - total / 2 - 20, y - size * 0.62, total + 40, size * 1.24, 18);
+			ctx.fill();
+		}
+		let x = WIDTH / 2 - total / 2;
+		words.forEach((word, wi) => {
+			const t = ease((local - wordIndex * 0.1) / 0.28);
+			wordIndex += 1;
+			ctx.globalAlpha = t;
+			ctx.save();
+			ctx.translate(x + widths[wi] / 2, y + (1 - t) * 26);
+			ctx.scale(0.85 + 0.15 * t, 0.85 + 0.15 * t);
+			ctx.shadowColor = 'rgba(0,0,0,0.6)';
+			ctx.shadowBlur = lastLine ? 0 : 18;
+			ctx.fillStyle = lastLine ? inkOn(opts.accent) : '#ffffff';
+			ctx.textAlign = 'center';
+			ctx.fillText(word, 0, 0);
+			ctx.restore();
+			x += widths[wi] + space;
+		});
+	});
+	ctx.globalAlpha = 1;
+	ctx.shadowBlur = 0;
+}
+
+function drawFrame(ctx: CanvasRenderingContext2D, opts: ShortVideoOptions, shots: VideoShot[], t: number): void {
 	let start = 0;
 	let index = 0;
 	for (let i = 0; i < shots.length; i += 1) {
@@ -72,56 +148,78 @@ function drawFrame(ctx: CanvasRenderingContext2D, opts: ShortVideoOptions, shots
 		start += shots[i].seconds;
 	}
 	const shot = shots[index];
-	const local = Math.min(1, (t - start) / Math.min(0.5, shot.seconds));
-	const [from, to] = PALETTES[index % PALETTES.length];
-	const grad = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-	grad.addColorStop(0, from);
-	grad.addColorStop(1, index === shots.length - 1 ? opts.accent : to);
-	ctx.fillStyle = grad;
-	ctx.fillRect(0, 0, WIDTH, HEIGHT);
+	const sinceStart = t - start;
+	const last = index === shots.length - 1;
+	const progress = Math.min(1, sinceStart / shot.seconds);
 
-	if (shot.image) {
-		const progress = Math.min(1, (t - start) / shot.seconds);
-		const direction = index % 2 === 0 ? 1 : -1;
-		drawCover(ctx, shot.image, WIDTH, HEIGHT, 1.08 + progress * 0.14, direction * (progress - 0.5) * 40, 0);
-		const shade = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-		shade.addColorStop(0, 'rgba(0,0,0,0.35)');
-		shade.addColorStop(0.5, 'rgba(0,0,0,0.15)');
-		shade.addColorStop(1, 'rgba(0,0,0,0.75)');
-		ctx.fillStyle = shade;
-		ctx.fillRect(0, 0, WIDTH, HEIGHT);
-	} else {
-		ctx.globalAlpha = 0.18;
+	if (index > 0 && sinceStart < FADE_SECONDS) {
+		drawBackground(ctx, opts, shots[index - 1], index - 1, 1, false);
+		ctx.globalAlpha = sinceStart / FADE_SECONDS;
+	}
+	drawBackground(ctx, opts, shot, index, progress, last);
+	ctx.globalAlpha = 1;
+	ctx.textAlign = 'center';
+
+	if (last) {
+		ctx.font = `900 ${opts.brand.length > 16 ? 56 : 72}px ${FONT}`;
 		ctx.fillStyle = '#ffffff';
-		const drift = (t / total) * 160;
-		ctx.beginPath();
-		ctx.arc(WIDTH * 0.8 - drift, HEIGHT * 0.22 + drift / 2, 150, 0, Math.PI * 2);
-		ctx.fill();
+		ctx.textBaseline = 'middle';
+		ctx.globalAlpha = ease(sinceStart / 0.4);
+		ctx.fillText(opts.brand.toUpperCase(), WIDTH / 2, HEIGHT * 0.38);
 		ctx.globalAlpha = 1;
+		const pulse = 1 + Math.sin(sinceStart * 6) * 0.025;
+		ctx.save();
+		ctx.translate(WIDTH / 2, HEIGHT * 0.52);
+		ctx.scale(pulse, pulse);
+		ctx.font = `800 40px ${FONT}`;
+		const label = `${shot.text}  \u2192`;
+		const bw = ctx.measureText(label).width + 90;
+		ctx.fillStyle = opts.accent;
+		ctx.beginPath();
+		ctx.roundRect(-bw / 2, -48, bw, 96, 48);
+		ctx.fill();
+		ctx.fillStyle = inkOn(opts.accent);
+		ctx.fillText(label, 0, 2);
+		ctx.restore();
+	} else {
+		drawCaption(ctx, opts, shot.text, sinceStart, shot.image ? HEIGHT * 0.72 : HEIGHT / 2, index === 0 ? 74 : 64);
 	}
 
-	ctx.fillStyle = '#ffffff';
-	ctx.shadowColor = 'rgba(0,0,0,0.55)';
-	ctx.shadowBlur = shot.image ? 14 : 0;
-	ctx.textAlign = 'center';
-	ctx.textBaseline = 'middle';
-	const size = index === 0 || index === shots.length - 1 ? 60 : 52;
-	ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
-	const lines = wrapLines(ctx, shot.text, WIDTH - 90);
-	const lineHeight = size * 1.2;
-	const top = (shot.image ? HEIGHT * 0.72 : HEIGHT / 2) - ((lines.length - 1) * lineHeight) / 2 + (1 - local) * 30;
-	ctx.globalAlpha = local;
-	lines.forEach((l, i) => ctx.fillText(l, WIDTH / 2, top + i * lineHeight));
-	ctx.globalAlpha = 1;
-	ctx.shadowBlur = 0;
-
-	ctx.font = '500 22px Inter, system-ui, sans-serif';
-	ctx.fillStyle = 'rgba(255,255,255,0.8)';
-	ctx.fillText(opts.brand, WIDTH / 2, HEIGHT - 70);
-	ctx.fillStyle = 'rgba(255,255,255,0.25)';
-	ctx.fillRect(40, HEIGHT - 36, WIDTH - 80, 4);
-	ctx.fillStyle = '#ffffff';
-	ctx.fillRect(40, HEIGHT - 36, (WIDTH - 80) * (t / total), 4);
+	// Story-style bars and the brand chip.
+	const gap = 8;
+	const barW = (WIDTH - 80 - gap * (shots.length - 1)) / shots.length;
+	let at = 0;
+	shots.forEach((sh, i) => {
+		ctx.fillStyle = 'rgba(255,255,255,0.3)';
+		ctx.beginPath();
+		ctx.roundRect(40 + i * (barW + gap), 44, barW, 6, 3);
+		ctx.fill();
+		const fill = Math.max(0, Math.min(1, (t - at) / sh.seconds));
+		if (fill > 0) {
+			ctx.fillStyle = '#ffffff';
+			ctx.beginPath();
+			ctx.roundRect(40 + i * (barW + gap), 44, barW * fill, 6, 3);
+			ctx.fill();
+		}
+		at += sh.seconds;
+	});
+	if (!last) {
+		ctx.font = `700 26px ${FONT}`;
+		const cw = ctx.measureText(opts.brand).width + 70;
+		ctx.fillStyle = 'rgba(0,0,0,0.45)';
+		ctx.beginPath();
+		ctx.roundRect(40, 74, cw, 52, 26);
+		ctx.fill();
+		ctx.fillStyle = opts.accent;
+		ctx.beginPath();
+		ctx.arc(66, 100, 9, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#ffffff';
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'middle';
+		ctx.fillText(opts.brand, 86, 101);
+		ctx.textAlign = 'center';
+	}
 }
 
 /** A short upbeat loop (kick, bass and a light arpeggio) made with the Web Audio API, so no audio files are needed. */
@@ -164,7 +262,7 @@ function startMusic(seconds: number): { stream: MediaStream; stop: () => void } 
 	return { stream: dest.stream, stop: () => void audio.close() };
 }
 
-/** Renders a vertical 6 to 10 second video in the browser and returns it as a WebM or MP4 blob. */
+/** Renders a vertical 8 to 15 second video in the browser and returns it as a WebM or MP4 blob. */
 export async function renderShortVideo(opts: ShortVideoOptions): Promise<{ blob: Blob; seconds: number }> {
 	if (typeof MediaRecorder === 'undefined') throw new Error('This browser cannot record video. Try Chrome or Safari 16 or newer.');
 	const shots = planShots(opts.shots, opts.cta);
@@ -181,7 +279,7 @@ export async function renderShortVideo(opts: ShortVideoOptions): Promise<{ blob:
 	if (music) music.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
 
 	const mimeType = pickMimeType(Boolean(opts.preferMp4));
-	const recorder = new MediaRecorder(stream, mimeType ? { mimeType, videoBitsPerSecond: 4_000_000 } : undefined);
+	const recorder = new MediaRecorder(stream, mimeType ? { mimeType, videoBitsPerSecond: 5_000_000 } : undefined);
 	const chunks: Blob[] = [];
 	recorder.ondataavailable = (e) => {
 		if (e.data.size > 0) chunks.push(e.data);
@@ -192,17 +290,30 @@ export async function renderShortVideo(opts: ShortVideoOptions): Promise<{ blob:
 
 	const startedAt = performance.now();
 	recorder.start();
-	await new Promise<void>((resolve) => {
+	await new Promise<void>((resolve, reject) => {
+		let finished = false;
 		const tick = () => {
+			if (finished) return;
 			const t = (performance.now() - startedAt) / 1000;
+			try {
+				drawFrame(ctx, opts, shots, Math.min(t, total));
+			} catch (error) {
+				finished = true;
+				reject(error instanceof Error ? error : new Error('Could not draw the video'));
+				return;
+			}
 			if (t >= total) {
-				drawFrame(ctx, opts, shots, total, total);
+				finished = true;
 				resolve();
 				return;
 			}
-			drawFrame(ctx, opts, shots, t, total);
 			requestAnimationFrame(tick);
 		};
+		// A hidden tab pauses animation frames; the timer keeps the recording moving to its end.
+		const timer = window.setInterval(() => {
+			if (finished) window.clearInterval(timer);
+			else tick();
+		}, 100);
 		tick();
 	});
 	recorder.stop();

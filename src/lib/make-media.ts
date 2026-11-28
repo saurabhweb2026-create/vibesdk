@@ -1,8 +1,8 @@
 import { apiClient } from '@/lib/api-client';
-import { composeCreative, loadImage } from '@/lib/creative-image';
+import { composeCreative, dominantAccent, loadImage, type CreativeOptions } from '@/lib/creative-image';
 import { renderShortVideo, type VideoShot } from '@/lib/short-video';
 
-const SCENE_PICTURES = 3;
+const SCENE_PICTURES = 4;
 
 export const blobToDataUrl = (blob: Blob): Promise<string> =>
 	new Promise((resolve, reject) => {
@@ -13,10 +13,10 @@ export const blobToDataUrl = (blob: Blob): Promise<string> =>
 	});
 
 /** Draws a picture for the brief and puts the headline and brand on it. Returns a PNG data URL. */
-export async function drawPicture(appId: string, prompt: string, overlay: string, brand: string, accent: string): Promise<string> {
+export async function drawPicture(appId: string, prompt: string, overlay: string, brand: string, accent: string, opts: CreativeOptions = {}): Promise<string> {
 	const drawn = await apiClient.generateLouieImage({ appId, prompt });
 	if (!drawn.data?.image) throw new Error('John could not draw the picture');
-	return composeCreative(drawn.data.image, overlay, brand, accent);
+	return composeCreative(drawn.data.image, overlay, brand, accent, opts);
 }
 
 export interface ReelShot {
@@ -26,19 +26,27 @@ export interface ReelShot {
 }
 
 /** Draws a few scene pictures and cuts them into a short video with music. */
-export async function cutReel(appId: string, reelShots: ReelShot[], cta: string, brand: string, accent: string): Promise<{ blob: Blob; isMp4: boolean }> {
+export async function cutReel(appId: string, reelShots: ReelShot[], cta: string, brand: string, accent: string, brandColor?: string): Promise<{ blob: Blob; isMp4: boolean }> {
 	const shots: VideoShot[] = reelShots.map((sh) => ({ seconds: sh.seconds, text: sh.text }));
 	const wanted = reelShots.map((sh, i) => ({ i, prompt: sh.imagePrompt ?? '' })).filter((x) => x.prompt.length > 4).slice(0, SCENE_PICTURES);
+	// One scene that fails to draw must not lose the whole video; its shot reuses a neighbouring picture.
 	const scenes = await Promise.all(
 		wanted.map(async (w) => {
-			const out = await apiClient.generateLouieImage({ appId, prompt: w.prompt });
-			return out.data?.image ? { i: w.i, image: await loadImage(out.data.image) } : null;
+			try {
+				const out = await apiClient.generateLouieImage({ appId, prompt: w.prompt });
+				return out.data?.image ? { i: w.i, image: await loadImage(out.data.image) } : null;
+			} catch {
+				return null;
+			}
 		}),
 	);
+	if (wanted.length > 0 && !scenes.some(Boolean)) throw new Error('John could not draw the scenes for this reel. Please try again.');
 	for (const s of scenes) if (s) shots[s.i].image = s.image;
 	shots.forEach((sh, i) => {
 		if (!sh.image) sh.image = shots.slice(0, i).reverse().find((x) => x.image)?.image ?? shots.find((x) => x.image)?.image ?? null;
 	});
-	const { blob } = await renderShortVideo({ shots, cta, brand, accent, music: true, preferMp4: true });
+	const lead = shots.find((sh) => sh.image)?.image;
+	const color = brandColor || (lead ? dominantAccent(lead, accent) : accent);
+	const { blob } = await renderShortVideo({ shots, cta, brand, accent: color, music: true, preferMp4: true });
 	return { blob, isMp4: blob.type.includes('mp4') };
 }

@@ -8,15 +8,6 @@ import { PANEL } from './troop-shared';
 
 const PINK = '#ec4899';
 
-interface Brief {
-	goal: string;
-	tone: string;
-	offer: string;
-	audience: string;
-	location: string;
-	budgetInr: number;
-}
-
 interface Made {
 	picture: string;
 	caption: string;
@@ -28,35 +19,29 @@ interface Made {
 interface Props {
 	appId: string;
 	brand: string;
-	brief: Brief;
+	/** What the owner asked John for, typed or spoken. */
+	request: string;
 	meta: MetaStatus | null;
 	onPosted: () => void;
-	/** Set when the owner asked for it by voice, so the work starts without a tap. */
-	autoStart?: string;
 }
 
-/**
- * One tap: John plans the campaign, draws the picture with its headline, cuts a short video
- * with music, and leaves a single button to post it.
- */
-export function QuickCampaign({ appId, brand, brief, meta, onPosted, autoStart }: Props) {
+/** John makes a picture and a short video for one request and leaves a post button for each. */
+export function QuickCampaign({ appId, brand, request, meta, onPosted }: Props) {
 	const [step, setStep] = useState('');
 	const [made, setMade] = useState<Made | null>(null);
 	const [posting, setPosting] = useState('');
 	const started = useRef(false);
 
-	const create = async (spoken?: string) => {
+	const create = async () => {
 		setMade(null);
 		try {
 			setStep('John is planning your campaign…');
 			const res = await apiClient.generateLouieAds({
 				appId,
-				goal: brief.goal,
-				budgetInr: brief.budgetInr,
-				audience: brief.audience || undefined,
-				location: brief.location || undefined,
-				tone: brief.tone,
-				offer: (spoken ?? brief.offer) || undefined,
+				goal: 'Get more customers',
+				budgetInr: 10_000,
+				tone: 'Friendly',
+				offer: request,
 				formats: ['Creatives', 'Video scripts'],
 			});
 			const content = res.data?.content;
@@ -72,11 +57,11 @@ export function QuickCampaign({ appId, brand, brief, meta, onPosted, autoStart }
 
 			if (script?.shots?.length) {
 				setStep('John is cutting the video…');
-				const { blob, isMp4 } = await cutReel(appId, script.shots, script.cta, script.title, PINK);
+				const { blob, isMp4 } = await cutReel(appId, script.shots, script.cta, brand, PINK);
 				setMade({ picture, caption, videoUrl: URL.createObjectURL(blob), videoBlob: blob, videoIsMp4: isMp4 });
 			}
 			toast.success('John finished your creative');
-			if (spoken) void speak('Your picture and video are ready. Tap post when you like them.');
+			void speak('Your picture and video are ready. Tap post when you like them.');
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : 'Could not create the campaign');
 		}
@@ -84,9 +69,9 @@ export function QuickCampaign({ appId, brand, brief, meta, onPosted, autoStart }
 	};
 
 	useEffect(() => {
-		if (!autoStart || started.current) return;
+		if (started.current) return;
 		started.current = true;
-		void create(autoStart);
+		void create();
 	});
 
 	useEffect(() => () => void (made?.videoUrl && URL.revokeObjectURL(made.videoUrl)), [made?.videoUrl]);
@@ -117,18 +102,11 @@ export function QuickCampaign({ appId, brand, brief, meta, onPosted, autoStart }
 		<div className={PANEL} style={{ borderColor: `${PINK}55` }}>
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<div className="font-label text-[11px]" style={{ color: PINK }}>One click</div>
-					<div className="mt-1 text-lg font-medium text-white">Picture and video, ready to post</div>
-					<p className="mt-0.5 text-sm text-white/60">John plans it, draws it, cuts the video with music, and you press post.</p>
+					<div className="font-label text-[11px]" style={{ color: PINK }}>Your request</div>
+					<div className="mt-1 text-lg font-medium text-white">{request}</div>
 				</div>
-				<button
-					type="button"
-					disabled={!!step}
-					onClick={() => void create()}
-					className="rounded-full px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-60"
-					style={{ background: PINK }}
-				>
-					{step || (made ? 'Make another' : 'Create now')}
+				<button type="button" disabled={!!step} onClick={() => void create()} className="rounded-full px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-60" style={{ background: PINK }}>
+					{step || 'Make another'}
 				</button>
 			</div>
 

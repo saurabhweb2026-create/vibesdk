@@ -1,4 +1,6 @@
 // John's content calendar: learn the business from a link, plan a month of posts, and publish the approved ones on their dates.
+import { activeHostname } from '../domains/customDomains';
+import { buildSpacePreviewPath } from '../../utils/urls';
 import { createPost, type MetaPostRow, type MetaTarget } from '../meta/metaService';
 import { parseJsonObject, troopComplete } from './troopLlm';
 import type { SiteInfo } from './troopStore';
@@ -8,6 +10,8 @@ export interface Brand {
 	about: string;
 	tone: string;
 	audience: string;
+	/** Main colours found on the website, as hex values. */
+	colors: string[];
 	products: Array<{ name: string; price: string }>;
 }
 
@@ -83,26 +87,56 @@ function safeUrl(raw: string): URL {
 	return url;
 }
 
-async function readPage(url: URL): Promise<string> {
+const HEX = /#([0-9a-f]{6})\b/gi;
+
+/** Picks the most used colourful hex values; greys and near-white or near-black are skipped. */
+function brandColors(html: string): string[] {
+	const counts = new Map<string, number>();
+	const theme = /<meta[^>]+name=["']theme-color["'][^>]+content=["'](#[0-9a-f]{6})["']/i.exec(html)?.[1];
+	if (theme) counts.set(theme.toLowerCase(), 50);
+	for (const [, hex] of html.matchAll(HEX)) {
+		const r = parseInt(hex.slice(0, 2), 16) / 255;
+		const g = parseInt(hex.slice(2, 4), 16) / 255;
+		const b = parseInt(hex.slice(4, 6), 16) / 255;
+		const max = Math.max(r, g, b);
+		const min = Math.min(r, g, b);
+		const light = (max + min) / 2;
+		const sat = max === min ? 0 : (max - min) / (1 - Math.abs(2 * light - 1));
+		if (sat < 0.35 || light < 0.18 || light > 0.82) continue;
+		const key = `#${hex.toLowerCase()}`;
+		counts.set(key, (counts.get(key) ?? 0) + 1);
+	}
+	return [...counts.entries()].sort((x, y) => y[1] - x[1]).slice(0, 2).map(([hex]) => hex);
+}
+
+async function readPage(url: URL): Promise<{ text: string; colors: string[] }> {
 	const res = await fetch(url.toString(), { headers: { 'user-agent': 'AlwaysBroBot/1.0', accept: 'text/html' }, redirect: 'follow', signal: AbortSignal.timeout(10_000) });
 	if (!res.ok) throw new Error('John could not open that link');
 	const html = (await res.text()).slice(0, 400_000);
-	return html
+	const text = html
 		.replace(/<(script|style|noscript|svg)[\s\S]*?<\/\1>/gi, ' ')
 		.replace(/<[^>]+>/g, ' ')
 		.replace(/&[a-z#0-9]+;/gi, ' ')
 		.replace(/\s+/g, ' ')
 		.trim()
 		.slice(0, PAGE_CHARS);
+	return { text, colors: brandColors(html) };
 }
 
-function toBrand(raw: Record<string, unknown>, url: string): Brand {
+/** The public address of a website the user built: its connected domain, otherwise the platform preview. */
+export async function siteLink(env: Env, userId: string, appId: string): Promise<string> {
+	const host = await activeHostname(env, userId, appId);
+	return host ? `https://${host}` : `https://${env.CUSTOM_DOMAIN}${buildSpacePreviewPath(appId, 'main')}`;
+}
+
+function toBrand(raw: Record<string, unknown>, url: string, colors: string[]): Brand {
 	const products = Array.isArray(raw.products) ? raw.products : [];
 	return {
 		url,
 		about: str(raw.about, 500),
 		tone: str(raw.tone, 120),
 		audience: str(raw.audience, 200),
+		colors,
 		products: products
 			.filter((p): p is Record<string, unknown> => !!p && typeof p === 'object')
 			.slice(0, 8)
@@ -120,8 +154,13 @@ export async function getBrand(env: Env, userId: string, appId: string): Promise
 /** Reads the business link (or, without one, the website description) and keeps what John needs to write in the brand's voice. */
 export async function learnBrand(env: Env, userId: string, site: SiteInfo, link: string): Promise<Brand> {
 	await ensureTables(env);
-	const url = link.trim() ? safeUrl(link.trim()) : null;
-	const source = url ? await readPage(url) : `${site.title}. ${site.description ?? ''} ${site.originalPrompt}`.slice(0, PAGE_CHARS);
+	const url = safeUrl(link.trim() || (await siteLink(env, userId, site.id)));
+	const page = await readPage(url).catch((error: unknown) => {
+		// The owner's own site may not be published yet; its description still tells John enough to start.
+		if (link.trim()) throw error;
+		return { text: '', colors: [] as string[] };
+	});
+	const source = `${page.text}\n\nWhat the owner told the website builder: ${site.title}. ${site.description ?? ''} ${site.originalPrompt}`.slice(0, PAGE_CHARS + 1200);
 	const answer = await troopComplete(
 		env,
 		[
@@ -136,7 +175,7 @@ export async function learnBrand(env: Env, userId: string, site: SiteInfo, link:
 	);
 	const raw = parseJsonObject(answer);
 	if (!raw) throw new Error('John could not read that page. Try another link.');
-	const brand = toBrand(raw, url?.toString() ?? '');
+	const brand = toBrand(raw, url.toString(), page.colors);
 	await env.DB.prepare('INSERT INTO troop_brand (app_id, user_id, profile, updated_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(app_id) DO UPDATE SET profile = ?3, updated_at = ?4')
 		.bind(site.id, userId, JSON.stringify(brand), Date.now())
 		.run();
@@ -185,7 +224,7 @@ export async function planMonth(env: Env, userId: string, site: SiteInfo, brand:
 		[
 			{
 				role: 'system',
-				content: `You are John, the social media marketer for a small Indian business. Plan exactly ${POSTS_PER_MONTH} Instagram posts for the next 27 days: about two thirds single pictures and one third short reels (15 to 20 seconds). Mix product posts, offers, behind the scenes, customer proof, tips and festive or seasonal moments. Write like the brand, plain and warm, with at most 4 hashtags in each caption. Reply with JSON only: {"posts": [{"dayOffset": number 1-27 ascending, "kind": "image" | "reel", "idea": string (one line), "caption": string, "imagePrompt": string (a photo brief with no text in the picture), "overlay": string (headline of at most 6 words, for pictures), "shots": [{"seconds": 3-5, "text": string (on-screen line), "imagePrompt": string}] (3 to 4 shots, reels only, otherwise empty), "cta": string (reels only)}]}`,
+				content: `You are John, the social media marketer for a small Indian business. Plan exactly ${POSTS_PER_MONTH} scroll-stopping Instagram posts for the next 27 days: about two thirds single pictures and one third short reels (15 to 20 seconds). Mix product posts, offers, behind the scenes, customer proof, tips and festive or seasonal moments. Write like the brand, plain and warm, with at most 4 hashtags in each caption. Reply with JSON only: {"posts": [{"dayOffset": number 1-27 ascending, "kind": "image" | "reel", "idea": string (one line), "caption": string, "imagePrompt": string (a vivid art-directed photo brief: one clear hero subject, a specific setting, lighting, colours and mood, premium magazine quality, no text in the picture), "overlay": string (a punchy headline of at most 5 words, for pictures), "shots": [{"seconds": 3-5, "text": string (on-screen line), "imagePrompt": string}] (3 to 4 shots, reels only, otherwise empty), "cta": string (a 2 or 3 word action such as Order now, for every post)}]}`,
 			},
 			{
 				role: 'user',

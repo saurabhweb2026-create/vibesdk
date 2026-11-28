@@ -4,11 +4,13 @@ import { ApiResponse, ControllerResponse } from '../types';
 import { createLogger } from '../../../logger';
 import { canUseTroop, getOwnedSite, takeUsage } from '../../../services/troop/troopStore';
 import type { MetaTarget } from '../../../services/meta/metaService';
-import { approvePlanItem, editPlanItem, getBrand, learnBrand, listPlan, planMonth, type Brand, type PlanItem } from '../../../services/troop/plan';
+import { approvePlanItem, editPlanItem, getBrand, learnBrand, listPlan, planMonth, siteLink, type Brand, type PlanItem } from '../../../services/troop/plan';
 
 export interface PlanData {
 	brand: Brand | null;
 	items: PlanItem[];
+	/** Address of the selected website, offered as the link John learns from. */
+	siteLink: string;
 }
 
 const TARGETS: MetaTarget[] = ['facebook', 'instagram', 'both'];
@@ -37,7 +39,7 @@ export class PlanController extends BaseController {
 	static async get(_request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<PlanData>>> {
 		return this.handle(context, async (userId) => {
 			const site = await this.owned(env, userId, context.pathParams?.appId ?? '');
-			return { brand: await getBrand(env, userId, site.id), items: await listPlan(env, userId, site.id) };
+			return { brand: await getBrand(env, userId, site.id), items: await listPlan(env, userId, site.id), siteLink: await siteLink(env, userId, site.id) };
 		}, 'Could not load the content calendar');
 	}
 
@@ -56,7 +58,7 @@ export class PlanController extends BaseController {
 			if (!brand) throw new Error('Let John learn your business first');
 			if (!(await takeUsage(env, `plan:${userId}`, PLANS_PER_DAY))) throw new Error('John has planned enough for today. Please try again tomorrow.');
 			const body = (await request.json().catch(() => ({}))) as { focus?: string };
-			return { brand, items: await planMonth(env, userId, site, brand, String(body.focus ?? '').trim().slice(0, 200)) };
+			return { brand, items: await planMonth(env, userId, site, brand, String(body.focus ?? '').trim().slice(0, 200)), siteLink: await siteLink(env, userId, site.id) };
 		}, 'John could not plan the month');
 	}
 
