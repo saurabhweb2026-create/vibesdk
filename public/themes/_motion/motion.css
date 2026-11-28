@@ -1,0 +1,15 @@
+/* AlwaysBro motion layer: scroll reveals, hero parallax, hover lift and a progress bar. Added only by script, so pages work without it. */
+.mo-on .mo-reveal{opacity:0;transform:translate3d(0,34px,0) scale(.98);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--mo-delay,0ms);will-change:opacity,transform}
+.mo-on .mo-reveal.mo-left{transform:translate3d(-48px,0,0)}
+.mo-on .mo-reveal.mo-right{transform:translate3d(48px,0,0)}
+.mo-on .mo-reveal.mo-in{opacity:1;transform:none}
+.mo-hero{will-change:transform,opacity}
+.mo-lift{transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s ease;transform-style:preserve-3d}
+.mo-lift:hover{box-shadow:0 22px 50px rgba(0,0,0,.28)}
+.mo-bar{position:fixed;inset:0 0 auto 0;height:3px;z-index:2000;background:linear-gradient(90deg,#10b981,#3b82f6,#a855f7);transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+.mo-glow{position:fixed;width:340px;height:340px;margin:-170px 0 0 -170px;border-radius:50%;pointer-events:none;z-index:1;background:radial-gradient(circle,rgba(139,240,196,.18),transparent 65%);mix-blend-mode:screen;opacity:0;transition:opacity .4s}
+.mo-on .mo-glow.mo-live{opacity:1}
+img.mo-float{animation:mo-float 6s ease-in-out infinite}
+@keyframes mo-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@media (prefers-reduced-motion:reduce){.mo-on .mo-reveal{opacity:1;transform:none;transition:none}.mo-bar,.mo-glow{display:none}img.mo-float{animation:none}}
+@media (hover:none){.mo-glow{display:none}}

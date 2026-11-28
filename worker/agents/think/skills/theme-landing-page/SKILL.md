@@ -36,6 +36,7 @@ Free MIT-licensed Start Bootstrap template. Stylesheet, scripts and images are h
         <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css" />
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="https://alwaysbro.com/themes/landing-page/css/styles.css" rel="stylesheet" />
+            <link href="https://alwaysbro.com/themes/_motion/motion.css" rel="stylesheet" />
     </head>
     <body>
         <!-- Navigation-->
@@ -262,6 +263,7 @@ Free MIT-licensed Start Bootstrap template. Stylesheet, scripts and images are h
         <!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
         <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
         <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
+            <script src="https://alwaysbro.com/themes/_motion/motion.js" defer></script>
     </body>
 </html>
 

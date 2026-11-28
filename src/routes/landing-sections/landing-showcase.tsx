@@ -3,20 +3,31 @@ import { THEMES, type SiteTheme } from '@/lib/themes';
 
 function ThemeCard({ theme, onPick }: { theme: SiteTheme; onPick: (id: string) => void }) {
 	return (
-		<button
-			type="button"
-			onClick={() => onPick(theme.id)}
-			className="group w-72 shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] text-left transition-all hover:-translate-y-1 hover:border-white/30 sm:w-80"
-		>
-			<img src={`/themes/thumbs/${theme.id}.webp`} alt={`${theme.name} theme`} loading="lazy" draggable={false} className="aspect-[3/2] w-full object-cover object-top" />
+		<div className="group relative w-72 shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] text-left transition-all hover:-translate-y-1 hover:border-white/30 sm:w-80">
+			<img src={`/themes/thumbs/${theme.id}.webp`} alt={`${theme.name} theme`} loading="lazy" draggable={false} className="aspect-[3/2] w-full object-cover object-top transition-transform duration-700 group-hover:scale-105" />
+			<span className="font-label absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[9px] text-[#8bf0c4] backdrop-blur">Motion</span>
+			<a
+				href={`/themes/${theme.id}/`}
+				target="_blank"
+				rel="noreferrer"
+				className="font-label absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[9px] text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 focus:opacity-100"
+			>
+				Live preview
+			</a>
 			<div className="flex items-center justify-between px-4 py-3.5">
 				<div>
 					<div className="text-sm font-medium text-white">{theme.name}</div>
 					<div className="text-xs text-white/50">{theme.bestFor}</div>
 				</div>
-				<span className="font-label rounded-full border border-white/20 px-3 py-1 text-[11px] text-white/80 transition-colors group-hover:bg-white group-hover:text-black">Use</span>
+				<button
+					type="button"
+					onClick={() => onPick(theme.id)}
+					className="font-label rounded-full border border-white/20 px-3 py-1 text-[11px] text-white/80 transition-colors hover:bg-white hover:text-black"
+				>
+					Use
+				</button>
 			</div>
-		</button>
+		</div>
 	);
 }
 

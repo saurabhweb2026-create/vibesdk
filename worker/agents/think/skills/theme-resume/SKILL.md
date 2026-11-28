@@ -36,6 +36,7 @@ Free MIT-licensed Start Bootstrap template. Stylesheet, scripts and images are h
         <link href="https://fonts.googleapis.com/css?family=Muli:400,400i,800,800i" rel="stylesheet" type="text/css" />
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="https://alwaysbro.com/themes/resume/css/styles.css" rel="stylesheet" />
+            <link href="https://alwaysbro.com/themes/_motion/motion.css" rel="stylesheet" />
     </head>
     <body id="page-top">
         <!-- Navigation-->
@@ -243,6 +244,7 @@ Free MIT-licensed Start Bootstrap template. Stylesheet, scripts and images are h
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
         <script src="https://alwaysbro.com/themes/resume/js/scripts.js"></script>
+            <script src="https://alwaysbro.com/themes/_motion/motion.js" defer></script>
     </body>
 </html>
 

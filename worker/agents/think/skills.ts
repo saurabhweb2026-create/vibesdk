@@ -25,6 +25,11 @@ import THEME_SHOP_HOMEPAGE from './skills/theme-shop-homepage/SKILL.md?raw';
 import THEME_RESUME from './skills/theme-resume/SKILL.md?raw';
 import THEME_LANDING_PAGE from './skills/theme-landing-page/SKILL.md?raw';
 import THEME_GRAYSCALE from './skills/theme-grayscale/SKILL.md?raw';
+import THEME_CREATIVE from './skills/theme-creative/SKILL.md?raw';
+import THEME_NEW_AGE from './skills/theme-new-age/SKILL.md?raw';
+import THEME_STYLISH_PORTFOLIO from './skills/theme-stylish-portfolio/SKILL.md?raw';
+import THEME_MODERN_BUSINESS from './skills/theme-modern-business/SKILL.md?raw';
+import THEME_ONE_PAGE_WONDER from './skills/theme-one-page-wonder/SKILL.md?raw';
 
 /** Raw `SKILL.md` contents keyed by their source directory name. */
 const RAW_SKILLS: Record<string, string> = {
@@ -41,6 +46,11 @@ const RAW_SKILLS: Record<string, string> = {
 	'theme-resume': THEME_RESUME,
 	'theme-landing-page': THEME_LANDING_PAGE,
 	'theme-grayscale': THEME_GRAYSCALE,
+	'theme-creative': THEME_CREATIVE,
+	'theme-new-age': THEME_NEW_AGE,
+	'theme-stylish-portfolio': THEME_STYLISH_PORTFOLIO,
+	'theme-modern-business': THEME_MODERN_BUSINESS,
+	'theme-one-page-wonder': THEME_ONE_PAGE_WONDER,
 };
 
 function buildEntries(): SkillManifestEntry[] {
