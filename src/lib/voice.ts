@@ -66,6 +66,20 @@ let speakToken = 0;
 
 /** One audio element is reused so the browser keeps allowing playback after the first tap. */
 let player: HTMLAudioElement | null = null;
+const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+
+/** Browsers only allow audio after a tap, so the shared element is unlocked on the first one. */
+function unlockPlayer(): void {
+	if (player) return;
+	player = new Audio(SILENT_WAV);
+	void player.play().then(() => player?.pause()).catch(() => { player = null; });
+}
+
+if (typeof document !== 'undefined') {
+	for (const type of ['pointerdown', 'touchend', 'keydown'] as const) {
+		document.addEventListener(type, unlockPlayer, { once: true, passive: true });
+	}
+}
 /** When the studio voice failed, the device voice is used until this time. */
 let studioRetryAt = 0;
 const STUDIO_RETRY_MS = 5 * 60 * 1000;
@@ -81,20 +95,21 @@ async function speakStudio(text: string, lang: string, who: VoiceWho, token: num
 	player ??= new Audio();
 	const url = URL.createObjectURL(audio);
 	const el = player;
+	let started = false;
 	try {
 		await new Promise<void>((resolve, reject) => {
 			el.onended = () => resolve();
 			el.onpause = () => resolve();
 			el.onerror = () => reject(new Error('playback'));
 			el.src = url;
-			void el.play().catch(reject);
+			el.play().then(() => { started = true; }, reject);
 		});
 	} catch {
-		// the sentence is then skipped rather than repeated in a second voice
+		// a blocked start falls back to the device voice; a mid-sentence error is not repeated
 	} finally {
 		URL.revokeObjectURL(url);
 	}
-	return true;
+	return started;
 }
 
 /** Speaks as the given teammate: a studio Indian voice when it is set up, the device voice otherwise. */
