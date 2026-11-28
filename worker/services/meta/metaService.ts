@@ -22,6 +22,7 @@ export interface MetaPostRow {
 	target: MetaTarget;
 	message: string;
 	hasImage: boolean;
+	hasVideo: boolean;
 	status: 'scheduled' | 'publishing' | 'posted' | 'failed' | 'cancelled';
 	scheduledAt: number | null;
 	publishedAt: number | null;
@@ -175,7 +176,8 @@ const toRow = (r: PostRecord): MetaPostRow => ({
 	appId: r.app_id,
 	target: r.target,
 	message: r.message,
-	hasImage: Boolean(r.media_key),
+	hasImage: Boolean(r.media_key) && !r.media_key?.endsWith('.mp4'),
+	hasVideo: Boolean(r.media_key?.endsWith('.mp4')),
 	status: r.status,
 	scheduledAt: r.scheduled_at,
 	publishedAt: r.published_at,
@@ -195,20 +197,24 @@ export async function getStatus(env: Env, userId: string): Promise<MetaStatus> {
 	};
 }
 
-const DATA_URL = /^data:image\/(jpeg|png);base64,([A-Za-z0-9+/=]+)$/;
+const DATA_URL = /^data:(image\/jpeg|image\/png|video\/mp4);base64,([A-Za-z0-9+/=]+)$/;
+const MEDIA_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'video/mp4': 'mp4' };
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 18 * 1024 * 1024;
 
-async function storeImage(env: Env, dataUrl: string): Promise<string> {
+async function storeMedia(env: Env, dataUrl: string): Promise<string> {
 	const match = DATA_URL.exec(dataUrl);
-	if (!match) throw new Error('The picture could not be read');
+	if (!match) throw new Error('The picture or video could not be read');
+	const type = match[1];
 	const bytes = fromB64(match[2]);
-	if (bytes.byteLength > 8 * 1024 * 1024) throw new Error('The picture is too large');
-	const key = `${crypto.randomUUID()}.${match[1] === 'png' ? 'png' : 'jpg'}`;
-	await env.VibecoderStore.put(`meta-media:${key}`, bytes, { expirationTtl: MEDIA_TTL_SECONDS, metadata: { type: `image/${match[1]}` } });
+	if (bytes.byteLength > (type === 'video/mp4' ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES)) throw new Error('The file is too large');
+	const key = `${crypto.randomUUID()}.${MEDIA_EXT[type]}`;
+	await env.VibecoderStore.put(`meta-media:${key}`, bytes, { expirationTtl: MEDIA_TTL_SECONDS, metadata: { type } });
 	return key;
 }
 
 export async function readMedia(env: Env, key: string): Promise<{ body: ArrayBuffer; type: string } | null> {
-	if (!/^[0-9a-f-]{36}\.(jpg|png)$/.test(key)) return null;
+	if (!/^[0-9a-f-]{36}\.(jpg|png|mp4)$/.test(key)) return null;
 	const found = await env.VibecoderStore.getWithMetadata<{ type?: string }>(`meta-media:${key}`, 'arrayBuffer');
 	if (!found.value) return null;
 	return { body: found.value, type: found.metadata?.type ?? 'image/jpeg' };
@@ -218,6 +224,8 @@ export interface NewPost {
 	appId: string;
 	message: string;
 	image?: string;
+	/** An MP4 data URL; posts as a Facebook video and an Instagram Reel. */
+	video?: string;
 	target: MetaTarget;
 	scheduleAt?: number;
 }
@@ -229,14 +237,15 @@ export async function createPost(env: Env, userId: string, input: NewPost): Prom
 	const message = input.message.trim();
 	if (message.length < 2) throw new Error('Write the post text first');
 	if (message.length > 2200) throw new Error('The post is too long');
-	if (input.target !== 'facebook' && !input.image) throw new Error('Instagram posts need a picture');
+	if (input.target !== 'facebook' && !input.image && !input.video) throw new Error('Instagram posts need a picture or a video');
 	if (input.target !== 'facebook' && !conn.ig_id) throw new Error('No Instagram business account is linked to your Page');
 	const now = Date.now();
 	if (input.scheduleAt !== undefined) {
 		if (input.scheduleAt < now + 5 * 60 * 1000) throw new Error('Pick a time at least 5 minutes from now');
 		if (input.scheduleAt > now + MAX_SCHEDULE_MS) throw new Error('You can schedule up to 4 weeks ahead');
 	}
-	const mediaKey = input.image ? await storeImage(env, input.image) : null;
+	const attachment = input.video ?? input.image;
+	const mediaKey = attachment ? await storeMedia(env, attachment) : null;
 	const id = crypto.randomUUID();
 	const status: MetaPostRow['status'] = input.scheduleAt ? 'scheduled' : 'publishing';
 	await env.DB.prepare(
@@ -254,10 +263,14 @@ export async function cancelPost(env: Env, userId: string, id: string): Promise<
 	await env.DB.prepare("UPDATE meta_posts SET status = 'cancelled' WHERE id = ?1 AND user_id = ?2 AND status = 'scheduled'").bind(id, userId).run();
 }
 
-async function publishToFacebook(pageId: string, token: string, message: string, imageUrl: string | null): Promise<void> {
+async function publishToFacebook(pageId: string, token: string, message: string, mediaUrl: string | null, isVideo: boolean): Promise<void> {
 	const body = new URLSearchParams({ access_token: token });
-	if (imageUrl) {
-		body.set('url', imageUrl);
+	if (mediaUrl && isVideo) {
+		body.set('file_url', mediaUrl);
+		body.set('description', message);
+		await graph(`${GRAPH}/${pageId}/videos`, { method: 'POST', body });
+	} else if (mediaUrl) {
+		body.set('url', mediaUrl);
 		body.set('caption', message);
 		await graph(`${GRAPH}/${pageId}/photos`, { method: 'POST', body });
 	} else {
@@ -266,18 +279,22 @@ async function publishToFacebook(pageId: string, token: string, message: string,
 	}
 }
 
-async function publishToInstagram(igId: string, token: string, message: string, imageUrl: string): Promise<void> {
+async function publishToInstagram(igId: string, token: string, message: string, mediaUrl: string, isVideo: boolean): Promise<void> {
+	const fields = isVideo ? { media_type: 'REELS', video_url: mediaUrl, share_to_feed: 'true' } : { image_url: mediaUrl };
 	const create = await graph<{ id: string }>(`${GRAPH}/${igId}/media`, {
 		method: 'POST',
-		body: new URLSearchParams({ image_url: imageUrl, caption: message, access_token: token }),
+		body: new URLSearchParams({ ...fields, caption: message, access_token: token }),
 	});
-	// Instagram prepares the picture first; wait until it says it is ready.
-	for (let i = 0; i < 10; i += 1) {
+	// Instagram prepares the media first; videos take longer than pictures.
+	const attempts = isVideo ? 40 : 10;
+	let ready = false;
+	for (let i = 0; i < attempts && !ready; i += 1) {
 		const state = await graph<{ status_code?: string }>(`${GRAPH}/${create.id}?fields=status_code&access_token=${encodeURIComponent(token)}`);
-		if (state.status_code === 'FINISHED') break;
-		if (state.status_code === 'ERROR' || state.status_code === 'EXPIRED') throw new Error('Instagram could not process the picture');
-		await new Promise((resolve) => setTimeout(resolve, 1500));
+		if (state.status_code === 'FINISHED') ready = true;
+		else if (state.status_code === 'ERROR' || state.status_code === 'EXPIRED') throw new Error('Instagram could not process the media');
+		else await new Promise((resolve) => setTimeout(resolve, isVideo ? 3000 : 1500));
 	}
+	if (!ready && isVideo) throw new Error('Instagram is still processing the video. Try again in a minute.');
 	await graph(`${GRAPH}/${igId}/media_publish`, { method: 'POST', body: new URLSearchParams({ creation_id: create.id, access_token: token }) });
 }
 
@@ -289,11 +306,12 @@ async function publish(env: Env, id: string): Promise<void> {
 	try {
 		if (!conn) throw new Error('Your Facebook Page is not connected any more');
 		const token = await unseal(env, conn.page_token);
-		const imageUrl = post.media_key ? `https://${env.CUSTOM_DOMAIN}/api/meta/media/${post.media_key}` : null;
-		if (post.target !== 'instagram') await publishToFacebook(conn.page_id, token, post.message, imageUrl);
+		const mediaUrl = post.media_key ? `https://${env.CUSTOM_DOMAIN}/api/meta/media/${post.media_key}` : null;
+		const isVideo = Boolean(post.media_key?.endsWith('.mp4'));
+		if (post.target !== 'instagram') await publishToFacebook(conn.page_id, token, post.message, mediaUrl, isVideo);
 		if (post.target !== 'facebook') {
-			if (!conn.ig_id || !imageUrl) throw new Error('Instagram needs a linked account and a picture');
-			await publishToInstagram(conn.ig_id, token, post.message, imageUrl);
+			if (!conn.ig_id || !mediaUrl) throw new Error('Instagram needs a linked account and a picture or video');
+			await publishToInstagram(conn.ig_id, token, post.message, mediaUrl, isVideo);
 		}
 		await env.DB.prepare("UPDATE meta_posts SET status = 'posted', published_at = ?2, error = NULL WHERE id = ?1").bind(id, Date.now()).run();
 	} catch (error) {

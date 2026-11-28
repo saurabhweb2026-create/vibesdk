@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { apiClient, type LouieAdContent, type LouiePack, type MetaStatus } from '@/lib/api-client';
 import { composeCreative, loadImage } from '@/lib/creative-image';
 import { renderShortVideo, type VideoShot } from '@/lib/short-video';
-import { speak } from '@/lib/voice';
 import { MetaPostDialog, useMetaStatus } from '@/components/meta-post-dialog';
 import { MarketingCouncil } from './marketing-council';
+import { QuickCampaign } from './quick-campaign';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
 const GOALS = ['Get more bookings', 'Sell more products', 'Bring more visitors', 'Launch something new'];
@@ -358,7 +358,7 @@ export default function LouiePage() {
 		};
 	}, [selectedId]);
 
-	const generate = async (spoken?: string) => {
+	const generate = async () => {
 		setBusy(true);
 		try {
 			const res = await apiClient.generateLouieAds({
@@ -368,7 +368,7 @@ export default function LouiePage() {
 				audience: audience || undefined,
 				location: location || undefined,
 				tone,
-				offer: (spoken ?? offer) || undefined,
+				offer: offer || undefined,
 				formats,
 			});
 			if (res.data) {
@@ -376,7 +376,6 @@ export default function LouiePage() {
 				setPacks((p) => [pack, ...p]);
 				setShown(0);
 				toast.success('John finished your ads');
-				if (spoken) void speak('Your ads are ready. Take a look.');
 			}
 		} catch {
 			// the API client already shows the reason
@@ -386,16 +385,9 @@ export default function LouiePage() {
 
 	const current = packs[shown];
 
-	// A spoken request fills the brief and starts the work straight away.
+	// A spoken request starts the one-click campaign straight away.
 	const [params] = useSearchParams();
 	const say = params.get('say');
-	const started = useRef(false);
-	useEffect(() => {
-		if (!say || started.current || !selectedId || !data?.access.louie) return;
-		started.current = true;
-		setOffer(say);
-		void generate(say);
-	});
 
 	return (
 		<div className="mx-auto max-w-3xl px-5 py-8 text-white">
@@ -407,6 +399,17 @@ export default function LouiePage() {
 				<>
 					<SitePicker sites={sites} selectedId={selectedId} onSelect={select} />
 					<MetaPanel status={meta} refresh={refreshMeta} />
+					{selectedId && (
+						<QuickCampaign
+							key={selectedId}
+							appId={selectedId}
+							brand={sites.find((x) => x.id === selectedId)?.title ?? 'AlwaysBro'}
+							brief={{ goal, tone, offer, audience, location, budgetInr: Number(budget) || 10000 }}
+							meta={meta}
+							onPosted={() => void refreshMeta()}
+							autoStart={say ?? undefined}
+						/>
+					)}
 					{selectedId && (
 						<div className={PANEL}>
 							<div className="mb-2 text-xs tracking-wide text-white/50">Your goal</div>

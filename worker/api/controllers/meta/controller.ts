@@ -18,6 +18,7 @@ interface PostBody {
 	appId?: string;
 	message?: string;
 	image?: string;
+	video?: string;
 	target?: string;
 	scheduleAt?: number;
 }
@@ -64,6 +65,7 @@ export class MetaController extends BaseController {
 				appId,
 				message: String(body.message ?? ''),
 				image: typeof body.image === 'string' ? body.image : undefined,
+				video: typeof body.video === 'string' ? body.video : undefined,
 				target,
 				scheduleAt: typeof body.scheduleAt === 'number' ? body.scheduleAt : undefined,
 			});

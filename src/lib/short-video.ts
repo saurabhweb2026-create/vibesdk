@@ -13,6 +13,8 @@ export interface ShortVideoOptions {
 	cta: string;
 	brand: string;
 	accent: string;
+	/** Records MP4 when the browser can, which Instagram and Facebook accept; WebM otherwise. */
+	preferMp4?: boolean;
 }
 
 const WIDTH = 540;
@@ -27,8 +29,10 @@ const PALETTES: Array<[string, string]> = [
 	['#172554', '#3b82f6'],
 ];
 
-function pickMimeType(): string {
-	const options = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+function pickMimeType(preferMp4: boolean): string {
+	const mp4 = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1', 'video/mp4'];
+	const webm = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+	const options = preferMp4 ? [...mp4, ...webm] : [...webm, ...mp4];
 	return options.find((t) => MediaRecorder.isTypeSupported(t)) ?? '';
 }
 
@@ -176,7 +180,7 @@ export async function renderShortVideo(opts: ShortVideoOptions): Promise<{ blob:
 	const music = opts.music ? startMusic(total) : null;
 	if (music) music.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
 
-	const mimeType = pickMimeType();
+	const mimeType = pickMimeType(Boolean(opts.preferMp4));
 	const recorder = new MediaRecorder(stream, mimeType ? { mimeType, videoBitsPerSecond: 4_000_000 } : undefined);
 	const chunks: Blob[] = [];
 	recorder.ondataavailable = (e) => {
