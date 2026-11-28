@@ -4,6 +4,7 @@ import { ApiResponse, ControllerResponse } from '../types';
 import { createLogger } from '../../../logger';
 import type { AgentId } from '../../../services/credits/purchasedCredits';
 import { AdPack, generateAdPack } from '../../../services/troop/louie';
+import { CouncilResult, holdCouncil } from '../../../services/troop/council';
 import { defaultGreeting } from '../../../services/troop/jack';
 import { buildImagePrompt, generateCreativeImage } from '../../../services/troop/louieImage';
 import { addXp } from '../../../services/troop/team';
@@ -66,6 +67,26 @@ export class TroopController extends BaseController {
 		} catch (error) {
 			this.logger.error('Error listing websites:', error);
 			return TroopController.createErrorResponse<SitesData>('Failed to load your websites', 500);
+		}
+	}
+
+	static async askCouncil(request: Request, env: Env, _ctx: ExecutionContext, context: RouteContext): Promise<ControllerResponse<ApiResponse<CouncilResult>>> {
+		try {
+			const user = context.user!;
+			if (!(await canUseTroop(env, user.id, 'louie'))) return TroopController.createErrorResponse<CouncilResult>(NOT_ALLOWED_LOUIE, 403);
+			const body = (await request.json()) as { appId?: string; question?: string };
+			const question = String(body.question ?? '').trim().slice(0, 400);
+			if (question.length < 8) return TroopController.createErrorResponse<CouncilResult>('Tell the council what you want to decide', 400);
+			const site = await getOwnedSite(env, user.id, String(body.appId ?? ''));
+			if (!site) return TroopController.createErrorResponse<CouncilResult>('Website not found', 404);
+			if (!(await takeUsage(env, `louie-user:${user.id}`, LOUIE_DAILY_LIMIT))) {
+				return TroopController.createErrorResponse<CouncilResult>('John has reached today\'s limit. Please try again tomorrow.', 429);
+			}
+			return TroopController.createSuccessResponse(await holdCouncil(env, site, question));
+		} catch (error) {
+			this.logger.error('Council failed', error);
+			const message = error instanceof Error ? error.message : 'The council could not meet';
+			return TroopController.createErrorResponse<CouncilResult>(message, 500);
 		}
 	}
 

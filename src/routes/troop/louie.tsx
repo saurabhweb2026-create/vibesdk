@@ -6,6 +6,7 @@ import { composeCreative, loadImage } from '@/lib/creative-image';
 import { renderShortVideo, type VideoShot } from '@/lib/short-video';
 import { speak } from '@/lib/voice';
 import { MetaPostDialog, useMetaStatus } from '@/components/meta-post-dialog';
+import { MarketingCouncil } from './marketing-council';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
 const GOALS = ['Get more bookings', 'Sell more products', 'Bring more visitors', 'Launch something new'];
@@ -510,6 +511,7 @@ export default function LouiePage() {
 						</div>
 					)}
 					{current && <AdPackView c={current.content} appId={current.appId} brand={sites.find((x) => x.id === current.appId)?.title ?? 'AlwaysBro'} onPost={(text, image) => setPostDraft({ text, image: image ?? null })} />}
+					{selectedId && <MarketingCouncil appId={selectedId} />}
 					{postDraft && selectedId && <MetaPostDialog appId={selectedId} initialText={postDraft.text} image={postDraft.image} status={meta} onClose={() => setPostDraft(null)} onDone={() => void refreshMeta()} />}
 				</>
 			)}

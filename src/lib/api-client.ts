@@ -1406,6 +1406,10 @@ class ApiClient {
 		return this.request<LouiePack>('/api/louie/generate', { method: 'POST', body });
 	}
 
+	async askCouncil(appId: string, question: string): Promise<ApiResponse<CouncilResult>> {
+		return this.request<CouncilResult>('/api/louie/council', { method: 'POST', body: { appId, question } });
+	}
+
 	async getLouiePacks(appId: string): Promise<ApiResponse<{ packs: LouiePack[] }>> {
 		return this.request<{ packs: LouiePack[] }>(`/api/louie/packs?appId=${encodeURIComponent(appId)}`);
 	}
@@ -1549,6 +1553,14 @@ export type MetaStatus = { configured: boolean; connected: boolean; pageName: st
 export type MetaPostRequest = { appId: string; message: string; target: MetaTarget; image?: string; scheduleAt?: number };
 export type DomainState = { hostname: string; status: 'pending' | 'active' | 'failed'; records: Array<{ type: 'CNAME' | 'TXT'; name: string; value: string }>; note: string };
 export type SkinData = { balance: number; skins: Array<{ id: string; name: string; price: number }>; owned: string[]; active: string };
+export type CouncilResult = {
+	question: string;
+	seated: Array<{ advisor: string; lens: string; take: string; bottomLine: string }>;
+	disagreements: Array<{ conflict: string; tradeoff: string; test: string }>;
+	recommendation: string;
+	doNext: string[];
+	tripwire: string;
+};
 export type VoiceHistoryTurn = { role: 'user' | 'assistant'; content: string };
 export type VoiceTurn = {
 	reply: string;
