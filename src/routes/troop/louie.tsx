@@ -1,8 +1,10 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { apiClient, type LouieAdContent, type LouiePack, type MetaStatus } from '@/lib/api-client';
 import { composeCreative, loadImage } from '@/lib/creative-image';
 import { renderShortVideo, type VideoShot } from '@/lib/short-video';
+import { speak } from '@/lib/voice';
 import { MetaPostDialog, useMetaStatus } from '@/components/meta-post-dialog';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
@@ -355,7 +357,7 @@ export default function LouiePage() {
 		};
 	}, [selectedId]);
 
-	const generate = async () => {
+	const generate = async (spoken?: string) => {
 		setBusy(true);
 		try {
 			const res = await apiClient.generateLouieAds({
@@ -365,7 +367,7 @@ export default function LouiePage() {
 				audience: audience || undefined,
 				location: location || undefined,
 				tone,
-				offer: offer || undefined,
+				offer: (spoken ?? offer) || undefined,
 				formats,
 			});
 			if (res.data) {
@@ -373,6 +375,7 @@ export default function LouiePage() {
 				setPacks((p) => [pack, ...p]);
 				setShown(0);
 				toast.success('John finished your ads');
+				if (spoken) speak('Your ads are ready. Take a look.', 'john');
 			}
 		} catch {
 			// the API client already shows the reason
@@ -382,10 +385,21 @@ export default function LouiePage() {
 
 	const current = packs[shown];
 
+	// A spoken request fills the brief and starts the work straight away.
+	const [params] = useSearchParams();
+	const say = params.get('say');
+	const started = useRef(false);
+	useEffect(() => {
+		if (!say || started.current || !selectedId || !data?.access.louie) return;
+		started.current = true;
+		setOffer(say);
+		void generate(say);
+	});
+
 	return (
 		<div className="mx-auto max-w-3xl px-5 py-8 text-white">
 			<title>John - AlwaysBro</title>
-			<TroopHeader face="/troop/john-face.webp" name="John" color={PINK} role="Ads" line="Tell me your goal and I will write your ads." />
+			<TroopHeader person="john" name="John" color={PINK} role="Ads" line="Tell me your goal and I will write your ads." />
 			{error && <div className={PANEL}>{error}</div>}
 			{data && !data.access.louie && <LockedNotice agent="John" />}
 			{data && data.access.louie && (
@@ -472,7 +486,7 @@ export default function LouiePage() {
 							<button
 								type="button"
 								disabled={busy || formats.length === 0}
-								onClick={generate}
+								onClick={() => void generate()}
 								className="mt-5 rounded-full px-6 py-2.5 text-sm font-medium text-black disabled:opacity-60"
 								style={{ background: '#fff' }}
 							>

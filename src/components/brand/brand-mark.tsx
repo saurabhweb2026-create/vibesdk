@@ -1,4 +1,5 @@
 import { cn } from '@cloudflare/kumo';
+import { useOutfit } from '@/lib/outfits';
 
 const FACE_BORDER = {
 	caesar: 'border-[#3b82f6]/50',
@@ -26,6 +27,7 @@ export function BrandFace({
 	className?: string;
 	face?: keyof typeof FACE_BORDER;
 }) {
+	const { faceSrc } = useOutfit();
 	return (
 		<span
 			className={cn(
@@ -35,7 +37,7 @@ export function BrandFace({
 			)}
 		>
 			<img
-				src={`/troop/${FACE_FILE[face]}-face.webp`}
+				src={faceSrc(FACE_FILE[face])}
 				alt={FACE_FILE[face]}
 				className="size-full object-cover"
 				draggable={false}

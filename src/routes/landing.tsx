@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { BrandLogo, BrandName } from '@/components/brand/brand-mark';
 import { GlyphMatrix } from '@/components/brand/glyph-matrix';
+import { FutureBackdrop } from '@/components/brand/future-backdrop';
+import { MicButton } from '@/components/mic-button';
 import { useAuthModal } from '@/components/auth/AuthModalProvider';
 import { PROMPT_STORAGE_KEY, THEME_STORAGE_KEY } from '@/lib/themes';
 import { LandingCrew } from './landing-sections/landing-crew';
@@ -62,6 +64,9 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 
 	return (
 		<div className="fixed inset-0 z-[60] overflow-y-auto scroll-smooth bg-[#0b0b0d] text-white">
+			<div className="pointer-events-none fixed inset-0">
+				<FutureBackdrop />
+			</div>
 			<header className="sticky top-0 z-20 border-b border-white/[0.06] bg-[#0b0b0d]/80 backdrop-blur-xl">
 				<div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
 					<div className="flex items-center gap-2.5">
@@ -82,8 +87,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 			</header>
 
 			<section className="relative overflow-hidden">
-				<GlyphMatrix />
-				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,#0b0b0d_30%,transparent_75%)]" />
+				<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(11,11,13,0.7)_20%,transparent_70%)]" />
 				<motion.div
 					initial={reduce ? false : { opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
@@ -108,7 +112,10 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
 						/>
 						<div className="flex items-center justify-between px-1 pt-1">
 							<span className="font-label px-2 text-[11px] text-white/35">Free to start</span>
+							<span className="flex items-center gap-2">
+							<MicButton onText={(t) => setPrompt((p) => `${p} ${t}`.trim())} />
 							<button type="submit" className="rounded-full bg-white px-5 py-2 text-sm font-medium text-black transition-colors hover:bg-white/85">Build it</button>
+							</span>
 						</div>
 					</form>
 					<div className="mt-6 flex flex-wrap justify-center gap-2 text-xs text-white/50">

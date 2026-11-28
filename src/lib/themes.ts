@@ -17,3 +17,5 @@ export const THEMES: SiteTheme[] = [
 export const THEME_STORAGE_KEY = 'alwaysbro-theme';
 
 export const PROMPT_STORAGE_KEY = 'alwaysbro-first-prompt';
+/** Set when the prompt came from the voice dock, so the builder starts without another tap. */
+export const AUTO_RUN_KEY = 'alwaysbro-auto-run';

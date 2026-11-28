@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router';
+import { MicButton } from '@/components/mic-button';
+import { speak } from '@/lib/voice';
 import { apiClient, type JackSetupData } from '@/lib/api-client';
 import { CopyButton, INPUT, LockedNotice, PANEL, SitePicker, TroopHeader, useTroopSites } from './troop-shared';
 
@@ -15,7 +18,7 @@ interface Bubble {
 	text: string;
 }
 
-function TestChat({ appId, enabled }: { appId: string; enabled: boolean }) {
+function TestChat({ appId, enabled, ask }: { appId: string; enabled: boolean; ask?: string }) {
 	const [bubbles, setBubbles] = useState<Bubble[]>([]);
 	const [text, setText] = useState('');
 	const [busy, setBusy] = useState(false);
@@ -28,9 +31,16 @@ function TestChat({ appId, enabled }: { appId: string; enabled: boolean }) {
 	useEffect(() => {
 		end.current?.scrollIntoView({ block: 'nearest' });
 	}, [bubbles]);
+	const asked = useRef(false);
+	useEffect(() => {
+		if (!ask || !enabled || asked.current) return;
+		asked.current = true;
+		void send(ask);
+	});
 
-	const send = async () => {
-		const message = text.trim();
+	/** Replies are read aloud when the question was spoken. */
+	const send = async (spoken?: string) => {
+		const message = (spoken ?? text).trim();
 		if (!message || busy) return;
 		setText('');
 		setBubbles((b) => [...b, { mine: true, text: message }]);
@@ -42,7 +52,9 @@ function TestChat({ appId, enabled }: { appId: string; enabled: boolean }) {
 				body: JSON.stringify({ bot: appId, visitor: visitor.current, message }),
 			});
 			const data = (await res.json()) as { reply?: string; error?: string };
-			setBubbles((b) => [...b, { mine: false, text: data.reply ?? data.error ?? 'Something went wrong' }]);
+			const answer = data.reply ?? data.error ?? 'Something went wrong';
+			setBubbles((b) => [...b, { mine: false, text: answer }]);
+			if (spoken) speak(answer, 'maria');
 		} catch {
 			setBubbles((b) => [...b, { mine: false, text: 'Could not connect. Please try again.' }]);
 		}
@@ -75,6 +87,7 @@ function TestChat({ appId, enabled }: { appId: string; enabled: boolean }) {
 				}}
 			>
 				<input className={INPUT} value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask a customer question" maxLength={500} />
+				<MicButton onText={(t) => void send(t)} className="self-center" />
 				<button type="submit" disabled={busy || !enabled} className="rounded-xl px-4 text-sm font-medium text-black disabled:opacity-50" style={{ background: '#fff' }}>
 					Send
 				</button>
@@ -87,6 +100,8 @@ export default function JackPage() {
 	const { data, error, sites, selectedId, select } = useTroopSites();
 	const [setup, setSetup] = useState<JackSetupData | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [params] = useSearchParams();
+	const ask = params.get('say') ?? undefined;
 
 	const load = useCallback(async (appId: string) => {
 		try {
@@ -146,7 +161,7 @@ export default function JackPage() {
 	return (
 		<div className="mx-auto max-w-3xl px-5 py-8 text-white">
 			<title>Maria - AlwaysBro</title>
-			<TroopHeader face="/troop/maria-face.webp" name="Maria" color={LIME} role="Customer support" line="Teach me your business and I will answer your customers." />
+			<TroopHeader person="maria" name="Maria" color={LIME} role="Customer support" line="Teach me your business and I will answer your customers." />
 			{error && <div className={PANEL}>{error}</div>}
 			{data && !data.access.jack && <LockedNotice agent="Maria" />}
 			{data && data.access.jack && (
@@ -205,7 +220,7 @@ export default function JackPage() {
 								</button>
 							</div>
 
-							<TestChat appId={setup.appId} enabled={setup.enabled} />
+							<TestChat appId={setup.appId} enabled={setup.enabled} ask={ask} />
 
 							<div className={PANEL}>
 								<div className="mb-2 font-label text-[11px]" style={{ color: LIME }}>

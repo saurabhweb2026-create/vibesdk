@@ -1,4 +1,5 @@
 import { cn } from '@cloudflare/kumo';
+import { useOutfit } from '@/lib/outfits';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeExternalLinks from 'rehype-external-links';
@@ -26,6 +27,7 @@ function sanitizeMessageForDisplay(message: string): string {
 }
 
 export function UserMessage({ message }: { message: string }) {
+	const { faceSrc } = useOutfit();
 	const sanitizedMessage = sanitizeMessageForDisplay(message);
 
 	return (
@@ -859,7 +861,7 @@ export function AIMessage({
 	return (
 		<div className="flex flex-col gap-2 min-w-0 rounded-2xl border border-[#3b82f6]/30 bg-gradient-to-br from-[#3b82f6]/15 via-[#8b5cf6]/10 to-transparent p-3.5">
 			<div className="font-display font-semibold text-[#60a5fa] flex items-center gap-2 mb-1">
-				<img src="/troop/jack-face.webp" alt="" className="size-7 shrink-0 rounded-full object-cover ring-2 ring-[#3b82f6]/60" />
+				<img src={faceSrc('jack')} alt="" className="size-7 shrink-0 rounded-full object-cover ring-2 ring-[#3b82f6]/60" />
 				Jack
 				{isThinking && <Sparkles className="size-3 text-[#f59e0b] animate-pulse" />}
 			</div>

@@ -1,4 +1,4 @@
-import { PROMPT_STORAGE_KEY, THEMES, THEME_STORAGE_KEY } from '@/lib/themes';
+import { AUTO_RUN_KEY, PROMPT_STORAGE_KEY, THEMES, THEME_STORAGE_KEY } from '@/lib/themes';
 import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import { ArrowUpRight, Loader2 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -32,6 +32,16 @@ import { startCloudflareConnect } from '@/lib/cloudflare-connect';
 
 
 /** A theme picked on the landing page becomes the first words of the builder prompt, once. */
+function takeAutoRun(): boolean {
+	try {
+		const flagged = sessionStorage.getItem(AUTO_RUN_KEY) === '1';
+		sessionStorage.removeItem(AUTO_RUN_KEY);
+		return flagged;
+	} catch {
+		return false;
+	}
+}
+
 function takeThemePrompt(): string {
 	try {
 		const typed = sessionStorage.getItem(PROMPT_STORAGE_KEY);
@@ -62,6 +72,8 @@ export default function Home() {
 	const [projectMode, setProjectMode] = useState<ProjectType>('app');
 	const behaviorMode: Extract<BehaviorType, 'think' | 'phasic'> = 'think';
 	const [query, setQuery] = useState(takeThemePrompt);
+	const autoRun = useRef<boolean | null>(null);
+	if (autoRun.current === null) autoRun.current = takeAutoRun();
 	const { user } = useAuth();
 	const greetingName = firstNameOf(user);
 	const { isLoadingCapabilities, capabilities, getEnabledFeatures } =
@@ -210,6 +222,13 @@ export default function Home() {
 		// Clear images after navigation
 		clearImages();
 	};
+
+	// A spoken request starts building as soon as the prompt is ready.
+	useEffect(() => {
+		if (!autoRun.current || !query.trim() || !user || usageLimitsLoading) return;
+		autoRun.current = false;
+		handleCreateApp(query, projectMode);
+	});
 
 	const discoverLinkRef = useRef<HTMLDivElement>(null);
 

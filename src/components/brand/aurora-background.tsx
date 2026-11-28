@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { apiClient } from '@/lib/api-client';
-import { AiWorldCanvas } from './ai-world-canvas';
+import { FutureBackdrop } from './future-backdrop';
 import { setActiveSkin, useActiveSkin } from '@/lib/skins';
 
 /** Slow, drifting colour blobs behind the whole app. The palette follows the chosen look. */
@@ -39,7 +39,7 @@ export function AuroraBackground() {
 			<span className="aurora__blob aurora__blob--b" />
 			<span className="aurora__blob aurora__blob--c" />
 			<span className="aurora__grid" />
-			<AiWorldCanvas />
+			<FutureBackdrop intensity={0.8} />
 		</div>
 	);
 }

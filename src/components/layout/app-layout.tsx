@@ -4,6 +4,8 @@ import { SidebarProvider, useSidebar } from '@cloudflare/kumo';
 import { AppSidebar } from './app-sidebar';
 import { GlobalHeader } from './global-header';
 import { HeaderProvider } from './header-context';
+import { OutfitAsk } from '@/components/outfit-ask';
+import { VoiceDock } from '@/components/voice-dock';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -68,6 +70,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 						{children || <Outlet />}
 					</div>
 				</main>
+				<OutfitAsk />
+				<VoiceDock />
 			</HeaderProvider>
 		</SidebarProvider>
 	);

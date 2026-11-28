@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useOutfit } from '@/lib/outfits';
 
 export type TroopStatus =
 	| 'idle'
@@ -20,9 +21,9 @@ interface TroopStageProps {
 }
 
 const TROOP = [
-	{ id: 'caesar', name: 'Jack', role: 'Builds your site', color: '#3b82f6', src: '/troop/jack-face.webp' },
-	{ id: 'louie', name: 'John', role: 'Ads', color: '#ec4899', src: '/troop/john-face.webp' },
-	{ id: 'jack', name: 'Maria', role: 'Customer support', color: '#14b8a6', src: '/troop/maria-face.webp' },
+	{ id: 'caesar', name: 'Jack', role: 'Builds your site', color: '#3b82f6', person: 'jack' },
+	{ id: 'louie', name: 'John', role: 'Ads', color: '#ec4899', person: 'john' },
+	{ id: 'jack', name: 'Maria', role: 'Customer support', color: '#14b8a6', person: 'maria' },
 ] as const;
 
 const STEPS = ['Plan', 'Build', 'Preview', 'Ready'];
@@ -78,6 +79,7 @@ function jackLine(status: TroopStatus): string {
 }
 
 export function TroopStage({ status, fileName, appId }: TroopStageProps) {
+	const { faceSrc } = useOutfit();
 	const reduceMotion = useReducedMotion();
 	const navigate = useNavigate();
 	const [collapsed, setCollapsed] = useState(false);
@@ -113,7 +115,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 				<div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c0c] text-white shadow-lg">
 					{header}
 					<div className="flex items-center gap-3 px-3 pb-2 pt-1">
-						<img src={TROOP[0].src} alt="Jack" className="size-9 shrink-0 rounded-lg object-cover" />
+						<img src={faceSrc(TROOP[0].person)} alt="Jack" className="size-9 shrink-0 rounded-lg object-cover" />
 						<div className="min-w-0 flex-1 truncate text-xs text-white/90">{lines[0]}</div>
 					</div>
 				</div>
@@ -169,7 +171,7 @@ export function TroopStage({ status, fileName, appId }: TroopStageProps) {
 									}}
 								>
 									<img
-										src={c.src}
+										src={faceSrc(c.person)}
 										alt={c.name}
 										className="h-full w-auto select-none rounded-2xl object-cover"
 										draggable={false}

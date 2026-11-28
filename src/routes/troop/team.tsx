@@ -1,4 +1,5 @@
 import { WavingCharacter, type TroopPerson } from '@/components/brand/waving-character';
+import { OutfitPicker } from '@/components/outfit-ask';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { apiClient, type AgentId, type TeamData, type TeamMember } from '@/lib/api-client';
@@ -167,6 +168,7 @@ export default function TeamPage() {
 		<div className="mx-auto max-w-5xl px-5 py-8 text-white">
 			<title>Your team - AlwaysBro</title>
 			<h1 className="text-4xl font-medium tracking-[-0.03em]">Your team</h1>
+			<div className="mt-4"><OutfitPicker /></div>
 			<p className="mt-1 text-sm text-white/60">
 				Jack, John and Maria grow as they work for you. Reward good work with a bonus and watch their story unfold.
 			</p>

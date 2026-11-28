@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { apiClient, type TroopSitesData } from '@/lib/api-client';
 import { GlyphMatrix } from '@/components/brand/glyph-matrix';
+import { useOutfit, type TroopPerson } from '@/lib/outfits';
 
 export const PANEL = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5';
 export const INPUT =
@@ -59,14 +60,15 @@ export function CopyButton({ text, label }: { text: string; label?: string }) {
 	);
 }
 
-export function TroopHeader({ face, name, color, role, line }: { face: string; name: string; color: string; role: string; line: string }) {
+export function TroopHeader({ person, name, color, role, line }: { person: TroopPerson; name: string; color: string; role: string; line: string }) {
+	const { faceSrc } = useOutfit();
 	return (
 		<div className="relative mb-8 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-7 sm:px-8">
 			<GlyphMatrix className="opacity-50" />
 			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,#0b0b0d_20%,transparent_80%)]" />
 			<div className="relative flex items-center gap-5">
 				<img
-					src={face}
+					src={faceSrc(person)}
 					alt={name}
 					className="size-20 shrink-0 rounded-full bg-[#120c0a] object-cover ring-1 ring-white/20"
 					style={{ boxShadow: `0 0 40px ${color}40` }}

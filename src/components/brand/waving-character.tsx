@@ -1,12 +1,33 @@
 import { motion, useReducedMotion } from 'framer-motion';
 
-export type TroopPerson = 'jack' | 'john' | 'maria';
+import { useOutfit, type TroopPerson } from '@/lib/outfits';
 
-const WAVE_SRC: Record<TroopPerson, string> = {
-	jack: '/troop/jack-wave.webp',
-	john: '/troop/john-wave.webp',
-	maria: '/troop/maria-wave.webp',
+export type { TroopPerson };
+
+/** Where the head sits in the everyday artwork, as fractions of the image width. */
+const HEAD: Record<TroopPerson, { x: number; width: number }> = {
+	jack: { x: 0.567, width: 0.29 },
+	john: { x: 0.554, width: 0.264 },
+	maria: { x: 0.528, width: 0.3 },
 };
+
+function SantaHat({ person }: { person: TroopPerson }) {
+	const { x, width } = HEAD[person];
+	const hatWidth = width * 1.12;
+	return (
+		<svg
+			viewBox="0 0 100 80"
+			aria-hidden
+			className="pointer-events-none absolute"
+			style={{ width: `${hatWidth * 100}%`, left: `${(x - hatWidth / 2) * 100}%`, bottom: '95.5%', transform: 'rotate(-7deg)' }}
+		>
+			<path d="M8 66 C16 20 52 2 80 18 C86 22 90 30 92 66 Z" fill="#d62839" />
+			<path d="M8 66 C16 20 52 2 80 18 C70 30 40 40 8 66 Z" fill="#ef4452" opacity="0.5" />
+			<rect x="2" y="62" width="96" height="16" rx="8" fill="#fdf6ec" />
+			<circle cx="84" cy="14" r="9" fill="#fdf6ec" />
+		</svg>
+	);
+}
 
 interface WavingCharacterProps {
 	person: TroopPerson;
@@ -20,6 +41,7 @@ interface WavingCharacterProps {
  */
 export function WavingCharacter({ person, color, className = 'h-72', delay = 0 }: WavingCharacterProps) {
 	const reduce = useReducedMotion();
+	const { outfit, waveSrc } = useOutfit();
 	const glow = { filter: `drop-shadow(0 0 18px ${color}88)` };
 
 	return (
@@ -30,7 +52,8 @@ export function WavingCharacter({ person, color, className = 'h-72', delay = 0 }
 			whileHover={reduce ? undefined : { scale: 1.06, rotate: [0, -3, 3, -2, 0], transition: { duration: 0.7 } }}
 			transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay }}
 		>
-			<img src={WAVE_SRC[person]} alt={person} draggable={false} className={`w-auto ${className}`} style={glow} />
+			<img src={waveSrc(person)} alt={person} draggable={false} className={`w-auto ${className}`} style={glow} />
+			{outfit.santaHat && <SantaHat person={person} />}
 		</motion.div>
 	);
 }
