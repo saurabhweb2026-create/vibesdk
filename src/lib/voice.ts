@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { apiClient } from './api-client';
 import type { TroopPerson } from './outfits';
 
 interface RecognitionEvent {
@@ -43,7 +44,7 @@ function pickVoice(female: boolean): SpeechSynthesisVoice | undefined {
 	return matches(indian) ?? matches(english) ?? indian[0] ?? english[0];
 }
 
-export function speak(text: string, person: TroopPerson): void {
+function speakWithBrowser(text: string, person: TroopPerson): void {
 	if (!canSpeak()) return;
 	const { pitch, rate, female } = PERSONA[person];
 	window.speechSynthesis.cancel();
@@ -55,7 +56,30 @@ export function speak(text: string, person: TroopPerson): void {
 	window.speechSynthesis.speak(utterance);
 }
 
+let player: HTMLAudioElement | null = null;
+let speechToken = 0;
+
+/** Speaks in the teammate's own studio voice; falls back to the browser voice when that is unavailable. */
+export async function speak(text: string, person: TroopPerson): Promise<void> {
+	stopSpeaking();
+	const token = ++speechToken;
+	try {
+		const blob = await apiClient.voiceSpeak(person, text);
+		if (token !== speechToken) return;
+		const url = URL.createObjectURL(blob);
+		const audio = new Audio(url);
+		audio.onended = () => URL.revokeObjectURL(url);
+		player = audio;
+		await audio.play();
+	} catch {
+		if (token === speechToken) speakWithBrowser(text, person);
+	}
+}
+
 export function stopSpeaking(): void {
+	speechToken++;
+	player?.pause();
+	player = null;
 	if (canSpeak()) window.speechSynthesis.cancel();
 }
 

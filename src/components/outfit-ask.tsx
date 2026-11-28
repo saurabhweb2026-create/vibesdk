@@ -1,6 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { SpeakerHighIcon } from '@phosphor-icons/react';
-import { OUTFITS, OUTFIT_ORDER, answerOccasion, pendingOccasion, setOutfit, useOutfit, type TroopPerson } from '@/lib/outfits';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { useAuth } from '@/contexts/auth-context';
+import { apiClient } from '@/lib/api-client';
+import { answerOccasion, pendingOccasion, syncWorn, useOutfit, type TroopPerson } from '@/lib/outfits';
 import { canSpeak, speak } from '@/lib/voice';
 
 const ASKERS: Array<{ person: TroopPerson; name: string }> = [
@@ -12,6 +16,16 @@ const ASKERS: Array<{ person: TroopPerson; name: string }> = [
 /** When a festival is near, a teammate asks to change into the matching outfit. */
 export function OutfitAsk() {
 	const { faceSrc, answered } = useOutfit();
+	const { user } = useAuth();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!user) return;
+		apiClient
+			.getTeam()
+			.then((res) => res.data && syncWorn(Object.fromEntries(res.data.members.map((m) => [m.id, m.outfit]))))
+			.catch(() => undefined);
+	}, [user]);
 	const occasion = answered && pendingOccasion();
 	const asker = ASKERS[new Date().getDate() % ASKERS.length];
 
@@ -29,7 +43,7 @@ export function OutfitAsk() {
 						<div className="font-label mb-1.5 flex items-center justify-between text-[11px] text-[#8bf0c4]">
 							{asker.name}
 							{canSpeak() && (
-								<button type="button" aria-label="Listen" onClick={() => speak(occasion.ask, asker.person)} className="text-white/50 hover:text-white">
+								<button type="button" aria-label="Listen" onClick={() => void speak(occasion.ask, asker.person)} className="text-white/50 hover:text-white">
 									<SpeakerHighIcon className="size-4" />
 								</button>
 							)}
@@ -39,12 +53,13 @@ export function OutfitAsk() {
 							<button
 								type="button"
 								onClick={() => {
-									answerOccasion(occasion, true);
-									speak('Thank you! How do I look?', asker.person);
+									answerOccasion(occasion, false);
+									void speak('Let me show you our outfits. You pick what we wear!', asker.person);
+									navigate(`/wardrobe?outfit=${occasion.outfit}&who=${asker.person}`);
 								}}
 								className="rounded-full bg-white px-4 py-1.5 text-xs font-medium text-black hover:bg-white/85"
 							>
-								Yes, dress up
+								See outfits
 							</button>
 							<button type="button" onClick={() => answerOccasion(occasion, false)} className="rounded-full px-3 py-1.5 text-xs text-white/60 hover:text-white">
 								Not now
@@ -54,30 +69,5 @@ export function OutfitAsk() {
 				</motion.div>
 			)}
 		</AnimatePresence>
-	);
-}
-
-/** Pick any outfit by hand, whatever the date. */
-export function OutfitPicker() {
-	const { outfit } = useOutfit();
-	return (
-		<div className="flex flex-wrap items-center gap-2">
-			<span className="font-label text-[11px] text-white/50">Team outfit</span>
-			{OUTFIT_ORDER.map((id) => (
-				<button
-					key={id}
-					type="button"
-					onClick={() => setOutfit(id)}
-					className="rounded-full border px-3 py-1 text-xs transition-colors"
-					style={{
-						borderColor: outfit.id === id ? '#8bf0c4' : 'rgba(255,255,255,0.15)',
-						background: outfit.id === id ? '#8bf0c41a' : 'transparent',
-						color: outfit.id === id ? '#fff' : 'rgba(255,255,255,0.7)',
-					}}
-				>
-					{OUTFITS[id].label}
-				</button>
-			))}
-		</div>
 	);
 }

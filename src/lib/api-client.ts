@@ -73,6 +73,7 @@ import {
 	SecurityErrorType,
 } from '@/api-types';
 import { toast } from 'sonner';
+import type { TroopPerson } from './outfits';
 
 /**
  * Global auth modal trigger for 401 interception
@@ -1426,6 +1427,16 @@ class ApiClient {
 		return this.request<{ ok: boolean }>('/api/team/outfit/equip', { method: 'POST', body: { agentId, outfitId } });
 	}
 
+	async voiceTurn(text: string, history: VoiceHistoryTurn[], who?: TroopPerson): Promise<ApiResponse<VoiceTurn>> {
+		return this.request<VoiceTurn>('/api/voice/turn', { method: 'POST', body: { text, history, who } }, true);
+	}
+
+	/** Natural speech for a teammate; resolves with an audio blob. */
+	async voiceSpeak(speaker: TroopPerson, text: string): Promise<Blob> {
+		const { response } = await this.requestRaw<never>('/api/voice/speak', { method: 'POST', body: { speaker, text }, skipJsonParsing: true }, false, true);
+		return response.blob();
+	}
+
 	async getSkins(): Promise<ApiResponse<SkinData>> {
 		return this.request<SkinData>('/api/skins');
 	}
@@ -1545,6 +1556,12 @@ export type MetaStatus = { configured: boolean; connected: boolean; pageName: st
 export type MetaPostRequest = { appId: string; message: string; target: MetaTarget; image?: string; scheduleAt?: number };
 export type DomainState = { hostname: string; status: 'pending' | 'active' | 'failed'; records: Array<{ type: 'CNAME' | 'TXT'; name: string; value: string }>; note: string };
 export type SkinData = { balance: number; skins: Array<{ id: string; name: string; price: number }>; owned: string[]; active: string };
+export type VoiceHistoryTurn = { role: 'user' | 'assistant'; content: string };
+export type VoiceTurn = {
+	speaker: TroopPerson;
+	reply: string;
+	action: { type: 'none' | 'build' | 'ads' | 'support' | 'wardrobe'; task: string; outfit: string };
+};
 export type TeamOutfit = { id: string; name: string; price: number; color: string; perk: string };
 export type TeamMember = {
 	id: AgentId;

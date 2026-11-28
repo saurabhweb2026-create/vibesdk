@@ -5,6 +5,7 @@ import { DomainController } from '../controllers/domains/controller';
 import { MetaController } from '../controllers/meta/controller';
 import { completeConnect, readMedia } from '../../services/meta/metaService';
 import { TeamController } from '../controllers/team/controller';
+import { VoiceController } from '../controllers/voice/controller';
 import { adaptController } from '../honoAdapter';
 import { AuthConfig, setAuthLevel } from '../../middleware/auth/routeAuth';
 
@@ -51,5 +52,7 @@ export function setupTroopRoutes(app: Hono<AppEnv>): void {
 		if (!media) return c.notFound();
 		return new Response(media.body, { headers: { 'content-type': media.type, 'cache-control': 'public, max-age=86400' } });
 	});
+	app.post('/api/voice/turn', setAuthLevel(AuthConfig.authenticated), adaptController(VoiceController, VoiceController.turn));
+	app.post('/api/voice/speak', setAuthLevel(AuthConfig.authenticated), adaptController(VoiceController, VoiceController.speak));
 	app.post('/api/team/bonus', setAuthLevel(AuthConfig.authenticated), adaptController(TeamController, TeamController.bonus));
 }

@@ -3,6 +3,9 @@ import { useSyncExternalStore } from 'react';
 export type TroopPerson = 'jack' | 'john' | 'maria';
 export type OutfitId = 'classic' | 'festive' | 'christmas';
 
+/** The teammate each server-side agent id stands for. */
+export const PERSON_AGENT = { jack: 'caesar', john: 'louie', maria: 'jack' } as const satisfies Record<TroopPerson, string>;
+
 export interface Outfit {
 	id: OutfitId;
 	label: string;
@@ -52,7 +55,11 @@ interface OutfitState {
 	outfit: OutfitId;
 	/** Occasion windows the user has already answered, as "id-year". */
 	answered: string[];
+	/** What each teammate wears when it differs from the shared outfit. */
+	worn: Partial<Record<TroopPerson, OutfitId>>;
 }
+
+const isOutfitId = (id: unknown): id is OutfitId => typeof id === 'string' && id in OUTFITS;
 
 const listeners = new Set<() => void>();
 let state: OutfitState = read();
@@ -60,10 +67,10 @@ let state: OutfitState = read();
 function read(): OutfitState {
 	try {
 		const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '') as Partial<OutfitState>;
-		const outfit = parsed.outfit && parsed.outfit in OUTFITS ? parsed.outfit : 'classic';
-		return { outfit, answered: Array.isArray(parsed.answered) ? parsed.answered : [] };
+		const outfit = isOutfitId(parsed.outfit) ? parsed.outfit : 'classic';
+		return { outfit, answered: Array.isArray(parsed.answered) ? parsed.answered : [], worn: parsed.worn ?? {} };
 	} catch {
-		return { outfit: 'classic', answered: [] };
+		return { outfit: 'classic', answered: [], worn: {} };
 	}
 }
 
@@ -86,6 +93,18 @@ export function setOutfit(outfit: OutfitId) {
 	write({ ...state, outfit });
 }
 
+/** Server outfit ids that have no artwork of their own keep the everyday look. */
+export const artOutfit = (serverId: string | null): OutfitId => (isOutfitId(serverId) ? serverId : 'classic');
+
+/** Adopts what the signed-in user's teammates wear, keyed by server agent id. */
+export function syncWorn(outfits: Record<string, string | null>) {
+	const worn: Partial<Record<TroopPerson, OutfitId>> = {};
+	for (const person of Object.keys(PERSON_AGENT) as TroopPerson[]) {
+		worn[person] = artOutfit(outfits[PERSON_AGENT[person]] ?? null);
+	}
+	write({ ...state, worn });
+}
+
 export function answerOccasion(occasion: Occasion, accepted: boolean) {
 	const key = `${occasion.id}-${new Date().getFullYear()}`;
 	write({
@@ -103,10 +122,12 @@ export function pendingOccasion(): Occasion | null {
 export function useOutfit() {
 	const current = useSyncExternalStore(subscribe, () => state);
 	const outfit = OUTFITS[current.outfit];
+	const outfitFor = (person: TroopPerson) => OUTFITS[current.worn[person] ?? current.outfit];
 	return {
 		outfit,
+		outfitFor,
 		answered: current.answered,
-		waveSrc: (person: TroopPerson) => `/troop/${person}${outfit.art}-wave.webp`,
-		faceSrc: (person: TroopPerson) => `/troop/${person}${outfit.art}-face.webp`,
+		waveSrc: (person: TroopPerson) => `/troop/${person}${outfitFor(person).art}-wave.webp`,
+		faceSrc: (person: TroopPerson) => `/troop/${person}${outfitFor(person).art}-face.webp`,
 	};
 }

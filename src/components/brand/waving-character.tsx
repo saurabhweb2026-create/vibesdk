@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion';
 
-import { useOutfit, type TroopPerson } from '@/lib/outfits';
+import { OUTFITS, useOutfit, type OutfitId, type TroopPerson } from '@/lib/outfits';
 
 export type { TroopPerson };
 
@@ -11,7 +11,7 @@ const HEAD: Record<TroopPerson, { x: number; width: number }> = {
 	maria: { x: 0.528, width: 0.3 },
 };
 
-function SantaHat({ person }: { person: TroopPerson }) {
+export function SantaHat({ person }: { person: TroopPerson }) {
 	const { x, width } = HEAD[person];
 	const hatWidth = width * 1.12;
 	return (
@@ -31,6 +31,8 @@ function SantaHat({ person }: { person: TroopPerson }) {
 
 interface WavingCharacterProps {
 	person: TroopPerson;
+	/** Shows this outfit instead of the one the person wears, for trying looks on. */
+	preview?: OutfitId;
 	color: string;
 	className?: string;
 	delay?: number;
@@ -39,9 +41,10 @@ interface WavingCharacterProps {
 /**
  * Transparent full-body character that sways gently from the feet. Hover adds a wave-back.
  */
-export function WavingCharacter({ person, color, className = 'h-72', delay = 0 }: WavingCharacterProps) {
+export function WavingCharacter({ person, color, preview, className = 'h-72', delay = 0 }: WavingCharacterProps) {
 	const reduce = useReducedMotion();
-	const { outfit, waveSrc } = useOutfit();
+	const { outfitFor } = useOutfit();
+	const outfit = preview ? OUTFITS[preview] : outfitFor(person);
 	const glow = { filter: `drop-shadow(0 0 18px ${color}88)` };
 
 	return (
@@ -52,7 +55,7 @@ export function WavingCharacter({ person, color, className = 'h-72', delay = 0 }
 			whileHover={reduce ? undefined : { scale: 1.06, rotate: [0, -3, 3, -2, 0], transition: { duration: 0.7 } }}
 			transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay }}
 		>
-			<img src={waveSrc(person)} alt={person} draggable={false} className={`w-auto ${className}`} style={glow} />
+			<img src={`/troop/${person}${outfit.art}-wave.webp`} alt={person} draggable={false} className={`w-auto ${className}`} style={glow} />
 			{outfit.santaHat && <SantaHat person={person} />}
 		</motion.div>
 	);

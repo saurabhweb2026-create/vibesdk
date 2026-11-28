@@ -17,11 +17,11 @@ export interface Outfit {
 }
 
 export const OUTFITS: Outfit[] = [
-	{ id: 'party', name: 'Party Hat', price: 20, color: '#f59e0b', perk: 'Celebrates every launch' },
-	{ id: 'hoodie', name: 'Cozy Hoodie', price: 30, color: '#6366f1', perk: 'Late-night build energy' },
-	{ id: 'suit', name: 'Sharp Suit', price: 60, color: '#0ea5e9', perk: 'Client-meeting ready' },
-	{ id: 'hero', name: 'Hero Cape', price: 100, color: '#ef4444', perk: 'Saves the day' },
-	{ id: 'gold', name: 'Golden Badge', price: 150, color: '#eab308', perk: 'Employee of the month' },
+	{ id: 'festive', name: 'Festive wear', price: 40, color: '#f59e0b', perk: 'Kurta and saree for every Indian festival' },
+	{ id: 'christmas', name: 'Santa hat', price: 25, color: '#ef4444', perk: 'Ho ho ho, the whole team in red' },
+	{ id: 'party', name: 'Party hat', price: 20, color: '#a855f7', perk: 'Celebrates every launch' },
+	{ id: 'shades', name: 'Cool shades', price: 30, color: '#38bdf8', perk: 'Too bright a future to look at' },
+	{ id: 'crown', name: 'Hero crown', price: 100, color: '#eab308', perk: 'Employee of the month, every month' },
 ];
 
 export const BONUS_AMOUNTS = [10, 25, 50];

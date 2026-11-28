@@ -412,6 +412,16 @@ export function AppSidebar() {
 							>
 								Your team page
 							</Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								className="text-sm"
+								active={pathname === '/wardrobe'}
+								icon={<BrandFace face="louie" className="size-7 -mr-1 ring-1 ring-white/15" />}
+								id="wardrobe-link"
+								tooltip="Outfits"
+								onClick={() => navigate('/wardrobe')}
+							>
+								Wardrobe
+							</Sidebar.MenuButton>
 						</Sidebar.Menu>
 
 						{user && (

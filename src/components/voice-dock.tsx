@@ -1,55 +1,68 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useRef, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { toast } from 'sonner';
 import { MicrophoneIcon } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/auth-context';
 import { useAuthModal } from '@/components/auth/AuthModalProvider';
+import { apiClient, type VoiceHistoryTurn, type VoiceTurn } from '@/lib/api-client';
 import { AUTO_RUN_KEY, PROMPT_STORAGE_KEY } from '@/lib/themes';
 import { canListen, speak, useListen } from '@/lib/voice';
-import { applyWardrobeCommand, routeCommand, type VoiceCommand } from '@/lib/voice-commands';
-import { OUTFITS } from '@/lib/outfits';
+import type { TroopPerson } from '@/lib/outfits';
 
-const REPLY: Record<VoiceCommand['person'], string> = {
-	jack: 'On it. I am starting your website now.',
-	john: 'Got it. I am writing your ads now.',
-	maria: 'Sure. Let me answer that.',
-};
+const PAGE_OWNER: Record<string, TroopPerson> = { '/louie': 'john', '/jack': 'maria' };
 
-const PATH: Record<VoiceCommand['person'], (task: string) => string> = {
-	jack: () => '/',
-	john: (task) => `/louie?say=${encodeURIComponent(task)}`,
-	maria: (task) => `/jack?say=${encodeURIComponent(task)}`,
-};
-
-/** One microphone for the whole team: say what you need and the right teammate takes it. */
+/** One microphone for the whole team: say what you need, the right teammate answers aloud and gets on it. */
 export function VoiceDock() {
 	const { user } = useAuth();
 	const { showAuthModal } = useAuthModal();
 	const navigate = useNavigate();
+	const { pathname } = useLocation();
 	const { listening, listen, cancel } = useListen();
 	const [heard, setHeard] = useState('');
+	const [thinking, setThinking] = useState(false);
+	const history = useRef<VoiceHistoryTurn[]>([]);
 
 	if (!canListen()) return null;
 
-	const dispatch = ({ person, task }: VoiceCommand) => {
-		if (person === 'jack') {
-			sessionStorage.setItem(PROMPT_STORAGE_KEY, task);
-			sessionStorage.setItem(AUTO_RUN_KEY, '1');
+	const act = ({ speaker, action }: VoiceTurn) => {
+		switch (action.type) {
+			case 'build':
+				sessionStorage.setItem(PROMPT_STORAGE_KEY, action.task);
+				sessionStorage.setItem(AUTO_RUN_KEY, '1');
+				navigate('/');
+				break;
+			case 'ads':
+				navigate(`/louie?say=${encodeURIComponent(action.task)}`);
+				break;
+			case 'support':
+				navigate(`/jack?say=${encodeURIComponent(action.task)}`);
+				break;
+			case 'wardrobe':
+				navigate(`/wardrobe?outfit=${encodeURIComponent(action.outfit)}&who=${speaker}`);
+				break;
 		}
-		navigate(PATH[person](task));
+	};
+
+	const converse = async (spoken: string) => {
+		setThinking(true);
+		try {
+			const res = await apiClient.voiceTurn(spoken, history.current, PAGE_OWNER[pathname]);
+			if (!res.data) throw new Error('empty');
+			const turn = res.data;
+			history.current = [...history.current, { role: 'user' as const, content: spoken }, { role: 'assistant' as const, content: turn.reply }].slice(-8);
+			void speak(turn.reply, turn.speaker);
+			act(turn);
+		} catch {
+			toast.message('The team could not answer just now. Please try again.');
+		} finally {
+			setThinking(false);
+		}
 	};
 
 	const handle = (spoken: string) => {
 		setHeard(spoken);
-		const outfit = applyWardrobeCommand(spoken);
-		if (outfit) {
-			speak(`Looking good! I am wearing the ${OUTFITS[outfit].label} outfit.`, 'maria');
-			return;
-		}
-		const command = routeCommand(spoken);
-		speak(REPLY[command.person], command.person);
-		if (user) dispatch(command);
-		else showAuthModal('Sign in to meet your team', () => dispatch(command));
+		if (user) void converse(spoken);
+		else showAuthModal('Sign in to talk to your team', () => void converse(spoken));
 	};
 
 	const press = async () => {
@@ -67,12 +80,12 @@ export function VoiceDock() {
 		}
 	};
 
+	const status = listening ? 'Listening...' : thinking ? 'Thinking...' : heard;
+
 	return (
 		<div className="fixed bottom-5 right-5 z-[70] flex items-center gap-3 pb-[env(safe-area-inset-bottom)]">
-			{(listening || heard) && (
-				<div className="font-label max-w-[60vw] rounded-full border border-white/10 bg-black/70 px-4 py-2 text-[11px] text-white/80 backdrop-blur">
-					{listening ? 'Listening...' : heard}
-				</div>
+			{status && (
+				<div className="font-label max-w-[60vw] rounded-full border border-white/10 bg-black/70 px-4 py-2 text-[11px] text-white/80 backdrop-blur">{status}</div>
 			)}
 			<button
 				type="button"

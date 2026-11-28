@@ -11,6 +11,7 @@ import DiscoverPage from './routes/discover';
 import LouiePage from './routes/troop/louie';
 import JackPage from './routes/troop/jack';
 import TeamPage from './routes/troop/team';
+import WardrobePage from './routes/troop/wardrobe';
 import { ProtectedRoute } from './routes/protected-route';
 
 const routes = [
@@ -71,6 +72,14 @@ const routes = [
 				element: (
 					<ProtectedRoute>
 						<TeamPage />
+					</ProtectedRoute>
+				),
+			},
+			{
+				path: 'wardrobe',
+				element: (
+					<ProtectedRoute>
+						<WardrobePage />
 					</ProtectedRoute>
 				),
 			},

@@ -375,7 +375,7 @@ export default function LouiePage() {
 				setPacks((p) => [pack, ...p]);
 				setShown(0);
 				toast.success('John finished your ads');
-				if (spoken) speak('Your ads are ready. Take a look.', 'john');
+				if (spoken) void speak('Your ads are ready. Take a look.', 'john');
 			}
 		} catch {
 			// the API client already shows the reason
