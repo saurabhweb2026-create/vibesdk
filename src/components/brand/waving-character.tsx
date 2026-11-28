@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion';
 
-import { isFestive, useOutfit, type Look, type TroopPerson } from '@/lib/outfits';
+import { fitsHeadGear, setArt, useOutfit, type Look, type TroopPerson } from '@/lib/outfits';
 
 export type { TroopPerson };
 
@@ -106,7 +106,7 @@ export function WavingCharacter({ person, color, look, className = 'h-72', delay
 	const reduce = useReducedMotion();
 	const { lookFor } = useOutfit();
 	const worn = look ?? lookFor(person);
-	const festive = isFestive(worn);
+	const art = setArt(worn);
 	const glow = { filter: `drop-shadow(0 0 18px ${color}88)` };
 
 	return (
@@ -117,9 +117,9 @@ export function WavingCharacter({ person, color, look, className = 'h-72', delay
 			whileHover={reduce ? undefined : { scale: 1.06, rotate: [0, -3, 3, -2, 0], transition: { duration: 0.7 } }}
 			transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay }}
 		>
-			<img src={`/troop/${person}${festive ? '-ethnic' : ''}-wave.webp`} alt={person} draggable={false} className={`w-auto ${className}`} style={glow} />
-			{!festive && (['bottom', 'top', 'shoes'] as const).map((slot) => worn[slot] && <Tint key={slot} person={person} region={slot} color={worn[slot].color} />)}
-			{worn.head && <HeadGear person={person} item={worn.head.id} />}
+			<img src={`/troop/${person}${art}-wave.webp`} alt={person} draggable={false} className={`w-auto ${className}`} style={glow} />
+			{!worn.set && (['bottom', 'top', 'shoes'] as const).map((slot) => worn[slot] && <Tint key={slot} person={person} region={slot} color={worn[slot].color} />)}
+			{worn.head && fitsHeadGear(worn) && <HeadGear person={person} item={worn.head.id} />}
 		</motion.div>
 	);
 }

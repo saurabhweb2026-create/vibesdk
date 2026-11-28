@@ -24,7 +24,7 @@ export interface VoiceHistoryTurn {
 
 const SPEAKERS: Speaker[] = ['bob', 'jack', 'john', 'maria'];
 const ACTIONS: VoiceActionType[] = ['none', 'build', 'open', 'edit', 'ads', 'support', 'wardrobe', 'back', 'end'];
-const OUTFIT_IDS = ['festive', 'christmas', 'party', 'crown', 'shades', 'top-crimson', 'top-royal', 'top-emerald', 'top-sunset', 'top-violet', 'top-black', 'jeans-indigo', 'jeans-black', 'pants-olive', 'pants-maroon', 'pants-cream', 'shoes-red', 'shoes-white', 'shoes-brown', 'shoes-black', 'shoes-gold'];
+const OUTFIT_IDS = ['festive', 'beach', 'casual', 'cowboy', 'formal', 'party-wear', 'christmas', 'party', 'crown', 'shades', 'top-crimson', 'top-royal', 'top-emerald', 'top-sunset', 'top-violet', 'top-black', 'jeans-indigo', 'jeans-black', 'pants-olive', 'pants-maroon', 'pants-cream', 'shoes-red', 'shoes-white', 'shoes-brown', 'shoes-black', 'shoes-gold'];
 
 const NAMES: Record<Speaker, string> = { bob: 'Bob', jack: 'Jack', john: 'John', maria: 'Maria' };
 

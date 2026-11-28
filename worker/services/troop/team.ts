@@ -25,6 +25,11 @@ const item = (id: string, slot: Slot, name: string, price: number, color: string
 
 export const WARDROBE: WardrobeItem[] = [
 	item('festive', 'set', 'Festive wear', 40, '#f59e0b', 'Kurta and saree for every Indian festival'),
+	item('beach', 'set', 'Beach wear', 50, '#38bdf8', 'Sun, sand and a launch by the sea'),
+	item('casual', 'set', 'Casual wear', 50, '#94a3b8', 'Relaxed Friday look'),
+	item('cowboy', 'set', 'Cowboy wear', 60, '#b45309', 'Ride into the next deadline'),
+	item('formal', 'set', 'Formal wear', 60, '#475569', 'Boardroom ready'),
+	item('party-wear', 'set', 'Party wear', 60, '#c026d3', 'Dressed to celebrate'),
 	item('christmas', 'head', 'Santa hat', 25, '#ef4444', 'Ho ho ho, the whole team in red'),
 	item('party', 'head', 'Party hat', 20, '#a855f7', 'Celebrates every launch'),
 	item('shades', 'head', 'Cool shades', 30, '#38bdf8', 'Too bright a future to look at'),

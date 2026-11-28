@@ -14,8 +14,20 @@ export interface Worn {
 
 export type Look = Partial<Record<WardrobeSlot, Worn>>;
 
-/** The festive set swaps the whole artwork, so it also swaps the face icons. */
-export const isFestive = (look: Look | undefined) => look?.set?.id === 'festive';
+/** File infix of the artwork each full set uses. A set swaps the whole picture, so it also swaps the face icon. */
+const SET_ART: Record<string, string> = {
+	festive: '-ethnic',
+	beach: '-beach',
+	casual: '-casual',
+	cowboy: '-cowboy',
+	formal: '-formal',
+	'party-wear': '-party',
+};
+
+export const setArt = (look: Look | undefined): string => (look?.set ? SET_ART[look.set.id] ?? '' : '');
+
+/** Hats and glasses are placed for the everyday and festive pictures only. */
+export const fitsHeadGear = (look: Look | undefined): boolean => !look?.set || look.set.id === 'festive';
 
 export interface Occasion {
 	id: string;
@@ -117,7 +129,7 @@ export function useOutfit() {
 	return {
 		answered: current.answered,
 		lookFor,
-		waveSrc: (person: TroopPerson) => `/troop/${person}${isFestive(lookFor(person)) ? '-ethnic' : ''}-wave.webp`,
-		faceSrc: (person: TroopPerson) => `/troop/${person}${isFestive(lookFor(person)) ? '-ethnic' : ''}-face.webp`,
+		waveSrc: (person: TroopPerson) => `/troop/${person}${setArt(lookFor(person))}-wave.webp`,
+		faceSrc: (person: TroopPerson) => `/troop/${person}${setArt(lookFor(person))}-face.webp`,
 	};
 }

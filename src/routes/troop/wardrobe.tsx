@@ -13,7 +13,7 @@ const PEOPLE: Array<{ person: TroopPerson; color: string }> = [
 ];
 
 const SLOTS: Array<{ slot: WardrobeSlot; label: string; none: string }> = [
-	{ slot: 'set', label: 'Festive', none: 'Everyday' },
+	{ slot: 'set', label: 'Full outfits', none: 'Everyday' },
 	{ slot: 'head', label: 'Hats and shades', none: 'Nothing' },
 	{ slot: 'top', label: 'Tops', none: 'Original' },
 	{ slot: 'bottom', label: 'Jeans and trousers', none: 'Original' },
@@ -196,7 +196,7 @@ export default function WardrobePage() {
 									);
 								})}
 							</div>
-							<p className="mt-4 text-xs text-white/45">The festive set replaces tops, jeans and shoes while it is on.</p>
+							<p className="mt-4 text-xs text-white/45">A full outfit replaces tops, jeans and shoes while it is on. Hats and shades only fit the everyday and festive looks.</p>
 						</div>
 					</div>
 				</>
